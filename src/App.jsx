@@ -7,7 +7,7 @@ import TabNavigation from './features/insight/TabNavigation';
 import CustomerAnalysis from './features/insight/CustomerAnalysis';
 import LocalAnalysisSection from './features/insight/LocalAnalysisSection';
 import MyPage from './features/mypage/MyPage';
-import PromotionPage from './features/promotion/PromotionPage';
+import PromotionPage from './features/autovideo/PromotionPage';
 import { COLORS } from './constants';
 import './styles/globals.css';
 

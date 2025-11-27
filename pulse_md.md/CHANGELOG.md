@@ -1,3 +1,25 @@
+## 2025-11-28
+
+### 🎨 UI/UX Improvements (UI/UX 개선)
+- **VideoCreator Redesign (홍보 영상 제작):**
+    - **Style Gallery:** "Energy(에너지)", "Premium(프리미엄)", "Mood(무드)"로 카테고리 재정의 및 설명 업데이트.
+    - **Visual Effects:** "3D Liquid Glass" 효과 적용 (볼륨감, 그림자, 그라데이션 강화) 및 선택 시 부드러운 배경 틴트 적용.
+    - **Result Screen:** 가로형 레이아웃(Horizontal Split)으로 변경하여 공간 효율성 증대.
+    - **AI Recommendation UI:** "Premium Gradient Pill" 스타일과 `Wand2` 아이콘을 적용하여 고급스러운 AI 추천 경험 제공.
+    - **Action Buttons:** "저장하기" 버튼을 Solid Main Blue 스타일로, "초기화" 버튼을 컴팩트한 아이콘 형태로 변경.
+    - **Loading Logic:** 로딩 바(8초)와 화면 전환 싱크를 맞춰 100% 완료 경험 제공.
+
+### 🚀 Features (기능 추가)
+- **Smart Reels Studio UX (스마트 릴스 스튜디오):**
+    - **Simplified Flow:** 중복된 업종 선택 단계 제거 및 이미지 업로드 슬롯(3개) 시각화.
+    - **Vibe Selection:** 단순 칩에서 "Visual Theme Cards"로 업그레이드.
+
+### 🐛 Bug Fixes (버그 수정)
+- **VideoCreator:** 구문 오류 수정 및 레이아웃 구조 복구.
+- **RightControlPanel:** `Play` 아이콘 import 오류 수정.
+
+---
+
     - **Interactive Profile List:** 부드러운 스프링 애니메이션이 적용된 "아코디언 스타일" 확장 기능 추가.
     - **Journey Map:** "불편함(Pain Points)"과 "만족(Good Points)"을 시각화한 수평 레이아웃으로 리디자인.
     - **AI Chat Interface:** 깔끔한 연한 파란색 배경의 전용 수직 채팅 패널 통합.
