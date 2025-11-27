@@ -1,0 +1,157 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+
+  html,
+  body {
+    @apply h-full overflow-hidden;
+  }
+
+  body {
+    @apply font-pretendard bg-[#F5F7FA] text-[#191F28];
+  }
+}
+
+@layer components {
+  .font-pretendard {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+  }
+
+  /* Sidebar Container Transition */
+  .sidebar-container {
+    transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    background-color: #002B7A;
+    overflow: hidden;
+    box-shadow: 4px 0 24px rgba(0, 43, 122, 0.15);
+  }
+
+  /* Main Content Layout Transition */
+  .main-content {
+    transition: margin-left 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+
+  /* Menu Item Base Style */
+  .menu-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 56px;
+    margin-bottom: 4px;
+    color: rgba(255, 255, 255, 0.6);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    white-space: nowrap;
+    /* Updated Border Radius to 40px */
+    border-top-left-radius: 40px;
+    border-bottom-left-radius: 40px;
+    /* Fixed Alignment for No Movement */
+    justify-content: flex-start;
+    padding-left: 14px;
+    margin-left: 8px;
+    width: calc(100% - 8px);
+  }
+
+  .menu-item:hover {
+    color: white;
+  }
+
+  .menu-item.active {
+    background-color: #F5F7FA;
+    color: #002B7A;
+    font-weight: 700;
+    z-index: 50;
+  }
+
+  /* Inverted Border Radius Logic - Radial Gradient Method (40px) */
+  .menu-item.active::before {
+    content: '';
+    position: absolute;
+    top: -40px;
+    right: 0;
+    width: 40px;
+    height: 40px;
+    background: radial-gradient(circle at 0 0, transparent 40px, #F5F7FA 40.5px);
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .menu-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: -40px;
+    right: 0;
+    width: 40px;
+    height: 40px;
+    background: radial-gradient(circle at 0 100%, transparent 40px, #F5F7FA 40.5px);
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* Icon Container Stability */
+  .menu-icon {
+    min-width: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* Text Fade Transition */
+  .menu-label {
+    opacity: 0;
+    width: 0;
+    transform: translateX(10px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .sidebar-expanded .menu-label {
+    opacity: 1;
+    width: auto;
+    margin-left: 16px;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+
+  .logo-text {
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+
+  .sidebar-expanded .logo-text {
+    max-width: 200px;
+    opacity: 1;
+    margin-left: 12px;
+  }
+
+  /* Hide Scrollbar but keep functionality */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Chat Animation */
+  .fade-in-up {
+    animation: fadeInUp 0.3s ease-out forwards;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
