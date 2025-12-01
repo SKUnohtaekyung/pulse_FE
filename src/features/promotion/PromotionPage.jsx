@@ -2,13 +2,25 @@ import React, { useState } from 'react';
 import VideoCreator from './VideoCreator';
 import GalleryPage from './GalleryPage';
 
-export default function PromotionPage() {
+export default function PromotionPage({ initialParams }) {
     const [viewMode, setViewMode] = useState('split'); // 'split' | 'gallery'
     const [images, setImages] = useState([]);
-    const [options, setOptions] = useState({ vibe: 'energetic', title: '' });
+    const [options, setOptions] = useState({ vibe: 'energetic', title: '', prompt: '' });
 
     const [step, setStep] = useState('input'); // 'input' | 'loading' | 'result'
     const [resultData, setResultData] = useState(null);
+
+    // Handle initial params from navigation
+    React.useEffect(() => {
+        if (initialParams) {
+            setOptions(prev => ({
+                ...prev,
+                vibe: initialParams.vibe || 'energetic',
+                title: initialParams.title || '', // Pre-fill result title
+                prompt: initialParams.title || '' // Pre-fill prompt with the same context
+            }));
+        }
+    }, [initialParams]);
 
     const handleGenerate = () => {
         setStep('loading');

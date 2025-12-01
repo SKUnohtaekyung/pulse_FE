@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { COLORS } from '../../constants';
 
-const DashboardHome = () => {
+const DashboardHome = ({ onNavigate }) => {
     const [today] = useState(new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' }));
 
     return (
@@ -36,15 +36,18 @@ const DashboardHome = () => {
                         <div className="relative z-10 flex-1">
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white/90 text-xs font-bold mb-3">
                                 <Sparkles size={12} className="text-yellow-300" />
-                                오늘의 AI 추천 미션
+                                오늘의 AI 제안
                             </div>
                             <h2 className="text-3xl font-bold text-white mb-2 leading-tight">
                                 "금요일 저녁 예약이 비었어요!<br />
-                                <span className="text-yellow-300">퇴근길 직장인 타겟</span> 릴스를 올려보세요."
+                                <span className="text-yellow-300">퇴근길 직장인 타겟</span> 영상을 올려보세요."
                             </h2>
-                            <button className="mt-4 px-6 py-3 bg-[#FF5A36] hover:bg-[#FF7052] text-white rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg hover:-translate-y-0.5">
+                            <button
+                                onClick={() => onNavigate('promotion', { title: '금요일 저녁, 퇴근길 직장인을 위한 힐링 타임', vibe: 'energetic' })}
+                                className="mt-4 px-6 py-3 bg-[#FF5A36] hover:bg-[#FF7052] text-white rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg hover:-translate-y-0.5"
+                            >
                                 <Clapperboard size={20} />
-                                1분 만에 홍보 영상 만들기
+                                홍보 영상 만들기
                             </button>
                         </div>
 

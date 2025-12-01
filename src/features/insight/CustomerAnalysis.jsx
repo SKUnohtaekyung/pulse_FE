@@ -58,7 +58,7 @@ const PERSONAS = [
     }
 ];
 
-export default function CustomerAnalysis() {
+export default function CustomerAnalysis({ onNavigate }) {
     const [selectedPersona, setSelectedPersona] = useState(null);
 
     return (
@@ -271,9 +271,12 @@ export default function CustomerAnalysis() {
                                     "{selectedPersona ? `${selectedPersona.nickname}님` : '손님'} 취향 저격 릴스, AI가 만들어드려요!"
                                 </p>
                             </div>
-                            <button className="bg-[#FF5A36] text-white px-4 py-2.5 rounded-xl font-bold text-[12px] hover:bg-[#FF5A36]/90 transition-all shadow-sm hover:translate-y-[-2px] flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                            <button
+                                onClick={() => onNavigate('promotion', { title: '단골 손님이 사랑하는 우리 가게 시그니처 메뉴', vibe: 'emotional' })}
+                                className="bg-[#FF5A36] text-white px-4 py-2.5 rounded-xl font-bold text-[12px] hover:bg-[#FF5A36]/90 transition-all shadow-sm hover:translate-y-[-2px] flex items-center gap-1.5 whitespace-nowrap shrink-0"
+                            >
                                 <Clapperboard size={14} className="fill-current" />
-                                1분 만에 릴스 만들기
+                                홍보 영상 만들기
                             </button>
                         </div>
                     </div>

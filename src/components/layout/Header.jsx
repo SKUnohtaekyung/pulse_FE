@@ -6,7 +6,7 @@ const Header = ({ title }) => (
     <header className="flex justify-between items-center mb-3 pl-2 shrink-0">
         <div>
             <h1 style={{ color: COLORS.primary }} className="text-[26px] font-bold leading-tight mb-0.5">
-                범계 로데오점 사장님, 안녕하세요!
+                범계 로데오점 박사장님, 안녕하세요!
             </h1>
             <p style={{ color: COLORS.primaryText }} className="text-[15px] opacity-70">
                 {title}

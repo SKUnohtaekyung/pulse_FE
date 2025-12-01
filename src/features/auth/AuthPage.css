@@ -1,0 +1,384 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
+
+/* Global Layout */
+.auth-split-layout {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    font-family: "Pretendard", sans-serif;
+    overflow: hidden;
+    position: relative;
+    background-color: #F5F7FA;
+}
+
+/* Static Blurry Background */
+.auth-split-layout::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background:
+        radial-gradient(circle at 80% 20%, rgba(0, 43, 122, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 90% 80%, rgba(77, 133, 255, 0.15) 0%, transparent 40%);
+    filter: blur(100px);
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Left Panel: Form Area (60%) */
+.auth-left-panel {
+    width: 60%;
+    background: linear-gradient(to right, #FFFFFF 85%, rgba(255, 255, 255, 0) 100%);
+    display: flex;
+    flex-direction: column;
+    padding: 40px 80px;
+    position: relative;
+    z-index: 10;
+    justify-content: center;
+}
+
+/* Right Panel: Visual Area (40%) */
+.auth-right-panel {
+    width: 40%;
+    position: relative;
+    background-color: transparent;
+    overflow: hidden;
+    z-index: 5;
+}
+
+/* Header & Logo */
+.auth-header {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 1400px;
+    padding: 16px 24px;
+    z-index: 20;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.brand-logo-text {
+    font-size: 24px;
+    font-weight: 800;
+    color: #191F28;
+    letter-spacing: -0.5px;
+    margin: 0;
+}
+
+/* Content Area */
+.auth-content {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.form-wrapper {
+    width: 100%;
+    max-width: 520px;
+    /* Enforce consistent width */
+    margin: 0 auto;
+    /* Center alignment */
+}
+
+/* Footer */
+.auth-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 24px 80px;
+}
+
+.auth-footer p {
+    font-size: 12px;
+    color: #8B95A1;
+    margin: 0;
+}
+
+/* Form Typography */
+.form-title {
+    font-size: 36px;
+    font-weight: 700;
+    color: #191F28;
+    margin: 0 0 12px 0;
+    letter-spacing: -1px;
+    line-height: 1.3;
+}
+
+.form-subtitle {
+    font-size: 16px;
+    color: #6B7280;
+    margin: 0 0 48px 0;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+/* Input Layout Containers */
+.input-group {
+    width: 100%;
+    margin-bottom: 24px;
+    position: relative;
+}
+
+.input-row {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 24px;
+    width: 100%;
+}
+
+.input-row .minimal-input,
+.input-row .custom-dropdown-container {
+    flex: 1;
+    width: 100%;
+}
+
+/* Minimal Input Styles */
+.minimal-input {
+    width: 100%;
+    /* max-width removed here as it is controlled by form-wrapper */
+    padding: 16px 0;
+    border: none;
+    border-bottom: 1px solid #E5E8EB;
+    background: transparent;
+    font-size: 16px;
+    color: #191F28;
+    border-radius: 0;
+    transition: all 0.2s ease;
+}
+
+.minimal-input:hover,
+.minimal-input:focus {
+    border-bottom: 2px solid #191F28;
+    /* Thicker border */
+    padding-bottom: 15px;
+    /* Adjust padding to prevent layout shift */
+    outline: none;
+}
+
+/* Custom Dropdown Styles */
+.custom-dropdown-container {
+    position: relative;
+}
+
+.dropdown-trigger {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dropdown-trigger .placeholder {
+    color: #ADB5BD;
+}
+
+.dropdown-trigger .selected-value {
+    color: #191F28;
+}
+
+.dropdown-arrow {
+    color: #8B95A1;
+    transition: transform 0.2s;
+}
+
+.dropdown-arrow.rotate {
+    transform: rotate(180deg);
+}
+
+.dropdown-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: #FFFFFF;
+    border: 1px solid #E5E8EB;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    margin-top: 4px;
+    padding: 8px 0;
+    list-style: none;
+    z-index: 100;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.dropdown-option {
+    padding: 12px 16px;
+    font-size: 15px;
+    color: #4B5563;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.dropdown-option:hover {
+    background-color: #F5F8FF;
+    color: #002B7A;
+}
+
+/* Password Toggle */
+.password-wrapper-minimal {
+    position: relative;
+    width: 100%;
+}
+
+.toggle-icon {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #8B95A1;
+}
+
+/* Checkbox */
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #4B5563;
+}
+
+.checkbox-group input[type="checkbox"] {
+    accent-color: #002B7A;
+    width: 16px;
+    height: 16px;
+}
+
+/* Buttons */
+.submit-btn {
+    width: 100%;
+    padding: 14px;
+    background-color: #002B7A;
+    color: #FFFFFF;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+    box-shadow: 0 4px 12px rgba(0, 43, 122, 0.2);
+}
+
+.submit-btn:hover {
+    background-color: #002261;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 43, 122, 0.3);
+}
+
+.submit-btn:active {
+    transform: scale(0.98);
+}
+
+.back-btn {
+    padding: 14px 24px;
+    background-color: #FFFFFF;
+    border: 1px solid #E5E8EB;
+    color: #4B5563;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.back-btn:hover {
+    background-color: #F9FAFB;
+    border-color: #D1D5DB;
+}
+
+/* Horizontal Button Layout */
+.form-actions-row.horizontal {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+    width: 100%;
+    align-items: stretch;
+    justify-content: center;
+}
+
+.submit-btn.full-width {
+    flex: 1;
+    margin-top: 0;
+}
+
+/* Switch Mode UI */
+.form-switch-container {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid #F2F4F6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.switch-text {
+    font-size: 14px;
+    color: #8B95A1;
+    margin: 0;
+}
+
+.switch-btn {
+    background: none;
+    border: none;
+    color: #002B7A;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.switch-btn:hover {
+    color: #001F57;
+}
+
+/* Animation */
+.fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .auth-left-panel {
+        width: 100%;
+        padding: 40px;
+    }
+
+    .auth-right-panel {
+        display: none;
+    }
+}

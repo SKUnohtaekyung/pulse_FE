@@ -45,8 +45,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
     // Local State for UI
     const [isAutoPrompt, setIsAutoPrompt] = useState(true);
     const [qualityMode, setQualityMode] = useState('standard'); // 'standard' | 'pro'
-    const [promptText, setPromptText] = useState('');
-    const [videoTitle, setVideoTitle] = useState(''); // Result screen title
+    // promptText and videoTitle are now managed by parent (options.prompt, options.title)
 
     // Loading Progress Logic
     const [progress, setProgress] = useState(0);
@@ -75,12 +74,12 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
 
     // Auto-generate prompt when image is uploaded
     useEffect(() => {
-        if (images.length > 0 && isAutoPrompt) {
-            setPromptText("따뜻한 햇살이 비치는 창가에서 김이 모락모락 나는 커피 한 잔의 여유로움");
-        } else if (images.length === 0) {
-            setPromptText("");
+        if (images.length > 0 && isAutoPrompt && !options.prompt) {
+            setOptions(prev => ({ ...prev, prompt: "따뜻한 햇살이 비치는 창가에서 김이 모락모락 나는 커피 한 잔의 여유로움" }));
+        } else if (images.length === 0 && !options.prompt) {
+            // Keep prompt empty if no images and no pre-filled prompt
         }
-    }, [images, isAutoPrompt]);
+    }, [images, isAutoPrompt, options.prompt, setOptions]);
 
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files);
@@ -91,7 +90,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
     };
 
     const handleAITitle = () => {
-        setVideoTitle("범계 로데오의 숨은 보석, 감성 카페 오픈!");
+        setOptions(prev => ({ ...prev, title: "범계 로데오의 숨은 보석, 감성 카페 오픈!" }));
     };
 
     // --- Round 9: Text Update & Premium AI UI ---
@@ -196,8 +195,8 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                         </div>
                         <div className="relative">
                             <textarea
-                                value={promptText}
-                                onChange={(e) => !isAutoPrompt && setPromptText(e.target.value)}
+                                value={options.prompt}
+                                onChange={(e) => !isAutoPrompt && setOptions({ ...options, prompt: e.target.value })}
                                 readOnly={isAutoPrompt}
                                 placeholder="만들고 싶은 영상의 느낌을 설명해주세요."
                                 className={`w-full h-20 rounded-xl p-3 text-[13px] resize-none transition-all outline-none border leading-relaxed ${isAutoPrompt
@@ -390,8 +389,8 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                 <div className="relative w-full">
                                     <input
                                         type="text"
-                                        value={videoTitle}
-                                        onChange={(e) => setVideoTitle(e.target.value)}
+                                        value={options.title}
+                                        onChange={(e) => setOptions({ ...options, title: e.target.value })}
                                         placeholder="영상 제목을 입력해주세요"
                                         className="w-full h-11 rounded-xl bg-white border border-gray-200 px-3 pr-24 text-[13px] focus:border-[#002B7A] focus:ring-1 focus:ring-[#002B7A] transition-all outline-none shadow-sm"
                                     />

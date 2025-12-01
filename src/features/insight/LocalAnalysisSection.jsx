@@ -3,7 +3,7 @@ import { MapPin, Briefcase, Clock, TrendingUp, Clapperboard, MessageCircle, Send
 import { COLORS } from '../../constants';
 import { LOCAL_DATA } from '../../data/mockData';
 
-export default function LocalAnalysisSection() {
+export default function LocalAnalysisSection({ onNavigate }) {
     const textRef = useRef(null);
 
     useEffect(() => {
@@ -193,9 +193,12 @@ export default function LocalAnalysisSection() {
                                     "우리 동네 핫플레이스 되는 홍보 영상, 1분이면 완성!"
                                 </p>
                             </div>
-                            <button className="bg-[#FF5A36] text-white px-5 py-3 rounded-xl font-bold text-[13px] hover:bg-[#FF5A36]/90 transition-all shadow-md hover:translate-y-[-2px] flex items-center gap-2 whitespace-nowrap shrink-0">
+                            <button
+                                onClick={() => onNavigate('promotion', { title: '우리 동네 핫플레이스, 여기 어때요?', vibe: 'energetic' })}
+                                className="bg-[#FF5A36] text-white px-5 py-3 rounded-xl font-bold text-[13px] hover:bg-[#FF5A36]/90 transition-all shadow-md hover:translate-y-[-2px] flex items-center gap-2 whitespace-nowrap shrink-0"
+                            >
                                 <Clapperboard size={16} className="fill-current" />
-                                1분 만에 릴스 만들기
+                                홍보 영상 만들기
                             </button>
                         </div>
                     </div>

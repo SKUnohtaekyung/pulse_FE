@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Home,
     BarChart2,
@@ -6,10 +7,15 @@ import {
     PlayCircle,
     Users,
     User,
-    LayoutDashboard
+    LayoutDashboard,
+    LogOut,
+    ChevronUp
 } from 'lucide-react';
 
 const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded }) => {
+    const navigate = useNavigate();
+    const [showProfileMenu, setShowProfileMenu] = useState(false);
+
     const menus = [
         { id: 'home', icon: <LayoutDashboard size={24} />, label: '우리 가게 현황' },
         { id: 'insight', icon: <BarChart2 size={24} />, label: '손님 마음 읽기' },
@@ -19,16 +25,26 @@ const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded }) => {
         { id: 'mypage', icon: <Home size={24} />, label: '마이페이지' },
     ];
 
+    const handleLogout = (e) => {
+        e.stopPropagation();
+        // Clear any auth tokens if needed
+        navigate('/login');
+    };
+
     return (
         <div
             className="fixed top-4 bottom-4 left-4 z-50 flex flex-col gap-3"
             onMouseEnter={() => setIsExpanded(true)}
-            onMouseLeave={() => setIsExpanded(false)}
+            onMouseLeave={() => {
+                setIsExpanded(false);
+                setShowProfileMenu(false);
+            }}
         >
             {/* Logo Section - Transparent Background */}
-            {/* Logo Section - Transparent Background */}
-            {/* Logo Section - Transparent Background */}
-            <div className={`h-20 flex items-center pl-4 shrink-0 overflow-hidden transition-all duration-400 ease-[cubic-bezier(0.25,0.8,0.25,1)] ${isExpanded ? 'w-[260px]' : 'w-[68px]'}`}>
+            <div
+                className={`h-20 flex items-center pl-4 shrink-0 overflow-hidden transition-all duration-400 ease-[cubic-bezier(0.25,0.8,0.25,1)] ${isExpanded ? 'w-[260px]' : 'w-[68px]'} cursor-pointer`}
+                onClick={() => setActiveMenu('home')}
+            >
                 <img
                     src="/PULSE_LOGO.png"
                     alt="PULSE"
@@ -57,26 +73,36 @@ const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded }) => {
                     ))}
                 </div>
 
-                {/* Profile Section */}
-                <div className="mb-2 shrink-0">
+                {/* Profile Section with Integrated Logout */}
+                <div className="mb-2 shrink-0 relative px-2">
                     <div
-                        className={`relative flex items-center h-14 transition-all duration-200 cursor-pointer ${isExpanded ? 'pl-[28px] justify-start' : 'justify-center'
+                        className={`relative flex items-center h-16 transition-all duration-200 rounded-2xl ${isExpanded ? 'bg-white/10 px-3 justify-between' : 'justify-center hover:bg-white/5'
                             }`}
-                        onClick={() => setActiveMenu('mypage')}
                     >
-                        {/* Profile Icon */}
-                        <div className="menu-icon">
-                            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center border border-white/10">
-                                <User size={16} className="text-white" />
+                        {/* Profile Info Group */}
+                        <div className="flex items-center gap-3 overflow-hidden">
+                            {/* Avatar */}
+                            <div className="shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-white/20 to-white/5 flex items-center justify-center border border-white/10 shadow-inner">
+                                <User size={18} className="text-white" />
+                            </div>
+
+                            {/* Text Info (Visible only when expanded) */}
+                            <div className={`flex flex-col justify-center transition-all duration-300 ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 hidden'
+                                }`}>
+                                <p className="text-white text-[15px] font-bold leading-tight mb-0.5">박사장님</p>
+                                <p className="text-blue-200 text-[11px] font-medium leading-tight">Premium Plan</p>
                             </div>
                         </div>
 
-                        {/* Text Container */}
-                        <div className={`flex flex-col justify-center overflow-hidden transition-all duration-300 ${isExpanded ? 'opacity-100 max-w-[150px] ml-4' : 'opacity-0 max-w-0 ml-0'
-                            }`}>
-                            <p className="text-white text-sm font-medium leading-none mb-1">박사장님</p>
-                            <p className="text-white/50 text-xs leading-none">Premium</p>
-                        </div>
+                        {/* Logout Button (Visible only when expanded) */}
+                        {isExpanded && (
+                            <button
+                                onClick={handleLogout}
+                                className="group flex items-center justify-center w-8 h-8 rounded-lg text-white/30 hover:text-white hover:bg-white/10 transition-all"
+                            >
+                                <LogOut size={15} strokeWidth={2} />
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

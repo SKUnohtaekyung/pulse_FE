@@ -65,3 +65,47 @@
 ### 🐛 Bug Fixes (버그 수정)
 * **Syntax Errors:** `PersonaSection.jsx`의 중복 태그 및 `globals.css`의 문법 오류 수정 (500 에러 해결).
 * **Configuration:** `vite.config.js`, `postcss.config.js`, `tailwind.config.js` 초기 설정 누락 해결.
+
+---
+
+## 2025-12-01
+
+### 🎨 Auth UI Redesign (로그인/회원가입 UI 개편)
+*   **Split Screen Layout:** 좌측 3D 비주얼 영역(60%)과 우측 입력 폼 영역(40%)으로 분할된 모던 레이아웃 적용.
+*   **3D Background:** `React Three Fiber`를 활용한 인터랙티브 3D 파티클 및 지오메트릭 애니메이션 배경 구현.
+*   **Glassmorphism:** 투명도와 블러 효과(`backdrop-filter`)를 활용한 세련된 글래스모피즘 카드 디자인.
+*   **Seamless Flow:** 별도 페이지 이동 없이 로그인/회원가입 모드가 부드럽게 전환되는 슬라이딩 인터페이스.
+*   **Input UX:** `floating label` 및 포커스 인터랙션이 적용된 프리미엄 입력 필드 스타일.
+
+### 🛠 Backend Integration (백엔드 연동)
+* **Authentication:**
+    * **Login:** `localStorage` 모의 로그인 로직을 `/api/auth/login` API 호출로 대체.
+    * **Signup:** 회원가입 로직을 `/api/users/store` API 호출로 대체 및 에러 핸들링 추가.
+
+### 🧭 Context-Aware Navigation (컨텍스트 기반 네비게이션)
+* **Navigation Logic:**
+    * **Parameter Passing:** 대시보드 및 분석 페이지에서 홍보 영상 제작 페이지로 이동 시, 문맥 데이터(`title`, `vibe`) 전달 기능 구현.
+    * **State Management:** `DashboardLayout`에서 네비게이션 파라미터 관리 및 `PromotionPage`로 전달.
+    * **State Lifting:** `VideoCreator`의 `prompt` 및 `title` 상태를 `PromotionPage`로 상향 조정하여 외부 초기화 지원.
+* **CTA Updates:**
+    * **Dashboard Home:** "퇴근길 직장인 타겟" (Energetic) 데이터 연동.
+    * **Customer Analysis:** "단골 손님 시그니처 메뉴" (Emotional) 데이터 연동.
+    * **Local Analysis:** "동네 핫플레이스" (Energetic) 데이터 연동.
+
+### 🐛 Bug Fixes (버그 수정)
+* **Syntax Errors:** `CustomerAnalysis.jsx` 및 `LocalAnalysisSection.jsx`의 중첩 태그 오류 수정.
+
+---
+
+## 2025-12-02
+
+### 🎨 Auth Page Overhaul (인증 페이지 전면 개편)
+*   **Complete Redesign:** 사용자 피드백을 반영하여 로그인 및 회원가입 페이지 디자인을 처음부터 다시 구축.
+*   **2-Step Signup Flow:** 회원가입 과정을 '기본 정보 입력' → '가게 정보 등록' 2단계로 분리하여 사용자 경험 개선.
+*   **Layout Standardization:**
+    *   **Consistent Width:** 모든 입력 폼(`input`, `button`)의 너비를 `520px`로 통일하여 시각적 안정감 확보.
+    *   **Flex Layout:** 이름/휴대폰 번호, 가게 이름/업종 등 가로 배치 필드의 비율과 간격을 정교하게 조정.
+*   **Visual Refinements:**
+    *   **Hover Effects:** 입력창 호버 시 하단 테두리가 `2px`로 두꺼워지는 인터랙션 추가 (레이아웃 밀림 방지).
+    *   **Alignment:** 로그인/회원가입 전환 섹션을 폼 중앙에 정확히 배치하고 상단 여백(`60px`) 확보.
+*   **Code Optimization:** `AuthPage.css`를 전면 재작성하여 불필요한 스타일을 제거하고 유지보수성을 높임.
