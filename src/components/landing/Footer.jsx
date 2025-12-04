@@ -9,7 +9,7 @@ const Footer = () => {
                     <img src="/PULSE_LOGO.png" alt="PULSE" className="h-6 w-auto mb-4 opacity-50 grayscale" />
                     <p className="text-sm text-gray-500 leading-relaxed">
                         외식업 사장님을 위한 통합 마케팅 자동화 플랫폼<br />
-                        Copyright © 2024 PULSE. All rights reserved.
+                        Copyright © 2025 PULSE. All rights reserved.
                     </p>
                 </div>
                 <div className="flex gap-8 text-sm text-gray-500">

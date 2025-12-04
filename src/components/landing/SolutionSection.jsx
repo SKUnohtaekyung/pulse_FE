@@ -55,7 +55,7 @@ const SolutionSection = () => {
                         number="02"
                         icon={Clapperboard}
                         title="Create"
-                        description="도출된 인사이트에 맞춰, 사진만 올리면 AI가 '스마트 릴스'를 자동으로 제작합니다."
+                        description="도출된 인사이트에 맞춰, 사진만 올리면 지금 바로 사용할 수 있는 '스마트 릴스'를 자동으로 제작합니다."
                         delay={0.4}
                     />
                     <StepCard

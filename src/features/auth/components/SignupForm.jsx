@@ -14,8 +14,7 @@ const SignupForm = ({ onSwitch }) => {
         storeName: '',
         category: '',
         storeAddress: '',
-        naverLink: '',
-        kakaoLink: '',
+
         agreed: false
     });
 
@@ -166,27 +165,7 @@ const SignupForm = ({ onSwitch }) => {
                             />
                         </div>
 
-                        <div className="input-group">
-                            <input
-                                type="text"
-                                name="naverLink"
-                                placeholder="네이버 지도 링크 (선택)"
-                                className="minimal-input"
-                                value={formData.naverLink}
-                                onChange={handleChange}
-                            />
-                        </div>
 
-                        <div className="input-group">
-                            <input
-                                type="text"
-                                name="kakaoLink"
-                                placeholder="카카오맵 링크 (선택)"
-                                className="minimal-input"
-                                value={formData.kakaoLink}
-                                onChange={handleChange}
-                            />
-                        </div>
 
                         <div className="form-actions-row horizontal">
                             <button type="button" className="back-btn" onClick={() => setStep(1)}>

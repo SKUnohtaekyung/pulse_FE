@@ -16,12 +16,7 @@ const AuthPage = () => {
                     <Link to="/">
                         <img src="/PULSE_LOGO.png" alt="PULSE" className="h-8 w-auto" />
                     </Link>
-                    <Link
-                        to="/"
-                        className="text-[15px] font-medium text-[#191F28] hover:opacity-70 transition-opacity flex items-center gap-1 mr-4"
-                    >
-                        메인으로
-                    </Link>
+
                 </div>
 
                 <div className="auth-content">

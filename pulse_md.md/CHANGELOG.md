@@ -109,3 +109,62 @@
     *   **Hover Effects:** 입력창 호버 시 하단 테두리가 `2px`로 두꺼워지는 인터랙션 추가 (레이아웃 밀림 방지).
     *   **Alignment:** 로그인/회원가입 전환 섹션을 폼 중앙에 정확히 배치하고 상단 여백(`60px`) 확보.
 *   **Code Optimization:** `AuthPage.css`를 전면 재작성하여 불필요한 스타일을 제거하고 유지보수성을 높임.
+
+---
+
+## 2025-12-04
+
+### 🎬 Promotion Video Creator Refinement (홍보 영상 제작 페이지 고도화)
+*   **Workflow & Logic Improvements (워크플로우 및 로직 개선):**
+    *   **Storyboard Step:** '입력(Input)'과 '결과(Result)' 사이에 '기획안(Storyboard)' 단계를 추가하여 3단계 프로세스 구축.
+    *   **Persona Prompt:** "누구를 위한 영상인가요?" 섹션을 추가하고, 3가지 페르소나(직장인, 커플, 가족) 선택 시 AI 프롬프트 자동 완성 기능 구현.
+    *   **AI Prompt Interaction:** AI가 작성한 프롬프트 수정 시 "AI가 작성함" 뱃지가 사라지도록 로직 개선.
+    *   **Quality Mode Selector:** 드롭다운 메뉴 방식의 '표준/프로 모드' 선택 UI 구현 (클릭 기반 인터랙션).
+*   **UI/UX Polish (디자인 및 사용성 개선):**
+    *   **Style Gallery Redesign:**
+        *   카드 높이 확대(`200px`) 및 텍스트 줄바꿈 허용으로 가독성 확보.
+        *   선택된 스타일에 따라 테마 색상(Amber, Purple, Rose)이 은은하게 적용되는 'Context-Aware' 디자인 적용.
+        *   **PULSE Badge:** "AI 추천" 뱃지를 "PULSE 추천"으로 변경하고 그라데이션 및 아이콘 효과 추가.
+    *   **Tooltip & Help:** "누구를 위한 영상인가요?" 및 "영상 설명" 라벨에 도움말 툴팁 추가 (화면 잘림 방지 로직 적용).
+    *   **Terminology:** "콘티 확인 중" → "영상 기획안 생성 중..."으로 사용자 친화적 용어 변경.
+    *   **Visual Hierarchy:** 왼쪽 패널의 입력 요소들을 하나의 통합 컨테이너로 합치고 스크롤바 디자인 간소화.
+    *   **No Scroll Policy:** 결과 화면 및 전체 레이아웃이 뷰포트 내에 완벽히 들어오도록 높이 및 여백 최적화.
+
+---
+
+## 2025-12-03
+
+### 🎨 Insight Page UI Improvements (손님/상권 분석 UI 개선)
+*   **Unified FAB (Floating Action Button) & Tooltip:**
+    *   **Consistent Positioning:** 두 분석 페이지(`CustomerAnalysis`, `LocalAnalysisSection`) 모두 FAB 위치를 `bottom-2 right-6`로 통일.
+    *   **Staggered Layout:** 버튼과 말풍선이 겹치지 않도록 버튼(`mb-4`)과 말풍선(`mb-4`)의 높이를 조정하여 시각적 간섭 제거.
+    *   **Hover-Only Tooltip:** 채팅 버튼에 마우스를 올렸을 때만 말풍선("상권 정보 물어보기" / "AI에게 질문하기")이 나타나도록 개선 (`AnimatePresence` 적용).
+    *   **Visual Polish:** FAB의 빨간색 알림 점(Red Dot) 제거 및 그림자 효과 최적화.
+
+*   **Local Analysis Section (우리 동네 상권 분석):**
+    *   **Peak Time Chart:**
+        *   **Layout Spacing:** 그래프 영역의 왼쪽 여백(`pl-10`)을 늘려 키워드 리스트와의 간격 확보.
+        *   **Width Expansion:** 오른쪽 여백(`pr-10`)을 줄여 그래프가 더 넓게 펼쳐지도록 수정.
+    *   **Header Alignment:** "상권 심층 분석" 타이틀과 설명 문구("피크타임과...")를 하단 정렬(`items-end`)로 나란히 배치.
+    *   **CTA Button:** 홍보 영상 제작 버튼의 호버 시 위로 올라가는 효과(`translate-y`) 제거 (그림자 효과만 유지).
+
+*   **Customer Analysis Section (단골 손님 유형 분석):**
+    *   **Text & Logic Updates:**
+        *   **Chat Title:** "AI 컨설턴트" → `~ 유형 분석중` (또는 "손님 유형 분석")으로 동적 변경.
+        *   **Default Message:** 손님 유형 미선택 시 "좌측 목록에서 손님 유형을 선택해주세요." 안내 메시지 표시.
+        *   **Journey Header:** "~님의 방문 여정" → "~ 유형의 방문여정"으로 변경 및 설명 문구("손님이 우리 가게를...") 추가.
+        *   **Chat Header:** "~님 분석 중" 부제 제거.
+
+*   **Layout & Navigation:**
+    *   **Tab Navigation Alignment:**
+        *   탭 버튼("단골 손님 유형 분석", "우리 동네 상권 분석")의 위치를 사이드바 네비게이션 시작점과 정확히 맞춤 (`mt-4`).
+        *   상단 타이틀("오늘도 힘차게 시작해볼까요?") 복구 및 정렬 유지.
+        *   **Button Sizing:** 탭 버튼의 높이를 살짝 늘려(`py-2.5`) 클릭 편의성 및 안정감 향상.
+
+### 🛠 Dashboard Refactoring (대시보드 리팩토링)
+*   **Component Extraction:**
+    *   **WeatherAnimation:** 날씨 위젯의 애니메이션 로직을 별도 컴포넌트로 분리하여 재사용성 확보.
+    *   **WidgetHeader:** 모든 위젯의 헤더(아이콘, 제목, 툴팁)를 `WidgetHeader` 컴포넌트로 표준화.
+*   **Code Optimization:**
+    *   **Style Unification:** `WIDGET_BASE_CLASSES` 상수를 도입하여 모든 위젯의 배경, 테두리, 그림자 스타일을 중앙에서 관리.
+    *   **Readability:** `DashboardHome.jsx`의 중복 코드를 제거하고 로직을 단순화하여 유지보수성 개선.

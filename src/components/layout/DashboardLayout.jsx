@@ -47,7 +47,9 @@ export default function DashboardLayout() {
                         // INSIGHT VIEW
                         <>
                             <Header title="오늘도 힘차게 시작해볼까요?" />
-                            <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+                            <div className="mt-4">
+                                <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+                            </div>
                             {activeTab === 'persona' ? <CustomerAnalysis onNavigate={handleNavigate} /> : <LocalAnalysisSection onNavigate={handleNavigate} />}
                         </>
                     ) : activeMenu === 'mypage' ? (

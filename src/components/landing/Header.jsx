@@ -10,13 +10,22 @@ const Header = () => {
             <div className="cursor-pointer" onClick={() => navigate('/')}>
                 <img src="/PULSE_LOGO.png" alt="PULSE" className="h-8 w-auto" />
             </div>
-            <button
-                onClick={() => navigate('/login')}
-                className="text-[15px] font-medium transition-colors hover:opacity-70"
-                style={{ color: COLORS.textMain }}
-            >
-                로그인
-            </button>
+            <div className="flex items-center gap-6">
+                <button
+                    onClick={() => navigate('/login')}
+                    className="text-[15px] font-medium transition-colors hover:opacity-70"
+                    style={{ color: COLORS.textMain }}
+                >
+                    로그인
+                </button>
+                <button
+                    onClick={() => navigate('/login')}
+                    className="text-[15px] font-medium transition-colors hover:opacity-70"
+                    style={{ color: COLORS.textMain }}
+                >
+                    회원가입
+                </button>
+            </div>
         </header>
     );
 };

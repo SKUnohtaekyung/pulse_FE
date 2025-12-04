@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, MessageCircle, ThumbsUp, AlertCircle, Lightbulb, ChevronRight, User, Send, Zap, ChevronDown, Frown, Smile, Clock, Wallet, Utensils, Calendar, Clapperboard } from 'lucide-react';
+import { Search, MessageCircle, ThumbsUp, AlertCircle, Lightbulb, ChevronRight, User, Send, Zap, ChevronDown, Frown, Smile, Clock, Wallet, Utensils, Calendar, Clapperboard, X, Sparkles, HelpCircle, CreditCard, ArrowUpRight } from 'lucide-react';
 import { COLORS } from '../../constants';
 
 // Mock Data
@@ -60,9 +60,11 @@ const PERSONAS = [
 
 export default function CustomerAnalysis({ onNavigate }) {
     const [selectedPersona, setSelectedPersona] = useState(null);
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
 
     return (
-        <div className="flex h-full gap-3 lg:gap-4 p-2 overflow-hidden min-w-[1024px]">
+        <div className="flex h-full gap-3 lg:gap-4 p-2 overflow-hidden min-w-[1024px] relative">
             {/* LEFT PANEL: Profile Selection (25%) */}
             <div className="w-[25%] flex flex-col h-full min-h-0">
                 {/* Title Section - Fixed Height to match Insight Cards (108px) */}
@@ -183,150 +185,182 @@ export default function CustomerAnalysis({ onNavigate }) {
                 </div>
             </div>
 
-            {/* CENTER PANEL: Journey & Strategy (45%) */}
-            <div className="w-[45%] flex flex-col h-full gap-3 min-h-0">
-                {/* 3 Insight Cards - Fixed Height 108px */}
-                <div className="grid grid-cols-3 gap-2.5 shrink-0 h-[108px]">
-                    <InsightCard
-                        icon={<ThumbsUp size={18} />}
-                        title="가장 원해요"
-                        tags={["#시그니처", "#푸짐"]}
-                        desc="볶음밥 양 칭찬"
-                        color="blue"
-                    />
-                    <InsightCard
-                        icon={<AlertCircle size={18} />}
-                        title="불편해요"
-                        tags={["#웨이팅", "#주차"]}
-                        desc="대기 시간 불확실"
-                        color="red"
-                    />
-                    <InsightCard
-                        icon={<Lightbulb size={18} />}
-                        title="먹히는 콘텐츠"
-                        tags={["#조리", "#ASMR"]}
-                        desc="지글지글 영상"
-                        color="indigo"
-                    />
+            {/* RIGHT PANEL: Insight & Journey (75%) */}
+            <div className="w-[75%] flex flex-col h-full gap-3 min-h-0">
+                {/* Top Row: Stats + CTA (Fixed Height 108px) */}
+                <div className="flex gap-3 shrink-0 h-[108px]">
+                    {/* Stats Cards (Ratio 4) */}
+                    <div className="flex-[4] grid grid-cols-2 gap-2.5">
+                        <div className="bg-white rounded-xl p-4 border border-[#002B7A]/5 hover:border-[#002B7A]/20 transition-all shadow-sm hover:shadow-md flex items-center gap-4 group px-5">
+                            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors shrink-0">
+                                <ThumbsUp size={18} />
+                            </div>
+                            <div className="flex flex-col justify-center">
+                                <div className="text-[11px] text-gray-500 mb-0.5">가장 원해요</div>
+                                <div className="text-[15px] font-bold text-[#191F28] mb-1.5">볶음밥 양 칭찬</div>
+                                <div className="flex gap-1">
+                                    <span className="text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-medium">#시그니처</span>
+                                    <span className="text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-medium">#푸짐</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl p-4 border border-[#002B7A]/5 hover:border-[#002B7A]/20 transition-all shadow-sm hover:shadow-md flex items-center gap-4 group px-5">
+                            <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-colors shrink-0">
+                                <AlertCircle size={18} />
+                            </div>
+                            <div className="flex flex-col justify-center">
+                                <div className="text-[11px] text-gray-500 mb-0.5">불편해요</div>
+                                <div className="text-[15px] font-bold text-[#191F28] mb-1.5">대기 시간 불확실</div>
+                                <div className="flex gap-1">
+                                    <span className="text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded font-medium">#웨이팅</span>
+                                    <span className="text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded font-medium">#주차</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* CTA Card (Ratio 3 - Expanded Horizontal Layout) */}
+                    <div className="flex-[3] bg-[#FFF4F1] rounded-[20px] px-6 py-4 border border-[#FF5A3620] shadow-sm flex items-center justify-between relative overflow-hidden group cursor-pointer hover:shadow-md transition-all"
+                        onClick={() => onNavigate('promotion', { title: '단골 손님이 사랑하는 우리 가게 시그니처 메뉴', vibe: 'emotional' })}
+                    >
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF5A36] rounded-full blur-[50px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
+
+                        {/* Left: Text Content */}
+                        <div className="flex flex-col justify-center relative z-10">
+                            <div className="flex items-center gap-2 mb-1.5">
+                                <span className="bg-[#FF5A36] text-white text-[11px] font-bold px-2 py-0.5 rounded">홍보 영상</span>
+                                <span className="text-[#FF5A36] text-[13px] font-bold">자동 제작</span>
+                            </div>
+                            <p className="text-[#191F28] font-bold text-[17px] leading-tight group-hover:text-[#FF5A36] transition-colors">
+                                "{selectedPersona ? `${selectedPersona.nickname}님` : '손님'} 취향 저격 릴스,<br />AI가 만들어드려요!"
+                            </p>
+                        </div>
+
+                        {/* Right: Action Button */}
+                        <div className="bg-[#FF5A36] text-white px-5 py-2.5 rounded-full font-bold text-[14px] shadow-lg shadow-[#FF5A36]/30 group-hover:shadow-xl group-hover:shadow-[#FF5A36]/40 group-hover:-translate-y-0.5 transition-all flex items-center gap-1.5 relative z-10">
+                            <span>바로 만들기</span>
+                            <ChevronRight size={16} />
+                        </div>
+                    </div>
                 </div>
 
-                {/* Horizontal Journey Map - Compact */}
-                <div className="bg-white rounded-[24px] p-4 lg:p-5 shadow-sm flex-1 flex flex-col relative overflow-hidden border border-[#002B7A05] min-h-0">
+                {/* Main: Horizontal Journey Map (Expanded) */}
+                <div className="bg-white rounded-[24px] p-5 lg:p-6 shadow-sm flex-1 flex flex-col relative overflow-hidden border border-[#002B7A05] min-h-0">
                     {/* Header */}
-                    <div className="flex justify-between items-start mb-4 shrink-0 gap-3">
-                        <h3 className="text-[18px] font-bold text-[#002B7A] flex items-center gap-2 min-w-0">
-                            <span className="w-1.5 h-5 bg-[#002B7A] rounded-full inline-block shrink-0"></span>
-                            <span className="truncate">{selectedPersona ? `${selectedPersona.nickname}님의 방문 여정` : '방문 여정'}</span>
-                        </h3>
+                    <div className="flex justify-between items-end mb-6 shrink-0 gap-3">
+                        <div className="flex items-end gap-3 min-w-0">
+                            <h3 className="text-[20px] font-bold text-[#002B7A] flex items-center gap-2 shrink-0">
+                                <span className="w-1.5 h-6 bg-[#002B7A] rounded-full inline-block shrink-0"></span>
+                                <span className="truncate">{selectedPersona ? `${selectedPersona.nickname} 유형의 방문여정` : '방문 여정'}</span>
+                            </h3>
+                            <p className="text-[13px] font-medium text-gray-500 pb-1 truncate">
+                                손님이 우리 가게를 경험하는 모든 과정을 분석했어요.
+                            </p>
+                        </div>
                         {selectedPersona && (
-                            <button className="flex items-center gap-1.5 text-[12px] font-bold text-[#002B7A] bg-[#F5F7FA] px-3 py-1.5 rounded-full hover:bg-[#002B7A10] transition-colors shrink-0">
+                            <button className="flex items-center gap-1.5 text-[13px] font-bold text-[#002B7A] bg-[#F5F7FA] px-4 py-2 rounded-full hover:bg-[#002B7A10] transition-colors shrink-0">
                                 <Search size={14} />
                                 자세히 보기
                             </button>
                         )}
                     </div>
 
-                    {/* Horizontal Steps */}
-                    <div className="flex-1 flex items-center relative px-2 min-h-0">
-                        {/* Connecting Line */}
-                        <div className="absolute top-[35%] left-8 right-8 h-[2px] bg-gray-100 -z-10" />
+                    {/* Horizontal Steps - Spacious Layout */}
+                    <div className="flex-1 flex items-center relative px-4 min-h-0">
+                        {selectedPersona ? (
+                            <>
+                                {/* Connecting Line */}
+                                <div className="absolute top-[35%] left-12 right-12 h-[2px] bg-gray-100 -z-10" />
 
-                        <div className="w-full flex justify-between">
-                            <HorizontalJourneyStep
-                                step="탐색"
-                                data={selectedPersona?.journey.explore}
-                                icon="🔍"
-                                isActive={!!selectedPersona}
-                            />
-                            <HorizontalJourneyStep
-                                step="방문"
-                                data={selectedPersona?.journey.visit}
-                                icon="🏃"
-                                isActive={!!selectedPersona}
-                            />
-                            <HorizontalJourneyStep
-                                step="식사"
-                                data={selectedPersona?.journey.eat}
-                                icon="🍽️"
-                                isActive={!!selectedPersona}
-                            />
-                            <HorizontalJourneyStep
-                                step="공유"
-                                data={selectedPersona?.journey.share}
-                                icon="🗣️"
-                                isActive={!!selectedPersona}
-                            />
-                        </div>
-                    </div>
-
-                    {/* AI Strategy Button */}
-                    <div className="mt-4 pt-4 border-t border-gray-100 shrink-0">
-                        <div className="flex items-center justify-between bg-[#FFF4F1] rounded-xl p-3 border border-[#FF5A3620] shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
-                            <div className="flex-1 min-w-0 mr-2">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="bg-[#FF5A36] text-white text-[10px] font-bold px-2 py-0.5 rounded">AI 릴스</span>
-                                    <span className="text-[#FF5A36] text-[12px] font-bold">자동 제작</span>
+                                <div className="w-full flex justify-between gap-4">
+                                    <HorizontalJourneyStep
+                                        step="탐색"
+                                        data={selectedPersona.journey.explore}
+                                        icon="🔍"
+                                        isActive={true}
+                                    />
+                                    <HorizontalJourneyStep
+                                        step="방문"
+                                        data={selectedPersona.journey.visit}
+                                        icon="🏃"
+                                        isActive={true}
+                                    />
+                                    <HorizontalJourneyStep
+                                        step="식사"
+                                        data={selectedPersona.journey.eat}
+                                        icon="🍽️"
+                                        isActive={true}
+                                    />
+                                    <HorizontalJourneyStep
+                                        step="공유"
+                                        data={selectedPersona.journey.share}
+                                        icon="🗣️"
+                                        isActive={true}
+                                    />
                                 </div>
-                                <p className="text-[#191F28] font-bold text-[14px] truncate group-hover:text-[#FF5A36] transition-colors">
-                                    "{selectedPersona ? `${selectedPersona.nickname}님` : '손님'} 취향 저격 릴스, AI가 만들어드려요!"
-                                </p>
+                            </>
+                        ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center text-center opacity-60">
+                                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                    <User size={32} className="text-gray-400" />
+                                </div>
+                                <h3 className="text-lg font-bold text-[#191F28] mb-1">손님 유형을 선택해 주세요</h3>
+                                <p className="text-sm text-gray-500">좌측 목록에서 손님을 선택하면<br />상세한 방문 여정을 확인할 수 있어요.</p>
                             </div>
-                            <button
-                                onClick={() => onNavigate('promotion', { title: '단골 손님이 사랑하는 우리 가게 시그니처 메뉴', vibe: 'emotional' })}
-                                className="bg-[#FF5A36] text-white px-4 py-2.5 rounded-xl font-bold text-[12px] hover:bg-[#FF5A36]/90 transition-all shadow-sm hover:translate-y-[-2px] flex items-center gap-1.5 whitespace-nowrap shrink-0"
-                            >
-                                <Clapperboard size={14} className="fill-current" />
-                                홍보 영상 만들기
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* RIGHT PANEL: Vertical Chat (30%) */}
-            <div className="w-[30%] flex flex-col h-full min-h-0 rounded-[24px] overflow-hidden shadow-sm border border-[#002B7A05]">
-                {/* Header - Main Blue */}
-                <div className="bg-[#002B7A] p-5 shrink-0">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shadow-sm text-white backdrop-blur-sm">
-                            <MessageCircle size={20} />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-lg text-white">직접 물어보기</h3>
-                            <p className="text-xs text-white/60">AI에게 궁금한 점을 질문하세요</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Body - Light Blue */}
-                <div className="flex-1 bg-[#002B7A1A] p-5 flex flex-col relative overflow-hidden">
-                    {/* Chat Area */}
-                    <div className="flex-1 overflow-y-auto scrollbar-hide mb-4 z-10 flex flex-col gap-3 min-h-0">
-                        <ChatMessage isAi={true} text="안녕하세요 사장님! 오늘 분석된 손님 유형에 대해 궁금한 점이 있으신가요?" />
-                        {selectedPersona && (
-                            <ChatMessage isAi={true} text={`'${selectedPersona.nickname}' 손님을 공략하기 위한 팁을 알려드릴까요?`} />
                         )}
                     </div>
-
-                    {/* Input Area */}
-                    <div className="mt-auto z-10 shrink-0">
-                        <div className="flex flex-wrap gap-2 mb-3">
-                            <SuggestionChip text="시그니처 메뉴 추천" />
-                            <SuggestionChip text="쿠폰 문구 작성" />
-                        </div>
-                        <div className="relative">
-                            <input
-                                type="text"
-                                placeholder="무엇이든 물어보세요..."
-                                className="w-full bg-white border border-[#002B7A]/10 rounded-2xl px-4 py-3 text-[#002B7A] placeholder-[#002B7A]/40 focus:outline-none focus:border-[#002B7A]/30 transition-colors pr-10 text-sm shadow-sm"
-                            />
-                            <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-[#FF5A36] rounded-xl hover:bg-[#FF5A36]/90 transition-colors shadow-lg">
-                                <Send size={16} className="text-white" />
-                            </button>
-                        </div>
-                    </div>
                 </div>
             </div>
+
+            {/* Floating Action Button (FAB) for Chat */}
+            {/* Chat Window (Popover) */}
+            <AnimatePresence>
+                {isChatOpen && (
+                    <ChatWindow
+                        selectedPersona={selectedPersona}
+                        onClose={() => setIsChatOpen(false)}
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Floating Action Button (FAB) - Only visible when chat is closed */}
+            <AnimatePresence>
+                {!isChatOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="absolute bottom-2 right-6 flex items-end gap-3 z-50"
+                        onMouseEnter={() => setIsHovered(true)}
+                        onMouseLeave={() => setIsHovered(false)}
+                    >
+                        {/* Tooltip Label */}
+                        <AnimatePresence>
+                            {isHovered && (
+                                <motion.div
+                                    initial={{ opacity: 0, x: 10, scale: 0.9 }}
+                                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                                    exit={{ opacity: 0, x: 10, scale: 0.9 }}
+                                    className="bg-white px-4 py-2 rounded-full shadow-md border border-gray-100 text-xs font-bold text-[#002B7A] flex items-center gap-1.5 mb-4"
+                                >
+                                    <span>AI에게 질문하기</span>
+                                    <div className="w-2 h-2 bg-[#FF5A36] rounded-full animate-pulse"></div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setIsChatOpen(true)}
+                            className="w-14 h-14 rounded-full shadow-xl flex items-center justify-center text-white bg-[#002B7A] hover:bg-[#001F5C] transition-colors mb-4"
+                        >
+                            <MessageCircle size={24} />
+                        </motion.button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
@@ -403,14 +437,117 @@ function SuggestionChip({ text }) {
     );
 }
 
+function ChatWindow({ selectedPersona, onClose }) {
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="fixed top-[108px] bottom-4 right-6 w-[380px] bg-white rounded-[24px] shadow-2xl border border-gray-100 flex flex-col overflow-hidden z-50"
+        >
+            {/* Header */}
+            <div className="bg-[#002B7A] p-5 shrink-0 flex justify-between items-start">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shadow-sm text-white backdrop-blur-sm border border-white/20">
+                        <Sparkles size={20} />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-lg text-white">{selectedPersona ? `${selectedPersona.nickname} 유형 분석중` : '손님 유형 분석'}</h3>
+                    </div>
+                </div>
+                <button
+                    onClick={onClose}
+                    className="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+                >
+                    <X size={18} />
+                </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 bg-[#F5F7FA] p-4 overflow-y-auto flex flex-col gap-4">
+                {/* Onboarding Message */}
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                    <div className="flex items-center gap-2 mb-2">
+                        <HelpCircle size={16} className="text-[#002B7A]" />
+                        <h4 className="font-bold text-sm text-[#191F28]">AI에게 무엇을 물어볼까요?</h4>
+                    </div>
+                    <p className="text-xs text-gray-600 leading-relaxed mb-3">
+                        단순한 데이터 조회를 넘어, <span className="font-bold text-[#002B7A]">구체적인 실행 전략</span>을 제안해 드립니다.
+                    </p>
+                    <div className="flex flex-col gap-2">
+                        {selectedPersona ? (
+                            <>
+                                <button className="text-left text-xs bg-[#F5F7FA] p-2.5 rounded-xl hover:bg-[#E5EDFF] hover:text-[#002B7A] transition-colors font-medium">
+                                    🍽️ {selectedPersona.nickname}님이 좋아할 신메뉴 추천해줘
+                                </button>
+                                <button className="text-left text-xs bg-[#F5F7FA] p-2.5 rounded-xl hover:bg-[#E5EDFF] hover:text-[#002B7A] transition-colors font-medium">
+                                    🎫 재방문을 유도할 쿠폰 문구 써줘
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <button className="text-left text-xs bg-[#F5F7FA] p-2.5 rounded-xl hover:bg-[#E5EDFF] hover:text-[#002B7A] transition-colors font-medium">
+                                    📈 우리 가게 매출을 올릴 방법이 있을까?
+                                </button>
+                                <button className="text-left text-xs bg-[#F5F7FA] p-2.5 rounded-xl hover:bg-[#E5EDFF] hover:text-[#002B7A] transition-colors font-medium">
+                                    👥 20대 손님을 더 많이 모으려면?
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                <ChatMessage isAi={true} text={selectedPersona
+                    ? `안녕하세요 사장님! '${selectedPersona.nickname}' 손님에 대해 어떤 점이 궁금하신가요?`
+                    : "좌측 목록에서 손님 유형을 선택해주세요."}
+                />
+            </div>
+
+            {/* Input Area */}
+            <div className="p-4 bg-white border-t border-gray-100">
+                <div className="relative">
+                    <input
+                        type="text"
+                        placeholder="질문을 입력하세요..."
+                        className="w-full bg-[#F5F7FA] border-none rounded-2xl px-4 py-3 text-[#191F28] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#002B7A]/10 transition-all pr-10 text-sm"
+                    />
+                    <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-[#002B7A] rounded-xl hover:bg-[#001F5C] transition-colors shadow-md">
+                        <Send size={14} className="text-white" />
+                    </button>
+                </div>
+            </div>
+        </motion.div>
+    );
+}
+
 function ChatMessage({ isAi, text }) {
     return (
         <div className={`flex ${isAi ? 'justify-start' : 'justify-end'}`}>
-            <div className={`max-w-[85%] p-3 rounded-2xl text-[14px] leading-relaxed shadow-sm ${isAi
-                ? 'bg-white text-[#002B7A] rounded-tl-none'
-                : 'bg-[#FF5A36] text-white rounded-tr-none'
+            <div className={`max-w-[85%] p-3 rounded-2xl text-[13px] leading-relaxed shadow-sm ${isAi
+                ? 'bg-white text-[#191F28] rounded-tl-none border border-gray-100'
+                : 'bg-[#002B7A] text-white rounded-tr-none'
                 }`}>
                 {text}
+            </div>
+        </div>
+    );
+}
+function StatCard({ label, value, trend, trendUp, icon, className }) {
+    return (
+        <div className={`bg-white rounded-xl p-4 border border-[#002B7A]/5 hover:border-[#002B7A]/20 transition-all shadow-sm hover:shadow-md flex items-center justify-between group ${className}`}>
+            <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-[#F5F7FA] flex items-center justify-center text-[#002B7A] group-hover:bg-[#002B7A] group-hover:text-white transition-colors">
+                    {icon}
+                </div>
+                <div>
+                    <div className="text-[12px] text-gray-500 mb-0.5">{label}</div>
+                    <div className="text-[16px] font-bold text-[#191F28]">{value}</div>
+                </div>
+            </div>
+            <div className={`text-[13px] font-bold flex items-center gap-0.5 ${trendUp ? 'text-red-500' : 'text-blue-500'}`}>
+                {trendUp ? <ArrowUpRight size={16} /> : <ArrowUpRight size={16} className="rotate-90" />}
+                {trend}
             </div>
         </div>
     );

@@ -23,6 +23,10 @@ export default function PromotionPage({ initialParams }) {
     }, [initialParams]);
 
     const handleGenerate = () => {
+        setStep('storyboard');
+    };
+
+    const handleConfirmStoryboard = () => {
         setStep('loading');
         // Simulate AI Generation
         setTimeout(() => {
@@ -61,6 +65,7 @@ export default function PromotionPage({ initialParams }) {
                 options={options}
                 setOptions={setOptions}
                 onGenerate={handleGenerate}
+                onConfirm={handleConfirmStoryboard}
             />
         </div>
     );
