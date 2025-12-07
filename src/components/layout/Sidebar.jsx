@@ -46,7 +46,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded }) => {
                 onClick={() => setActiveMenu('home')}
             >
                 <img
-                    src="/PULSE_LOGO.png"
+                    src={`${import.meta.env.BASE_URL}PULSE_LOGO.png`}
                     alt="PULSE"
                     className="h-12 w-auto max-w-none object-contain object-left"
                 />

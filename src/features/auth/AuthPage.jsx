@@ -14,7 +14,7 @@ const AuthPage = () => {
             <div className="auth-left-panel">
                 <div className="auth-header">
                     <Link to="/">
-                        <img src="/PULSE_LOGO.png" alt="PULSE" className="h-8 w-auto" />
+                        <img src={`${import.meta.env.BASE_URL}PULSE_LOGO.png`} alt="PULSE" className="h-8 w-auto" />
                     </Link>
 
                 </div>
