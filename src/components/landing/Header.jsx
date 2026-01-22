@@ -19,7 +19,7 @@ const Header = () => {
                     로그인
                 </button>
                 <button
-                    onClick={() => navigate('/login')}
+                    onClick={() => navigate('/signup')}
                     className="text-[15px] font-medium transition-colors hover:opacity-70"
                     style={{ color: COLORS.textMain }}
                 >
