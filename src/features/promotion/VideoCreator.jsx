@@ -230,19 +230,27 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                 </div>
                             )}
                             <div className="grid grid-cols-3 gap-2">
-                                {PERSONA_PROMPTS.map((persona) => (
-                                    <button
-                                        key={persona.id}
-                                        onClick={() => {
-                                            setOptions({ ...options, prompt: persona.prompt });
-                                            setIsAutoPrompt(false);
-                                        }}
-                                        className="flex flex-col items-center justify-center p-2 rounded-xl border border-gray-200 bg-gray-50 hover:bg-blue-50 hover:border-blue-200 transition-all group"
-                                    >
-                                        <span className="text-xl mb-1 group-hover:scale-110 transition-transform">{persona.icon}</span>
-                                        <span className="text-[11px] font-bold text-gray-700 group-hover:text-[#002B7A]">{persona.label}</span>
-                                    </button>
-                                ))}
+                                {PERSONA_PROMPTS.map((persona) => {
+                                    const isSelected = options.personaId === persona.id;
+                                    return (
+                                        <button
+                                            key={persona.id}
+                                            onClick={() => {
+                                                setOptions({ ...options, prompt: persona.prompt, personaId: persona.id });
+                                                setIsAutoPrompt(false);
+                                            }}
+                                            className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all group ${isSelected
+                                                ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500 shadow-sm'
+                                                : 'border-gray-200 bg-gray-50 hover:bg-blue-50 hover:border-blue-200'
+                                                }`}
+                                        >
+                                            <span className="text-xl mb-1 group-hover:scale-110 transition-transform">{persona.icon}</span>
+                                            <span className={`text-[11px] font-bold ${isSelected ? 'text-[#002B7A]' : 'text-gray-700 group-hover:text-[#002B7A]'}`}>
+                                                {persona.label}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
 

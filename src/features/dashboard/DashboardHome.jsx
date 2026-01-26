@@ -10,7 +10,8 @@ import {
     ArrowUpRight,
     Search,
     MousePointerClick,
-    Zap
+    Zap,
+    MapPin
 } from 'lucide-react';
 import {
     XAxis,
@@ -167,140 +168,180 @@ const DashboardHome = ({ onNavigate }) => {
                     </div>
                 </div>
 
-                {/* Section 2: Analysis (Flex 0.72) - Increased Height */}
-                <div className="flex-[0.72] flex flex-col gap-2 min-h-0">
-                    <div className="flex items-center justify-between shrink-0">
-                        <div className="flex items-center gap-2">
-                            <div className="w-1 h-4 bg-[#002B7A] rounded-full"></div>
-                            <h3 className="text-base font-bold text-[#191F28]">상세 분석</h3>
+                {/* --- Section 2: Data & Analysis --- */}
+                <div className="flex-[0.72] flex gap-4 min-h-0">
+                    {/* 1. Store Data Analysis (Left ~60%) */}
+                    <div className="flex-[1.4] bg-white rounded-[24px] p-5 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden">
+                        {/* Header (Vertical Bar Style - Unified) */}
+                        <div className="flex items-center justify-between mb-4 relative z-10 shrink-0">
+                            <div className="flex items-center gap-2">
+                                <div className="w-1 h-4 bg-[#002B7A] rounded-full"></div>
+                                <h3 className="text-lg font-bold text-[#191F28]">가게 데이터 분석</h3>
+                                <InfoTooltip text="지난 7일간의 매장 검색량 및 방문자 추이입니다." size={14} />
+                            </div>
+                            <button className="text-xs bg-[#E5EDFF] text-[#002B7A] px-3 py-1.5 rounded-full hover:bg-[#D0E0FF] transition-colors flex items-center gap-1 font-bold">
+                                상세 분석 보러가기 <ChevronRight size={12} />
+                            </button>
                         </div>
-                        <button
-                            onClick={() => onNavigate && onNavigate('insight')}
-                            className="group flex items-center gap-1.5 px-4 py-1.5 bg-[#E5EDFF] text-[#002B7A] rounded-full text-xs font-bold hover:bg-[#D0E0FF] transition-all"
-                        >
-                            상세 분석 보러가기
-                            <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
-                        </button>
+
+                        {/* Summary Stats */}
+                        <div className="flex items-center gap-6 mb-3 relative z-10 shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                                    <Search size={16} />
+                                </div>
+                                <div>
+                                    <p className="text-[11px] text-gray-500 mb-0.5">매장 검색량</p>
+                                    <div className="flex items-end gap-1.5">
+                                        <span className="text-xl font-bold text-[#191F28]">1,250</span>
+                                        <span className="text-[10px] font-bold text-red-500 flex items-center bg-red-50 px-1 py-0.5 rounded">
+                                            <ArrowUpRight size={10} /> 15%
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="w-px h-8 bg-gray-100"></div>
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                                    <MousePointerClick size={16} />
+                                </div>
+                                <div>
+                                    <p className="text-[11px] text-gray-500 mb-0.5">플레이스 방문</p>
+                                    <div className="flex items-end gap-1.5">
+                                        <span className="text-xl font-bold text-[#191F28]">450</span>
+                                        <span className="text-[10px] font-bold text-red-500 flex items-center bg-red-50 px-1 py-0.5 rounded">
+                                            <ArrowUpRight size={10} /> 8%
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Chart Area */}
+                        <div className="flex-1 w-full min-h-0 relative z-0">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={CHART_DATA} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#002B7A" stopOpacity={0.1} />
+                                            <stop offset="95%" stopColor="#002B7A" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f5f5f5" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} />
+                                    <RechartsTooltip
+                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }}
+                                        cursor={{ stroke: '#002B7A', strokeWidth: 1, strokeDasharray: '4 4' }}
+                                    />
+                                    <Area type="monotone" dataKey="value" stroke="#002B7A" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-12 gap-3 flex-1 min-h-0">
-                        {/* 1. Performance (Span 6) */}
-                        <div className={`${WIDGET_BASE_CLASSES} col-span-6 flex-col p-4 gap-2`}>
-                            <WidgetHeader
-                                icon={BarChart2}
-                                title="주간 성과"
-                                tooltipText="지난 7일간의 매장 검색량 및 방문자 추이입니다."
-                            />
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 flex-1">
-                                    <p className="text-xs text-gray-500 flex items-center gap-1.5">
-                                        <Search size={14} /> 매장 검색량
-                                    </p>
-                                    <div className="flex items-end gap-2">
-                                        <span className="text-lg font-bold text-[#191F28]">1,250</span>
-                                        <span className="text-[10px] text-red-500 font-bold flex items-center bg-red-50 px-1 py-0.5 rounded">
-                                            <ArrowUpRight size={10} className="mr-0.5" /> 15%
+                    {/* 2. Guest Analysis (Right ~40%) - Annotated Split Layout */}
+                    <div className="flex-1 bg-white rounded-[24px] shadow-sm border border-gray-100 relative group overflow-hidden flex flex-col p-6 pt-10 min-w-[320px]">
+                        {/* Decorative Background Blob */}
+                        <div className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-blue-50/50 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+
+                        {/* Content Body: Split Layout */}
+                        <div className="flex-1 flex gap-6 relative z-10 min-h-0">
+
+                            {/* LEFT COL (42%): Headline + Description */}
+                            <div className="w-[42%] flex flex-col">
+                                {/* Box 1: Headline Area */}
+                                <div className="mb-3">
+                                    <h2 className="text-[26px] font-extrabold text-[#191F28] leading-[1.2] tracking-tight break-keep mb-3">
+                                        <span className="bg-gradient-to-r from-[#002B7A] to-blue-500 bg-clip-text text-transparent">30대 직장인</span>이<br />
+                                        가장 많아요 👔
+                                    </h2>
+                                    <div className="flex flex-wrap gap-2 items-center">
+                                        <span className="px-2.5 py-1 bg-blue-50 text-[#002B7A] text-[11px] font-bold rounded-full border border-blue-100">
+                                            🔥 점심 피크 타임
                                         </span>
                                     </div>
                                 </div>
-                                <div className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 flex-1">
-                                    <p className="text-xs text-gray-500 flex items-center gap-1.5">
-                                        <MousePointerClick size={14} /> 플레이스 방문
+
+                                {/* Box 3: Description Area (Moved Up) */}
+                                <div className="bg-[#F8F9FA] rounded-xl p-3.5 border border-gray-100 mb-2">
+                                    <p className="text-[11px] text-gray-600 leading-relaxed font-medium break-keep">
+                                        주변 오피스 근무자들이 점심 식사를 위해 활발히 이동하며,
+                                        <span className="text-[#002B7A] font-bold"> 가성비와 회전율</span>이 중요한
+                                        직장인 점심 & 저녁 회식 상권의 특징을 보입니다.
                                     </p>
-                                    <div className="flex items-end gap-2">
-                                        <span className="text-lg font-bold text-[#191F28]">450</span>
-                                        <span className="text-[10px] text-red-500 font-bold flex items-center bg-red-50 px-1 py-0.5 rounded">
-                                            <ArrowUpRight size={10} className="mr-0.5" /> 8%
-                                        </span>
-                                    </div>
                                 </div>
                             </div>
-                            <div className="flex-1 w-full min-h-0 relative outline-none [&_.recharts-wrapper]:outline-none [&_.recharts-surface]:outline-none" tabIndex={-1}>
-                                <ResponsiveContainer width="100%" height="100%" className="outline-none">
-                                    <AreaChart data={CHART_DATA} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                                        <defs>
-                                            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#002B7A" stopOpacity={0.1} />
-                                                <stop offset="95%" stopColor="#002B7A" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#8B95A1', fontSize: 11 }} dy={10} />
-                                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#8B95A1', fontSize: 11 }} domain={[0, 'auto']} tickCount={5} />
-                                        <RechartsTooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }} />
-                                        <Area type="monotone" dataKey="value" stroke="#002B7A" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
 
-                        {/* 2. Sentiment (Span 3) */}
-                        <div className={`${WIDGET_BASE_CLASSES} col-span-3 flex-col p-4 gap-2`}>
-                            <WidgetHeader
-                                icon={Smile}
-                                title="고객 감정"
-                                tooltipText="최근 1주일간 수집된 리뷰와 SNS 반응을 분석한 결과입니다."
-                            />
-                            <div className="flex-1 flex flex-col items-center justify-center gap-3">
-                                <div className="relative w-28 h-28 flex items-center justify-center">
-                                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 96 96">
-                                        <circle cx="48" cy="48" r="40" stroke="#F0F4FF" strokeWidth="8" fill="none" />
-                                        <circle cx="48" cy="48" r="40" stroke="#002B7A" strokeWidth="8" fill="none" strokeDasharray="213.6" strokeDashoffset="21.36" strokeLinecap="round" />
-                                    </svg>
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <span className="text-2xl font-bold text-[#191F28]">92%</span>
-                                        <span className="text-xs text-gray-500 font-medium mt-1">긍정적</span>
-                                    </div>
-                                </div>
-                                <div className="w-full flex flex-col gap-2">
-                                    <div>
-                                        <div className="flex items-center justify-between text-[10px] mb-1">
-                                            <span className="text-gray-600 flex items-center gap-1"><Heart size={12} className="text-red-400" /> 맛이 좋아요</span>
-                                            <span className="font-bold text-[#191F28]">45%</span>
-                                        </div>
-                                        <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                                            <div className="bg-red-400 h-full rounded-full" style={{ width: '45%' }}></div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center justify-between text-[10px] mb-1">
-                                            <span className="text-gray-600 flex items-center gap-1"><Sparkles size={12} className="text-yellow-400" /> 분위기 깡패</span>
-                                            <span className="font-bold text-[#191F28]">30%</span>
-                                        </div>
-                                        <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                                            <div className="bg-yellow-400 h-full rounded-full" style={{ width: '30%' }}></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                            {/* VERTICAL DIVIDER */}
+                            <div className="w-px bg-gray-100 h-full my-1"></div>
 
-                        {/* 3. Keywords (Span 3) */}
-                        <div className={`${WIDGET_BASE_CLASSES} col-span-3 flex-col p-4 gap-2`}>
-                            <div className="shrink-0">
-                                <div className="flex justify-between items-start mb-1">
-                                    <h3 className="text-base font-bold text-[#191F28] leading-snug">
-                                        인기 키워드 🔥
-                                    </h3>
-                                    <InfoTooltip text="우리 가게와 관련된 인기 검색 키워드 순위입니다." size={16} align="right" direction="bottom" />
+                            {/* RIGHT COL (Flex-1): Persona List (Pushed Down) */}
+                            <div className="flex-1 flex flex-col min-h-0 pt-14">
+                                {/* Box 2: Header (Clean) */}
+                                <div className="mb-3 shrink-0">
+                                    <h3 className="text-sm font-bold text-[#002B7A] tracking-wide">주요 방문 손님</h3>
                                 </div>
-                                <p className="text-[11px] text-gray-500">지난주보다 <span className="text-[#002B7A] font-bold">#가성비</span> 검색이 늘었어요.</p>
-                            </div>
-                            <div className="flex-1 overflow-hidden min-h-0 flex flex-col justify-between gap-2">
-                                {KEYWORD_DATA.slice(0, 6).map((kw, i) => (
-                                    <div key={i} className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-50 transition-colors group shrink-0">
-                                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-all ${i === 0 ? 'bg-[#002B7A] text-white shadow-md' : 'bg-gray-100 text-gray-500'}`}>{i + 1}</span>
-                                        <div className="flex-1 min-w-0">
+
+                                <div className="flex flex-col gap-2.5 flex-1">
+                                    {/* Persona 1 */}
+                                    <div className="flex items-center gap-3 group/item cursor-pointer p-1.5 rounded-xl hover:bg-gray-50 transition-colors bg-white/50 backdrop-blur-sm border border-transparent hover:border-gray-100">
+                                        <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center shrink-0 shadow-sm text-lg">
+                                            🥘
+                                        </div>
+                                        <div className="min-w-0 flex-1">
                                             <div className="flex justify-between items-center mb-0.5">
-                                                <span className="font-bold text-[#191F28] text-xs truncate">#{kw.text}</span>
-                                                <span className="text-[10px] text-gray-500 font-medium">{kw.value}%</span>
+                                                <h4 className="text-xs font-bold text-[#191F28]">비 오면 '국물파'</h4>
+                                                <span className="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold">2.5배 ⬆</span>
                                             </div>
-                                            <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
-                                                <div className="h-full bg-[#002B7A] rounded-full opacity-80" style={{ width: `${kw.value}%` }} />
-                                            </div>
+                                            <p className="text-[10px] text-gray-500 truncate">
+                                                비 오는 날 <span className="text-[#191F28] font-bold">전골/국밥</span> 찾는 손님 급증
+                                            </p>
                                         </div>
                                     </div>
-                                ))}
+
+                                    {/* Persona 2 */}
+                                    <div className="flex items-center gap-3 group/item cursor-pointer p-1.5 rounded-xl hover:bg-gray-50 transition-colors bg-white/50 backdrop-blur-sm border border-transparent hover:border-gray-100">
+                                        <div className="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center shrink-0 shadow-sm text-lg">
+                                            💼
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex justify-between items-center mb-0.5">
+                                                <h4 className="text-xs font-bold text-[#191F28]">가성비 직장인</h4>
+                                                <span className="text-[9px] bg-green-100 text-green-600 px-1.5 py-0.5 rounded font-bold">런치 인기</span>
+                                            </div>
+                                            <p className="text-[10px] text-gray-500 truncate">
+                                                점심시간 <span className="text-[#191F28] font-bold">런치 세트</span> 선호도 1위
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Persona 3 */}
+                                    <div className="flex items-center gap-3 group/item cursor-pointer p-1.5 rounded-xl hover:bg-gray-50 transition-colors bg-white/50 backdrop-blur-sm border border-transparent hover:border-gray-100">
+                                        <div className="w-9 h-9 rounded-full bg-purple-50 flex items-center justify-center shrink-0 shadow-sm text-lg">
+                                            🍷
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex justify-between items-center mb-0.5">
+                                                <h4 className="text-xs font-bold text-[#191F28]">미식가 커플</h4>
+                                                <span className="text-[9px] bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded font-bold">예약 필수</span>
+                                            </div>
+                                            <p className="text-[10px] text-gray-500 truncate">
+                                                주말 저녁 <span className="text-[#191F28] font-bold">와인/데이트</span> 코스 추천
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Bottom CTA Button (Distinct Navigation Style) */}
+                                <div className="mt-auto flex justify-end shrink-0 pt-2">
+                                    <button
+                                        onClick={() => onNavigate && onNavigate('insight')}
+                                        className="text-xs bg-[#191F28] text-white px-4 py-2 rounded-full hover:bg-[#333D4B] transition-all shadow-md hover:shadow-lg flex items-center gap-1.5 font-bold group/btn"
+                                    >
+                                        손님 분석 페이지로 이동 <ChevronRight size={12} className="group-hover/btn:translate-x-0.5 transition-transform" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

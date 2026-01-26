@@ -1,5 +1,6 @@
 import React from 'react';
 import { Bell } from 'lucide-react';
+import InlineChatInterface from '../../features/insight/InlineChatInterface';
 import { COLORS } from '../../constants';
 
 const Header = ({ title }) => (
@@ -13,10 +14,13 @@ const Header = ({ title }) => (
             </p>
         </div>
 
-        <button className="relative p-2.5 rounded-xl bg-white shadow-sm hover:bg-gray-50 transition-colors">
-            <Bell size={22} color={COLORS.primary} />
-            <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full" style={{ backgroundColor: COLORS.point }}></span>
-        </button>
+        <div className="flex items-center gap-2">
+            <InlineChatInterface />
+            <button className="relative p-2.5 rounded-xl bg-white shadow-sm hover:bg-gray-50 transition-colors">
+                <Bell size={22} color={COLORS.primary} />
+                <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full" style={{ backgroundColor: COLORS.point }}></span>
+            </button>
+        </div>
     </header>
 );
 

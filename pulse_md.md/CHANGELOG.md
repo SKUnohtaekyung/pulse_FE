@@ -168,3 +168,53 @@
 *   **Code Optimization:**
     *   **Style Unification:** `WIDGET_BASE_CLASSES` 상수를 도입하여 모든 위젯의 배경, 테두리, 그림자 스타일을 중앙에서 관리.
     *   **Readability:** `DashboardHome.jsx`의 중복 코드를 제거하고 로직을 단순화하여 유지보수성 개선.
+
+---
+
+## 2026.1/25 (Unified Insight & AI Chatbot)
+
+### 📊 Unified Insight Page Redesign (분석 페이지 통합 개편)
+*   **Master-Detail Layout (2-Pane Structure):**
+    *   기존에 분리되어 있던 '단골 손님 분석'과 '상권 분석'을 **하나의 페이지(`UnifiedInsightPage`)로 통합**했습니다.
+    *   **Left Pane (35%):** 'Weekly Insight' 요약 카드와 분석 리포트 목록을 배치하여 탐색 편의성 강화.
+    *   **Right Pane (65%):** 선택한 리포트(상권 분석 or 페르소나 상세)가 우측에 즉시 표시되는 반응형 구조.
+*   **Top-Down Visual Flow:**
+    *   **Macro to Micro:** '주변 상권(거시)'에서 시작하여 '개별 페르소나(미시)'로 이어지는 자연스러운 데이터 탐색 경험 설계.
+    *   **Interactive List:** 클릭 시 배경색 변화 및 부드러운 전환 애니메이션(`Framer Motion`) 적용.
+*   **UI/UX Refinement:**
+    *   **Weekly Insight Card:** 트로피 아이콘과 함께 이번 주의 핵심 키워드를 요약해주는 상단 고정 카드 추가.
+    *   **Consistency:** 페르소나 상세 뷰의 헤더, 태그, 여정 지도 레이아웃을 통일감 있게 재정비.
+
+### 🤖 Global AI Chatbot (전역 AI 챗봇 도입)
+*   **Header Integration:** 챗봇을 별도의 플로팅 위젯에서 **헤더(Header)의 툴바 요소**로 통합했습니다.
+    *   **Position:** 우측 상단 알림 벨과 나란히 (`Flex Gap-2`) 배치하여 완벽한 수평/수직 정렬 구현.
+    *   **Structure:** `Fixed` 포지셔닝을 제거하고 `Relative` 포지셔닝으로 변경하여 레이아웃 안정성 확보.
+*   **Premium UI Design:**
+    *   **Glassmorphism:** 헤더에 배경 블러 및 반투명 효과를 적용하여 현대적인 감각 추가.
+    *   **Bubble Style:** 아이메시지(iMessage) 스타일의 말풍선 (User: Blue / AI: Gray) 및 타임스탬프 적용.
+    *   **Floating Input:** 둥근 캡슐 형태의 하단 입력창 디자인으로 가벼운 느낌 강조.
+*   **Interaction & Motion:**
+    *   **Spring Animation:** 버튼 위치에서 자연스럽게 펴지는 (`Scale 0.9 -> 1`) 스프링 애니메이션 적용.
+    *   **Auto Scroll:** 메시지 수신 시 자동으로 하단 스크롤 이동.
+
+### 📘 Documentation & Cleanup (문서 및 정리)
+*   **Design Guide Update:** `design_guide.md`에 'Global Header Standard' 및 'AI Chatbot Interface' 섹션 추가.
+*   **Code Cleanup:** `UnifiedInsightPage` 및 `DashboardLayout`에 남아있던 구형 챗봇 코드 및 미사용 파일(`*_plan.md`) 전체 삭제.
+
+---
+
+## 2026-01-26
+
+### 🎨 Dashboard Redesign (대시보드 리디자인)
+*   **Hybrid Layout:** 주간 주말 차트(좌측)와 손님 분석 카드(우측)를 병렬 배치하여 정보 밀도를 높이고, 스크롤 없이 한눈에 파악 가능한 구조로 개선.
+*   **Weather Optimized:** 날씨 및 이벤트 정보를 좌측 상단으로 컴팩트하게 정리하고, **AI 홍보 제안 배너**를 헤드라인 우측으로 이동하여 공간 효율 극대화.
+
+### 💎 Visual Polish (디자인 디테일 강화)
+*   **Typography System:** `Pretendard Variable` CDN 적용 및 Tailwind Config에 정교한 타이포그래피 토큰(`text-head-1`, `text-body-1` 등) 시스템 구축 완료.
+*   **Guest Analysis Card:** 좌우 분할 레이아웃 적용, 설명 텍스트 위치 위로 이동, "주요 방문 손님" 헤더 강조(`text-sm`), 배지 제거로 깔끔한 디자인 구현.
+*   **Sidebar Refinement:** 그림자(Shadow) 제거로 평면적인 일체감 조성, 선택된 메뉴 배경색을 페이지 배경색(`#F5F7FA`)과 완벽 일치시켜 이질감 제거.
+*   **Gradient Consistency:** "점심 시간대", "20-30대 직장인", "시원 국물파" 등 핵심 키워드에 브랜드 시그니처(Navy to Blue) 그라데이션 일괄 적용.
+
+### 🚀 UX Improvements (사용성 개선)
+*   **CTA Redesign:** 손님 분석 카드의 버튼을 "상세 리포트 보기"에서 **"손님 분석 페이지로 이동"**으로 변경하고 다크 네이비(`bg-[#191F28]`) 스타일을 적용하여 네비게이션 명확화.
+*   **Term Unification:** "손님 마음 읽기" 용어를 **"손님 분석"**으로 통일하고, 메뉴명 및 헤더 타이틀에 일관성 있게 반영.

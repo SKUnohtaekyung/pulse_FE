@@ -17,7 +17,8 @@ export default function PromotionPage({ initialParams }) {
                 ...prev,
                 vibe: initialParams.vibe || 'energetic',
                 title: initialParams.title || '', // Pre-fill result title
-                prompt: initialParams.title || '' // Pre-fill prompt with the same context
+                prompt: initialParams.prompt || '', // Correctly read prompt
+                personaId: initialParams.personaId || null // [NEW] Read personaId
             }));
         }
     }, [initialParams]);

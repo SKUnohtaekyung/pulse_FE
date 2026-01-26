@@ -3,9 +3,7 @@ import { MoreHorizontal } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import DashboardHome from '../../features/dashboard/DashboardHome';
-import TabNavigation from '../../features/insight/TabNavigation';
-import CustomerAnalysis from '../../features/insight/CustomerAnalysis';
-import LocalAnalysisSection from '../../features/insight/LocalAnalysisSection';
+import UnifiedInsightPage from '../../features/insight/UnifiedInsightPage';
 import MyPage from '../../features/mypage/MyPage';
 import PromotionPage from '../../features/promotion/PromotionPage';
 import { COLORS } from '../../constants';
@@ -14,7 +12,7 @@ import '../../styles/globals.css';
 export default function DashboardLayout() {
     const [activeMenu, setActiveMenu] = useState('home');
     const [isExpanded, setIsExpanded] = useState(false);
-    const [activeTab, setActiveTab] = useState('persona');
+
     const [navParams, setNavParams] = useState(null);
 
     const handleNavigate = (menuId, params = null) => {
@@ -46,11 +44,8 @@ export default function DashboardLayout() {
                     ) : activeMenu === 'insight' ? (
                         // INSIGHT VIEW
                         <>
-                            <Header title="오늘도 힘차게 시작해볼까요?" />
-                            <div className="mt-4">
-                                <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
-                            </div>
-                            {activeTab === 'persona' ? <CustomerAnalysis onNavigate={handleNavigate} /> : <LocalAnalysisSection onNavigate={handleNavigate} />}
+                            <Header title="단골 손님과 상권 트렌드를 분석해 드려요." />
+                            <UnifiedInsightPage onNavigate={handleNavigate} />
                         </>
                     ) : activeMenu === 'mypage' ? (
                         // MYPAGE VIEW

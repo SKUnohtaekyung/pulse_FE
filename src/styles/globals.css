@@ -24,7 +24,6 @@
     transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     background-color: #002B7A;
     overflow: hidden;
-    box-shadow: 4px 0 24px rgba(0, 43, 122, 0.15);
   }
 
   /* Main Content Layout Transition */

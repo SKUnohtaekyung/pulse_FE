@@ -78,13 +78,10 @@
 
 ### 🚫 No Scroll Policy (스크롤 금지 정책)
 * **Viewport Fit:** 모든 메인 대시보드 및 핵심 기능 화면은 **표준 데스크탑 뷰포트(100vh)** 내에 완벽하게 들어와야 합니다.
+* 단, 손님 마음 읽기 페이지는 스크롤되는 화면을 허용합니다.
 * **Vertical Space:** `h-full`, `flex-1`, `min-h-0` 등의 유틸리티를 활용하여 수직 공간을 꽉 채우되, 내부 스크롤이 발생하지 않도록 설계합니다.
 * **Reason:** 바쁜 자영업자가 한눈에 모든 정보를 파악하고 즉시 행동할 수 있도록 하기 위함입니다.
 
-### 📐 3-Column Layout (분석 화면 표준)
-* **Left (25%):** Identity & Key Stats (고정 정보)
-* **Center (45%):** Deep Analysis & Charts (시각화 정보)
-* **Right (30%):** AI Chat & Interaction (대화형 정보)
 
 ### 🎩 Global Header Standard (공통 헤더)
 모든 페이지의 최상단에는 동일한 규격의 헤더가 위치해야 합니다.
@@ -97,10 +94,16 @@
 *   **Subtitle (Dynamic):**
     *   Text: 페이지별 맞춤 문구 (예: "오늘도 힘차게 시작해볼까요?")
     *   Font: 15px Medium, Opacity 70%
-*   **Notification Icon:**
-    *   Style: White Bg, Rounded-xl, Shadow-sm
-    *   Icon: Bell (22px, Primary Color)
-    *   Badge: Point Color (`#FF5A36`) Dot
+*   **Header Tools (Right Side):**
+    *   **Layout:** `flex gap-2 items-center` (Perfect vertical alignment)
+    *   **AI Chatbot Trigger:**
+        *   Style: **White Rounded Square (`rounded-xl`)**, Shadow-sm, Border (Default: Transparent, Active: Primary Blue)
+        *   Icon: MessageCircle / Sparkles (Primary Color)
+        *   Motion: Hover Scale (1.05), Active Ring
+    *   **Notification Icon:**
+        *   Style: Same as Chatbot (White, Shadow-sm)
+        *   Icon: Bell (22px, Primary Color)
+        *   Badge: Point Color (`#FF5A36`) Dot
 
 ---
 
@@ -152,6 +155,20 @@
   pointer-events: none;
 }
 ```
+
+### 🤖 AI Chatbot Interface (PULSE AI)
+AI 챗봇은 사용자가 언제든 호출할 수 있는 **'Global Overlay'** 형태로 제공됩니다.
+
+*   **Trigger Position:** 헤더 우측 상단 (알림 벨 좌측), `Relative` 포지셔닝으로 레이아웃 틀어짐 방지
+*   **Window Style:**
+    *   **Glassmorphism Header:** `bg-white/80 backdrop-blur-md` (세련된 투명감)
+    *   **Dimension:** Width 360px, Height 600px (충분한 정보 표시)
+    *   **Shadow:** `shadow-2xl` + `ring-1 ring-black/5` (깊이감 강조)
+*   **Message Bubbles:**
+    *   **User:** `bg-[#002B7A]` (Primary), White Text, `rounded-[20px] rounded-tr-sm` (아이메시지 스타일)
+    *   **AI:** `bg-[#F5F7FA]` (Bg Page), Dark Text, `rounded-[20px] rounded-tl-sm`
+*   **Motion:** `Spring` Animation (Stiffness 350, Damping 25)
+    *   버튼 위치에서 **'Pop'** 하며 펴지는 자연스러운 등장 효과 (`transformOrigin: top right`)
 
 ---
 
