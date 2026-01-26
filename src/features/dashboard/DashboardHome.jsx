@@ -241,9 +241,19 @@ const DashboardHome = ({ onNavigate }) => {
                     </div>
 
                     {/* 2. Guest Analysis (Right ~40%) - Annotated Split Layout */}
-                    <div className="flex-1 bg-white rounded-[24px] shadow-sm border border-gray-100 relative group overflow-hidden flex flex-col p-6 pt-10 min-w-[320px]">
+                    <div className="flex-1 bg-white rounded-[24px] shadow-sm border border-gray-100 relative group overflow-hidden flex flex-col p-6 pt-6 min-w-[320px]">
                         {/* Decorative Background Blob */}
                         <div className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-blue-50/50 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+
+                        {/* Top CTA Button */}
+                        <div className="flex justify-end mb-4 relative z-10 shrink-0">
+                            <button
+                                onClick={() => onNavigate && onNavigate('insight')}
+                                className="text-xs bg-[#E5EDFF] text-[#002B7A] px-3 py-1.5 rounded-full hover:bg-[#D0E0FF] transition-colors flex items-center gap-1 font-bold"
+                            >
+                                손님 분석 페이지로 이동 <ChevronRight size={12} className="group-hover/btn:translate-x-0.5 transition-transform" />
+                            </button>
+                        </div>
 
                         {/* Content Body: Split Layout */}
                         <div className="flex-1 flex gap-6 relative z-10 min-h-0">
@@ -277,7 +287,7 @@ const DashboardHome = ({ onNavigate }) => {
                             <div className="w-px bg-gray-100 h-full my-1"></div>
 
                             {/* RIGHT COL (Flex-1): Persona List (Pushed Down) */}
-                            <div className="flex-1 flex flex-col min-h-0 pt-14">
+                            <div className="flex-1 flex flex-col min-h-0 pt-5">
                                 {/* Box 2: Header (Clean) */}
                                 <div className="mb-3 shrink-0">
                                     <h3 className="text-sm font-bold text-[#002B7A] tracking-wide">주요 방문 손님</h3>
@@ -292,7 +302,6 @@ const DashboardHome = ({ onNavigate }) => {
                                         <div className="min-w-0 flex-1">
                                             <div className="flex justify-between items-center mb-0.5">
                                                 <h4 className="text-xs font-bold text-[#191F28]">비 오면 '국물파'</h4>
-                                                <span className="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold">2.5배 ⬆</span>
                                             </div>
                                             <p className="text-[10px] text-gray-500 truncate">
                                                 비 오는 날 <span className="text-[#191F28] font-bold">전골/국밥</span> 찾는 손님 급증
@@ -308,7 +317,6 @@ const DashboardHome = ({ onNavigate }) => {
                                         <div className="min-w-0 flex-1">
                                             <div className="flex justify-between items-center mb-0.5">
                                                 <h4 className="text-xs font-bold text-[#191F28]">가성비 직장인</h4>
-                                                <span className="text-[9px] bg-green-100 text-green-600 px-1.5 py-0.5 rounded font-bold">런치 인기</span>
                                             </div>
                                             <p className="text-[10px] text-gray-500 truncate">
                                                 점심시간 <span className="text-[#191F28] font-bold">런치 세트</span> 선호도 1위
@@ -324,23 +332,12 @@ const DashboardHome = ({ onNavigate }) => {
                                         <div className="min-w-0 flex-1">
                                             <div className="flex justify-between items-center mb-0.5">
                                                 <h4 className="text-xs font-bold text-[#191F28]">미식가 커플</h4>
-                                                <span className="text-[9px] bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded font-bold">예약 필수</span>
                                             </div>
                                             <p className="text-[10px] text-gray-500 truncate">
                                                 주말 저녁 <span className="text-[#191F28] font-bold">와인/데이트</span> 코스 추천
                                             </p>
                                         </div>
                                     </div>
-                                </div>
-
-                                {/* Bottom CTA Button (Distinct Navigation Style) */}
-                                <div className="mt-auto flex justify-end shrink-0 pt-2">
-                                    <button
-                                        onClick={() => onNavigate && onNavigate('insight')}
-                                        className="text-xs bg-[#191F28] text-white px-4 py-2 rounded-full hover:bg-[#333D4B] transition-all shadow-md hover:shadow-lg flex items-center gap-1.5 font-bold group/btn"
-                                    >
-                                        손님 분석 페이지로 이동 <ChevronRight size={12} className="group-hover/btn:translate-x-0.5 transition-transform" />
-                                    </button>
                                 </div>
                             </div>
                         </div>

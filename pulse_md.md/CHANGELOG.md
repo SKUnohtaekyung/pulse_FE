@@ -218,3 +218,15 @@
 ### 🚀 UX Improvements (사용성 개선)
 *   **CTA Redesign:** 손님 분석 카드의 버튼을 "상세 리포트 보기"에서 **"손님 분석 페이지로 이동"**으로 변경하고 다크 네이비(`bg-[#191F28]`) 스타일을 적용하여 네비게이션 명확화.
 *   **Term Unification:** "손님 마음 읽기" 용어를 **"손님 분석"**으로 통일하고, 메뉴명 및 헤더 타이틀에 일관성 있게 반영.
+
+### ✨ Immersive Loading Experience (몰입형 로딩 화면)
+*   **3D Interactive Core:** `Three.js`를 활용하여 살아 움직이는 듯한 **Fluid Core**를 구현하고, 마우스 움직임에 반응하는 인터랙티브 경험 제공.
+*   **Split-Screen Layout:**
+    *   **Visual Balance:** 3D 오브젝트를 좌측, 정보 입력을 우측에 배치하는 **2분할 레이아웃**으로 전면 개편하여 시각적 간섭 제거.
+    *   **Focus:** 텍스트와 버튼의 가독성을 극대화하고, 로딩 완료 시 자연스럽게 "시작하기"로 시선을 유도.
+*   **Premium UI Detail:**
+    *   **Glassmorphic CTA:** "PULSE 시작하기" 버튼에 **글래스모피즘 & 샤인(Shine) 애니메이션**을 적용하여 클릭 유도 강화.
+    *   **Seamless Transition:** 로딩 중과 완료 후의 테마 컬러(`#002B7A`)를 동일하게 유지하여 이질감 없는 매끄러운 경험 완성.
+*   **System Stability:**
+    *   **Custom Hook:** `useSignupProgress` 훅을 도입하여 진행률, 메시지, 에러 상태를 체계적으로 관리.
+    *   **Error Handling:** 네트워크 오류 등 예외 상황 발생 시 "재시도" UI가 즉시 노출되도록 안전장치 마련.

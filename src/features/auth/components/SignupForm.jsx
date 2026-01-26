@@ -1,11 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ChevronDown } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import SignupLoadingScreen from './SignupLoadingScreen';
+import { useSignupProgress } from '../../../hooks/useSignupProgress';
 import '../AuthPage.css';
 
 const SignupForm = ({ onSwitch }) => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
+    
+    // Status: 'idle' | 'loading' | 'success' | 'error'
+    const { progress, message, status, startPolling } = useSignupProgress();
+    const [isLoading, setIsLoading] = useState(false); 
+
     const [formData, setFormData] = useState({
         name: '',
         phone: '',
@@ -16,7 +24,6 @@ const SignupForm = ({ onSwitch }) => {
         postcode: '',
         address: '',
         detailAddress: '',
-
         agreed: false
     });
     const [passwordValidation, setPasswordValidation] = useState({
@@ -25,6 +32,8 @@ const SignupForm = ({ onSwitch }) => {
         hasLowerCase: false,
         hasNumber: false
     });
+
+    // No auto-redirect useEffect - waiting for user action on Success screen
 
     const validatePassword = (password) => {
         return {
@@ -42,27 +51,23 @@ const SignupForm = ({ onSwitch }) => {
             [name]: type === 'checkbox' ? checked : value
         }));
 
-        // 비밀번호 입력 시 실시간 검증
         if (name === 'password') {
             setPasswordValidation(validatePassword(value));
         }
     };
 
-    // Daum 우편번호 API 호출
     const execDaumPostcode = () => {
         new window.daum.Postcode({
             oncomplete: function(data) {
-                let addr = ''; // 주소 변수
-                let extraAddr = ''; // 참고항목 변수
+                let addr = '';
+                let extraAddr = '';
 
-                // 사용자가 선택한 주소 타입에 따라 해당 주소 값을 가져온다.
-                if (data.userSelectedType === 'R') { // 도로명 주소
+                if (data.userSelectedType === 'R') {
                     addr = data.roadAddress;
-                } else { // 지번 주소
+                } else {
                     addr = data.jibunAddress;
                 }
 
-                // 도로명 주소일 때 참고항목을 조합
                 if(data.userSelectedType === 'R'){
                     if(data.bname !== '' && /[동|로|가]$/g.test(data.bname)){
                         extraAddr += data.bname;
@@ -76,7 +81,6 @@ const SignupForm = ({ onSwitch }) => {
                     addr += extraAddr;
                 }
 
-                // 우편번호와 주소 정보를 state에 설정
                 setFormData(prev => ({
                     ...prev,
                     postcode: data.zonecode,
@@ -94,7 +98,6 @@ const SignupForm = ({ onSwitch }) => {
                 return;
             }
             
-            // 비밀번호 유효성 검사
             const validation = validatePassword(formData.password);
             if (!validation.minLength || !validation.hasSpecialChar || !validation.hasLowerCase || !validation.hasNumber) {
                 alert("비밀번호는 8자 이상, 특수문자, 영어 소문자, 숫자를 포함해야 합니다.");
@@ -108,185 +111,210 @@ const SignupForm = ({ onSwitch }) => {
     };
 
     const handleSubmit = async () => {
-        // MOCK SIGNUP FOR DEMO
-        try {
-            // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 500));
+        // Start Loading Process
+        setIsLoading(true);
+        // Pass true to test error roughly 20% of the time, or false for always success
+        // For production, this would be set to false or controlled by API errors
+        startPolling(false); 
+    };
 
-            alert("회원가입이 완료되었습니다!");
-            onSwitch(); // Switch to login mode
-        } catch (error) {
-            console.error("Signup Error:", error);
-            alert("서버 오류가 발생했습니다.");
-        }
+    // Callback when user clicks "Start" on success screen
+    const handleComplete = () => {
+        setIsLoading(false);
+        onSwitch();
+    };
+
+    // Callback when user clicks "Retry" on error screen
+    const handleRetry = () => {
+        startPolling(false);
     };
 
     return (
-        <div className="form-wrapper fade-in">
-            {step === 1 ? (
-                <>
-                    <h2 className="form-title">PULSE 시작하기</h2>
-                    <p className="form-subtitle">
-                        마케팅 자동화의 첫 걸음, 계정을 생성해보세요.
-                    </p>
-                </>
+        <AnimatePresence mode="wait">
+            {isLoading ? (
+                <SignupLoadingScreen 
+                    key="loading" 
+                    progress={progress} 
+                    message={message} 
+                    status={status}
+                    onComplete={handleComplete}
+                    onRetry={handleRetry}
+                />
             ) : (
-                <>
-                    <h2 className="form-title">가게 등록</h2>
-                    <p className="form-subtitle">
-                        사장님의 소중한 가게 정보를 알려주세요.
-                    </p>
-                </>
-            )}
+                <motion.div 
+                    key="form"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="form-wrapper"
+                >
+                    {step === 1 ? (
+                        <>
+                            <h2 className="form-title">PULSE 시작하기</h2>
+                            <p className="form-subtitle">
+                                마케팅 자동화의 첫 걸음, 계정을 생성해보세요.
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <h2 className="form-title">가게 등록</h2>
+                            <p className="form-subtitle">
+                                사장님의 소중한 가게 정보를 알려주세요.
+                            </p>
+                        </>
+                    )}
 
-            <form onSubmit={handleNext}>
-                {step === 1 ? (
-                    <div className="fade-in">
-                        <div className="input-row">
-                            <input
-                                type="text"
-                                name="name"
-                                placeholder="이름 (실명)"
-                                className="minimal-input"
-                                value={formData.name}
-                                onChange={handleChange}
-                                required
-                            />
-                            <input
-                                type="tel"
-                                name="phone"
-                                placeholder="휴대폰 번호"
-                                className="minimal-input"
-                                value={formData.phone}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
+                    <form onSubmit={handleNext}>
+                        {step === 1 ? (
+                            <div className="fade-in">
+                                <div className="input-row">
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        placeholder="이름 (실명)"
+                                        className="minimal-input"
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                    <input
+                                        type="tel"
+                                        name="phone"
+                                        placeholder="휴대폰 번호"
+                                        className="minimal-input"
+                                        value={formData.phone}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </div>
 
-                        <div className="input-group">
-                            <input
-                                type="email"
-                                name="email"
-                                placeholder="이메일 (아이디)"
-                                className="minimal-input"
-                                value={formData.email}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
-                        <div className="input-group">
-                            <PasswordInput
-                                name="password"
-                                placeholder="비밀번호 (8자 이상)"
-                                value={formData.password}
-                                onChange={handleChange}
-                                validation={passwordValidation}
-                            />
-                        </div>
+                                <div className="input-group">
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        placeholder="이메일 (아이디)"
+                                        className="minimal-input"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <PasswordInput
+                                        name="password"
+                                        placeholder="비밀번호 (8자 이상)"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        validation={passwordValidation}
+                                    />
+                                </div>
 
-                        <button type="submit" className="submit-btn">
-                            다음으로 &rarr;
-                        </button>
-                    </div>
-                ) : (
-                    <div className="fade-in">
-                        <div className="input-row">
-                            <input
-                                type="text"
-                                name="storeName"
-                                placeholder="가게 이름"
-                                className="minimal-input"
-                                value={formData.storeName}
-                                onChange={handleChange}
-                                required
-                            />
-                            <CustomDropdown
-                                name="category"
-                                placeholder="업종 선택"
-                                options={["한식", "중식", "일식", "양식", "카페/디저트", "주점", "기타"]}
-                                value={formData.category}
-                                onChange={(val) => setFormData(prev => ({ ...prev, category: val }))}
-                            />
-                        </div>
-
-                        <div className="input-group">
-                            <input
-                                type="text"
-                                name="postcode"
-                                placeholder="우편번호"
-                                className="minimal-input"
-                                value={formData.postcode}
-                                readOnly
-                            />
-                            <div className="input-row" style={{ gap: '8px' , marginBottom: '0px'}}>
-                                <input
-                                    type="text"
-                                    name="address"
-                                    placeholder="주소"
-                                    className="minimal-input"
-                                    value={formData.address}
-                                    readOnly
-                                    required
-                                    style={{ flex: '1' }}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={execDaumPostcode}
-                                    className="submit-btn"
-                                    style={{ 
-                                        flex: '0 0 auto',
-                                        width: '120px',
-                                        padding: '0 15px',
-                                        fontSize: '14px',
-                                        whiteSpace: 'nowrap',
-                                        margin: '7px'
-                                    }}
-                                >
-                                    우편번호 찾기
+                                <button type="submit" className="submit-btn">
+                                    다음으로 &rarr;
                                 </button>
                             </div>
-                            <input
-                                type="text"
-                                name="detailAddress"
-                                placeholder="상세주소"
-                                className="minimal-input"
-                                value={formData.detailAddress}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div>
+                        ) : (
+                            <div className="fade-in">
+                                <div className="input-row">
+                                    <input
+                                        type="text"
+                                        name="storeName"
+                                        placeholder="가게 이름"
+                                        className="minimal-input"
+                                        value={formData.storeName}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                    <CustomDropdown
+                                        name="category"
+                                        placeholder="업종 선택"
+                                        options={["한식", "중식", "일식", "양식", "카페/디저트", "주점", "기타"]}
+                                        value={formData.category}
+                                        onChange={(val) => setFormData(prev => ({ ...prev, category: val }))}
+                                    />
+                                </div>
 
-                        <div className="checkbox-group" style={{ marginTop: '24px' }}>
-                            <label>
-                                <input
-                                    type="checkbox"
-                                    name="agreed"
-                                    checked={formData.agreed}
-                                    onChange={handleChange}
-                                    required
-                                />
-                                <span>[필수] 개인정보 수집 및 이용 동의</span>
-                            </label>
-                        </div>
+                                <div className="input-group">
+                                    <input
+                                        type="text"
+                                        name="postcode"
+                                        placeholder="우편번호"
+                                        className="minimal-input"
+                                        value={formData.postcode}
+                                        readOnly
+                                    />
+                                    <div className="input-row" style={{ gap: '8px' , marginBottom: '0px'}}>
+                                        <input
+                                            type="text"
+                                            name="address"
+                                            placeholder="주소"
+                                            className="minimal-input"
+                                            value={formData.address}
+                                            readOnly
+                                            required
+                                            style={{ flex: '1' }}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={execDaumPostcode}
+                                            className="submit-btn"
+                                            style={{ 
+                                                flex: '0 0 auto',
+                                                width: '120px',
+                                                padding: '0 15px',
+                                                fontSize: '14px',
+                                                whiteSpace: 'nowrap',
+                                                margin: '7px'
+                                            }}
+                                        >
+                                            우편번호 찾기
+                                        </button>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        name="detailAddress"
+                                        placeholder="상세주소"
+                                        className="minimal-input"
+                                        value={formData.detailAddress}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="checkbox-group" style={{ marginTop: '24px' }}>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            name="agreed"
+                                            checked={formData.agreed}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                        <span>[필수] 개인정보 수집 및 이용 동의</span>
+                                    </label>
+                                </div>
 
 
-                        <div className="form-actions-row horizontal">
-                            <button type="button" className="back-btn" onClick={() => setStep(1)}>
-                                이전
-                            </button>
-                            <button type="submit" className="submit-btn full-width">
-                                가입 완료
-                            </button>
-                        </div>
+                                <div className="form-actions-row horizontal">
+                                    <button type="button" className="back-btn" onClick={() => setStep(1)}>
+                                        이전
+                                    </button>
+                                    <button type="submit" className="submit-btn full-width">
+                                        가입 완료
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </form>
+
+                    <div className="form-switch-container">
+                        <p className="switch-text">이미 계정이 있으신가요?</p>
+                        <button className="switch-btn" onClick={onSwitch}>로그인 하러가기</button>
                     </div>
-                )}
-            </form>
-
-            <div className="form-switch-container">
-                <p className="switch-text">이미 계정이 있으신가요?</p>
-                <button className="switch-btn" onClick={onSwitch}>로그인 하러가기</button>
-            </div>
-        </div>
+                </motion.div>
+            )}
+        </AnimatePresence>
     );
 };
 
