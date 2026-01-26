@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import ThreeBackground from './ThreeBackground';
 import LoginForm from './components/LoginForm';
 import SignupForm from './components/SignupForm';
 import './AuthPage.css';
 
 const AuthPage = () => {
-    const [isSignUp, setIsSignUp] = useState(false);
+    const location = useLocation();
+    const [isSignUp, setIsSignUp] = useState(location.pathname === '/signup');
 
     return (
         <div className="auth-split-layout">
