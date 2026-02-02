@@ -1,6 +1,6 @@
 // [혜린] Auth API 함수들
 
-const API_BASE_URL = 'http://localhost:8080';
+const API_BASE_URL = 'http://localhost:8080/api';
 
 /**
  * [혜린] 회원가입 API
@@ -8,7 +8,7 @@ const API_BASE_URL = 'http://localhost:8080';
  * @returns {Promise} 회원가입 결과
  */
 export const signup = async (signupData) => {
-  const url = `${API_BASE_URL}/signup`;
+  const url = `${API_BASE_URL}/auth/signup`;
   const method = 'POST';
   const headers = {
     'Content-Type': 'application/json',
@@ -18,7 +18,7 @@ export const signup = async (signupData) => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('회원가입 API 요청');
   console.log('1️⃣ 요청 URL:', url);
-  console.log('   Swagger 확인: POST /signup');
+  console.log('   Swagger 확인: POST /auth/signup');
   
   // [혜린] 테스트 로그 2: Method & Headers
   console.log('2️⃣ Method:', method);
