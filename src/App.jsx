@@ -15,6 +15,7 @@ export default function App() {
             <Route path="/signup" element={<AuthPage />} />
             <Route path="/landing" element={<LandingPage />} /> /*나중에 메인으로 바꾸기*/
             <Route path="/dashboard" element={<DashboardLayout />} />
+            <Route path="/subscription" element={<DashboardLayout initialPage="subscription" />} />
             <Route path="/" element={DEV_MODE ? <DashboardLayout /> : <LandingPage />} />
             <Route path="*" element={<DashboardLayout />} />
         </Routes>

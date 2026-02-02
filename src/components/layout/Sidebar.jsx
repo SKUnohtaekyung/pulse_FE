@@ -87,10 +87,18 @@ const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded }) => {
                             </div>
 
                             {/* Text Info (Visible only when expanded) */}
-                            <div className={`flex flex-col justify-center transition-all duration-300 ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 hidden'
-                                }`}>
+                            <div
+                                className={`flex flex-col justify-center transition-all duration-300 ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 hidden'} cursor-pointer hover:opacity-80`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveMenu('subscription');
+                                }}
+                            >
                                 <p className="text-white text-[15px] font-bold leading-tight mb-0.5">박사장님</p>
-                                <p className="text-blue-200 text-[11px] font-medium leading-tight">Premium Plan</p>
+                                <div className="flex items-center gap-1">
+                                    <p className="text-blue-200 text-[11px] font-medium leading-tight">Growth 플랜</p>
+                                    <ChevronUp size={12} className="text-blue-200" />
+                                </div>
                             </div>
                         </div>
 

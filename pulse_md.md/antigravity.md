@@ -19,7 +19,8 @@
 * **필요할 때만 찾아라:** 모든 코드를 기억하려 하지 말고, 필요한 순간에만 해당 파일을 열어보십시오.
 * **참조 순서:**
     * 디자인 관련 질문 → `design_guide.md` 확인 (다른 파일 보지 말 것)
-    * 기능 명세 질문 → `about_pulse.md` 확인
+    * 프로젝트의 기획 내용 → `about_pulse.md` 확인
+    * UI 구현 관련 질문 → `PULSE.md` 확인  
     * API/DB 구조 질문 → `tech.md` 확인
 
 ### 📝 Rule 3. Volatile Chat, Persistent Repo (휘발성 채팅, 영구적 저장소)

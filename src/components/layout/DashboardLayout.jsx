@@ -6,6 +6,7 @@ import DashboardHome from '../../features/dashboard/DashboardHome';
 import UnifiedInsightPage from '../../features/insight/UnifiedInsightPage';
 import MyPage from '../../features/mypage/MyPage';
 import PromotionPage from '../../features/promotion/PromotionPage';
+import SubscriptionPage from '../../pages/SubscriptionPage';
 import { COLORS } from '../../constants';
 import '../../styles/globals.css';
 
@@ -57,8 +58,11 @@ export default function DashboardLayout() {
                         // PROMOTION VIEW
                         <>
                             <Header title="사장님의 사진으로 홍보 영상을 빠르게 제작해 드려요." />
-                            <PromotionPage initialParams={navParams} />
+                            <PromotionPage initialParams={navParams} onNavigate={handleNavigate} />
                         </>
+                    ) : activeMenu === 'subscription' ? (
+                        // SUBSCRIPTION VIEW
+                        <SubscriptionPage />
                     ) : (
                         // Placeholder for other menus
                         <div className="flex items-center justify-center h-full text-gray-400 flex-col gap-4">

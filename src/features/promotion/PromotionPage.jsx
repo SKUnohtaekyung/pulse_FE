@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import VideoCreator from './VideoCreator';
 import GalleryPage from './GalleryPage';
 
-export default function PromotionPage({ initialParams }) {
+export default function PromotionPage({ initialParams, onNavigate }) {
     const [viewMode, setViewMode] = useState('split'); // 'split' | 'gallery'
     const [images, setImages] = useState([]);
     const [options, setOptions] = useState({ vibe: 'energetic', title: '', prompt: '' });
@@ -67,6 +67,7 @@ export default function PromotionPage({ initialParams }) {
                 setOptions={setOptions}
                 onGenerate={handleGenerate}
                 onConfirm={handleConfirmStoryboard}
+                onNavigate={onNavigate}
             />
         </div>
     );

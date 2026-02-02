@@ -1,9 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Upload, X, Zap, Crown, Coffee, Lightbulb, AlertCircle, CheckCircle, TrendingUp, Clock, Hash, Copy, Download, Instagram, RefreshCw, Play, Wand2, Settings, Crop, Edit2, Trash2, ChevronDown, Info, Plus, Star, Sparkles } from 'lucide-react';
+import { Upload, X, Zap, Crown, Coffee, Lightbulb, AlertCircle, CheckCircle, TrendingUp, Clock, Hash, Copy, Download, Instagram, RefreshCw, Play, Wand2, Settings, Crop, Edit2, Trash2, ChevronDown, Info, Plus, Star, Sparkles, Lock } from 'lucide-react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Sphere, MeshDistortMaterial } from '@react-three/drei';
 
-// --- 3D Components for Loading ---
+// --- 3D Components for Loading (로딩 화면용 3D 컴포넌트) ---
+// 회전하는 왜곡된 구체 (AI가 생각하는 뇌를 추상적으로 표현)
 function AnimatedSphere() {
     const meshRef = useRef(null);
     useFrame((state) => {
@@ -20,7 +21,8 @@ function AnimatedSphere() {
     );
 }
 
-// 5 Satellites with fading colors
+// 5개의 위성 (Satellites) - 회전하며 사라지는 효과 연출
+// radius: 궤도 반지름, speed: 회전 속도, size: 위성 크기, color: 색상
 function OrbitingSatellite({ radius, speed, size, color, offset, yAmp = 0.5 }) {
     const ref = useRef(null);
     useFrame((state) => {
@@ -39,19 +41,78 @@ function OrbitingSatellite({ radius, speed, size, color, offset, yAmp = 0.5 }) {
     );
 }
 
-export default function VideoCreator({ step, resultData, onReset, images, setImages, options, setOptions, onGenerate, onConfirm }) {
+// --- Constants (상수 데이터 외부 분리) ---
+// 성능 최적화: 컴포넌트 리렌더링 시 불필요한 재생성을 막기 위해 전역 변수로 관리합니다.
+const VIBES = [
+    {
+        id: 'energetic',
+        label: '에너지',
+        desc: '빠른 템포로 매력 포인트를 보여주는 홍보 영상',
+        gradient: 'from-yellow-400 to-amber-500',
+        bgSelected: 'bg-gradient-to-br from-yellow-100/90 to-amber-200/90 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_4px_12px_rgba(251,191,36,0.3)]',
+        textSelected: 'text-amber-700',
+        icon: <Zap size={16} />,
+        recommend: true
+    },
+    {
+        id: 'luxury',
+        label: '프리미엄',
+        desc: '차분한 템포로 고급스러운 이미지를 강조하는 영상',
+        gradient: 'from-purple-400 to-fuchsia-600',
+        bgSelected: 'bg-gradient-to-br from-purple-100/90 to-fuchsia-200/90 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_4px_12px_rgba(192,38,211,0.3)]',
+        textSelected: 'text-purple-700',
+        icon: <Crown size={16} />
+    },
+    {
+        id: 'emotional',
+        label: '무드',
+        desc: '잔잔한 분위기와 스토리 중심으로 감성을 담은 영상',
+        gradient: 'from-orange-300 to-rose-400',
+        bgSelected: 'bg-gradient-to-br from-orange-100/90 to-rose-200/90 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_4px_12px_rgba(251,113,133,0.3)]',
+        textSelected: 'text-rose-700',
+        icon: <Coffee size={16} />
+    }
+];
+
+const PERSONA_PROMPTS = [
+    {
+        id: 'hangover',
+        label: '시원 국물파',
+        icon: '🍜',
+        desc: '해장이 필요한 손님 타겟',
+        prompt: '김이 모락모락 나는 얼큰한 국물 요리 클로즈업, 땀을 닦으며 시원해하는 중년 남성, 해장이 되어 개운한 표정, 활기찬 아침 식당 분위기'
+    },
+    {
+        id: 'worker',
+        label: '가성비 직장인',
+        icon: '💼',
+        desc: '빠른 점심이 필요한 타겟',
+        prompt: '푸짐하고 맛있는 점심 한 상 차림, 음식을 급하게 먹지만 만족스러운 표정, 시계를 확인하며 웃는 직장인, 활기찬 점심시간 분위기'
+    },
+    {
+        id: 'couple',
+        label: '미식가 커플',
+        icon: '💑',
+        desc: '데이트 맛집을 찾는 타겟',
+        prompt: '로맨틱한 조명 아래 예쁘게 플레이팅된 요리, 서로 음식을 먹여주거나 건배하는 다정한 커플, 인스타그램 감성의 세련된 분위기'
+    }
+];
+
+export default function VideoCreator({ step, resultData, onReset, images, setImages, options, setOptions, onGenerate, onConfirm, onNavigate }) {
     const fileInputRef = useRef(null);
 
-    // Local State for UI
-    const [isAutoPrompt, setIsAutoPrompt] = useState(true);
-    const [qualityMode, setQualityMode] = useState('standard'); // 'standard' | 'pro'
-    const [isQualityMenuOpen, setIsQualityMenuOpen] = useState(false);
-    // promptText and videoTitle are now managed by parent (options.prompt, options.title)
+    // Local State for UI (화면 제어를 위한 로컬 상태)
+    const [isAutoPrompt, setIsAutoPrompt] = useState(true); // AI 자동 완성 활성화 여부
+    const [qualityMode, setQualityMode] = useState('standard'); // 'standard' | 'pro' (화질 모드)
+    const [isQualityMenuOpen, setIsQualityMenuOpen] = useState(false); // 화질 선택 메뉴 토글
+    const [selectedFile, setSelectedFile] = useState(null); // 백엔드 전송용 원본 파일 객체 (Backend Integration)
+    // promptText와 videoTitle은 부모 컴포넌트(PromotionPage)에서 관리합니다 (상태 끌어올리기)
 
-    // Loading Progress Logic
+    // Loading Progress Logic (로딩 진행률 시뮬레이션)
+    // 실제 서버 응답과 관계없이 사용자 경험을 위해 8초간 자연스럽게 게이지가 찹니다.
     const [progress, setProgress] = useState(0);
     const [activeTooltip, setActiveTooltip] = useState(null); // 'persona' | 'desc' | null
-    const logs = ["사진을 분석하고 있어요...", "어울리는 음악을 고르고 있어요...", "자막을 생성하고 있어요...", "영상을 렌더링하고 있어요..."];
+    const logs = ["사진을 분석하고 있어요...", "어울리는 음악을 고르고 있어요...", "장면을 최적화하고 있어요...", "영상을 렌더링하고 있어요..."];
     const LOADING_DURATION = 8000; // 8 seconds fixed
     const DEFAULT_PROMPT = "따뜻한 햇살이 비치는 창가에서 김이 모락모락 나는 커피 한 잔의 여유로움";
 
@@ -75,7 +136,8 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
         }
     }, [step]);
 
-    // Auto-generate prompt when image is uploaded
+    // Auto-generate prompt (이미지 업로드 시 프롬프트 자동 완성)
+    // 이미지를 올리면 기본 프롬프트를 자동으로 채워줘서 사용자가 막막하지 않게 돕습니다.
     useEffect(() => {
         if (images.length > 0 && isAutoPrompt && !options.prompt) {
             setOptions(prev => ({ ...prev, prompt: DEFAULT_PROMPT }));
@@ -87,8 +149,10 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files);
         if (files.length > 0) {
-            const newImage = URL.createObjectURL(files[0]);
+            const file = files[0];
+            const newImage = URL.createObjectURL(file); // 프론트엔드 표시용 Blob URL
             setImages([newImage]);
+            setSelectedFile(file); // 백엔드 전송용 Raw File 저장
         }
     };
 
@@ -97,61 +161,83 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
     };
 
     // --- Round 9: Text Update & Premium AI UI ---
-    const VIBES = [
-        {
-            id: 'energetic',
-            label: '에너지',
-            desc: '빠른 템포로 매력 포인트를 보여주는 홍보 영상',
-            gradient: 'from-yellow-400 to-amber-500',
-            // 3D Glass Selected State
-            bgSelected: 'bg-gradient-to-br from-yellow-100/90 to-amber-200/90 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_4px_12px_rgba(251,191,36,0.3)]',
-            textSelected: 'text-amber-700',
-            icon: <Zap size={16} />,
-            recommend: true
-        },
-        {
-            id: 'luxury',
-            label: '프리미엄',
-            desc: '차분한 템포로 고급스러운 이미지를 강조하는 영상',
-            gradient: 'from-purple-400 to-fuchsia-600',
-            bgSelected: 'bg-gradient-to-br from-purple-100/90 to-fuchsia-200/90 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_4px_12px_rgba(192,38,211,0.3)]',
-            textSelected: 'text-purple-700',
-            icon: <Crown size={16} />
-        },
-        {
-            id: 'emotional',
-            label: '무드',
-            desc: '잔잔한 분위기와 스토리 중심으로 감성을 담은 영상',
-            gradient: 'from-orange-300 to-rose-400',
-            bgSelected: 'bg-gradient-to-br from-orange-100/90 to-rose-200/90 shadow-[inset_0_2px_4px_rgba(255,255,255,0.8),0_4px_12px_rgba(251,113,133,0.3)]',
-            textSelected: 'text-rose-700',
-            icon: <Coffee size={16} />
-        }
-    ];
+    // CONSTANTS VIBES and PERSONA_PROMPTS moved outside component for performance
 
-    const PERSONA_PROMPTS = [
-        {
-            id: 'hangover',
-            label: '시원 국물파',
-            icon: '🍜',
-            desc: '해장이 필요한 손님 타겟',
-            prompt: '김이 모락모락 나는 얼큰한 국물 요리 클로즈업, 시원하고 개운한 느낌, 숙취가 해소되는 듯한 만족스러운 표정의 손님, 밝고 활기찬 아침 분위기'
-        },
-        {
-            id: 'worker',
-            label: '가성비 직장인',
-            icon: '💼',
-            desc: '빠른 점심이 필요한 타겟',
-            prompt: '푸짐하고 맛있는 점심 한 상 차림, 바쁜 점심시간에도 빠르게 나오는 음식, 활기찬 직장인들의 식사 모습, 효율적이고 든든한 한 끼'
-        },
-        {
-            id: 'couple',
-            label: '미식가 커플',
-            icon: '💑',
-            desc: '데이트 맛집을 찾는 타겟',
-            prompt: '로맨틱한 조명 아래 예쁘게 플레이팅된 요리, 행복하게 식사하는 커플, 감성적인 인테리어와 분위기, 인스타그램 감성의 세련된 연출'
-        }
-    ];
+
+
+
+    // --- Phase 5: VEO3 Payload Generator (VEO3 연동을 위한 검증 로직) ---
+    // UI에서 선택한 값들을 AI 모델(VEO3)이 이해할 수 있는 JSON 구조로 변환합니다.
+    // Video.md 명세서의 규칙을 엄격하게 따릅니다.
+    const generateVeoPayload = () => {
+        const transactionId = `PULSE_Gen_${Date.now()}`; // 고유 트랜잭션 ID 생성
+
+        // Mappings based on Video.md (Video.md 기반 매핑 로직)
+        const qualityKeywords = qualityMode === 'pro'
+            ? "8K, Masterpiece, Highly Detailed, Sharp Focus, Ray Tracing"
+            : "Photorealistic, 4K, Clean Image";
+
+        const vibeMap = {
+            energetic: { keywords: "Fast-paced, Vibrant Colors, High Saturation, Pop Style", camera: "Dynamic zoom, Fast transitions, Handheld shake" },
+            luxury: { keywords: "Luxurious, Cinematic Lighting, Slow Motion, Elegant, Soft Focus", camera: "Slow smooth pan, Stabilized gimbal shot, Rack focus" },
+            emotional: { keywords: "Cozy, Warm Tone, Instagram Aesthetic, Emotional, Lo-fi", camera: "Static shot with subtle movement, Shallow depth of field" }
+        };
+        const selectedVibe = vibeMap[options.vibe || 'energetic']; // Default to energetic
+
+        const personaMap = {
+            hangover: "A middle-aged man wiping sweat",
+            worker: "Busy office worker in a suit",
+            couple: "A young stylish couple"
+        };
+        const targetPersona = personaMap[options.personaId] || "A happy customer";
+
+        const locationDesc = options.prompt || "A warm sunlit Korean restaurant table";
+
+        return {
+            metadata: {
+                prompt_name: transactionId,
+                base_style: `Vertical 9:16, Portrait Mode, ${qualityKeywords}, ${selectedVibe.keywords}, ${targetPersona} atmosphere`,
+                aspect_ratio: "9:16",
+                duration: "8-10 seconds",
+                location: `${locationDesc} (e.g., A warm sunlit Korean restaurant table)`,
+                camera_setup: `Vertical framing. ${selectedVibe.camera}`
+            },
+            key_elements: [
+                options.prompt || "Delicious Food",
+                `${targetPersona} (e.g., A happy couple, a busy office worker)`,
+                "No text overlays",
+                "High visual fidelity"
+            ],
+            negative_prompts: [
+                "text", "subtitles", "captions", "english text", "korean text", "watermark", "logo", "signature",
+                "horizontal", "landscape", "16:9", "letterbox",
+                "distorted food", "messy table", "ugly faces", "bad anatomy", "violence", "disturbing content"
+            ],
+            timeline: [
+                {
+                    sequence: 1,
+                    section: "HOOK (0-3s)",
+                    timestamp: "00:00-00:03",
+                    action: `[Shot: Close-up] + [Subject: ${options.prompt || "Main Menu"}] + [Action: Dynamic Sizzling] + [Context: High Contrast Lighting].`,
+                    audio: "Upbeat Intro + Sizzling Sound"
+                },
+                {
+                    sequence: 2,
+                    section: "BODY (3-7s)",
+                    timestamp: "00:03-00:07",
+                    action: `[Shot: Medium Shot] + [Subject: ${targetPersona}] + [Action: Eating Happily] + [Context: Busy Store Atmosphere].`,
+                    audio: "Ambient Chatter + Chewing Sound"
+                },
+                {
+                    sequence: 3,
+                    section: "OUTRO (7-10s)",
+                    timestamp: "00:07-00:10",
+                    action: `[Shot: Pull-back/Wide] + [Subject: Full Table Spread] + [Action: Static] + [Context: Inviting Atmosphere].`,
+                    audio: "Logo Sound + Fading BGM"
+                }
+            ]
+        };
+    };
 
     return (
         <div className="flex-1 h-full flex gap-6 overflow-hidden p-2">
@@ -165,7 +251,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                         <h2 className="text-[18px] font-bold text-[#002B7A] flex items-center gap-2">
                             홍보 영상 만들기
                         </h2>
-                        <p className="text-[12px] text-gray-400 mt-0.5">우리 가게의 매력을 담은 맞춤 홍보 영상을 쉽고 빠르게 만들어보세요!</p>
+                        <p className="text-[14px] text-gray-500 mt-0.5">우리 가게의 매력을 담은 맞춤 홍보 영상을 쉽고 빠르게 만들어보세요!</p>
                     </div>
 
                     {/* Scrollable Content Area */}
@@ -174,9 +260,9 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                         {/* Image Upload */}
                         <div className="space-y-2 shrink-0">
                             <div className="flex justify-between items-center">
-                                <label className="text-[13px] font-bold text-[#191F28]">원본 이미지 (필수)</label>
-                                <div className="flex items-center gap-1 text-[10px] text-[#002B7A] bg-blue-50 px-2 py-0.5 rounded-full">
-                                    <Info size={10} /> <span>음식이나 가게의 분위기 중심 사진을 권장해요.</span>
+                                <label className="text-[15px] font-bold text-[#191F28]">원본 이미지 (필수)</label>
+                                <div className="flex items-center gap-1 text-[12px] text-[#002B7A] bg-blue-50 px-2.5 py-1 rounded-full">
+                                    <Info size={12} /> <span>음식이나 가게의 분위기 중심 사진을 권장해요.</span>
                                 </div>
                             </div>
                             <div
@@ -205,7 +291,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                             <Upload size={20} className="text-gray-400 group-hover:text-[#002B7A]" />
                                         </div>
                                         <p className="text-[13px] font-bold text-gray-500">이미지 업로드</p>
-                                        <p className="text-[11px] text-gray-400">클릭하거나 드래그하세요</p>
+                                        <p className="text-[12px] text-gray-400">클릭하거나 드래그하세요</p>
                                     </div>
                                 )}
                             </div>
@@ -214,8 +300,8 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
 
                         {/* Persona Prompt Section */}
                         <div className="space-y-2 shrink-0 relative">
-                            <label className="text-[13px] font-bold text-[#191F28] flex items-center gap-1.5">
-                                누구를 위한 영상인가요? <span className="text-gray-400 font-medium text-[12px]">(선택)</span>
+                            <label className="text-[15px] font-bold text-[#191F28] flex items-center gap-1.5">
+                                타겟 손님 <span className="text-gray-400 font-medium text-[13px]">(선택)</span>
                                 <div
                                     className="cursor-help"
                                     onMouseEnter={() => setActiveTooltip('persona')}
@@ -245,7 +331,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                                 }`}
                                         >
                                             <span className="text-xl mb-1 group-hover:scale-110 transition-transform">{persona.icon}</span>
-                                            <span className={`text-[11px] font-bold ${isSelected ? 'text-[#002B7A]' : 'text-gray-700 group-hover:text-[#002B7A]'}`}>
+                                            <span className={`text-[13px] font-bold ${isSelected ? 'text-[#002B7A]' : 'text-gray-700 group-hover:text-[#002B7A]'}`}>
                                                 {persona.label}
                                             </span>
                                         </button>
@@ -257,8 +343,8 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                         {/* Prompt Section */}
                         <div className="space-y-2 flex-1 flex flex-col min-h-[120px] relative">
                             <div className="flex justify-between items-center shrink-0">
-                                <label className="text-[13px] font-bold text-[#191F28] flex items-center gap-1.5">
-                                    영상 설명
+                                <label className="text-[15px] font-bold text-[#191F28] flex items-center gap-1.5">
+                                    영상 컨셉 설명
                                     <div
                                         className="cursor-help"
                                         onMouseEnter={() => setActiveTooltip('desc')}
@@ -279,9 +365,9 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                         setOptions(prev => ({ ...prev, prompt: DEFAULT_PROMPT }));
                                     }
                                 }}>
-                                    <span className={`text-[10px] font-medium transition-colors ${isAutoPrompt ? 'text-[#002B7A]' : 'text-gray-400'}`}>AI 자동 완성</span>
-                                    <div className={`w-7 h-3.5 rounded-full p-0.5 transition-colors ${isAutoPrompt ? 'bg-[#002B7A]' : 'bg-gray-200'}`}>
-                                        <div className={`w-2.5 h-2.5 bg-white rounded-full shadow-sm transition-transform ${isAutoPrompt ? 'translate-x-3.5' : 'translate-x-0'}`} />
+                                    <span className={`text-[12px] font-medium transition-colors ${isAutoPrompt ? 'text-[#002B7A]' : 'text-gray-400'}`}>AI 자동 완성</span>
+                                    <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${isAutoPrompt ? 'bg-[#002B7A]' : 'bg-gray-200'}`}>
+                                        <div className={`w-3 h-3 bg-white rounded-full shadow-sm transition-transform ${isAutoPrompt ? 'translate-x-4' : 'translate-x-0'}`} />
                                     </div>
                                 </div>
                             </div>
@@ -292,15 +378,15 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                         setOptions({ ...options, prompt: e.target.value });
                                         if (isAutoPrompt) setIsAutoPrompt(false);
                                     }}
-                                    placeholder="만들고 싶은 영상의 느낌을 설명해주세요."
-                                    className={`w-full h-full rounded-xl p-3 text-[13px] resize-none transition-all outline-none border leading-relaxed ${isAutoPrompt
+                                    placeholder="만들고 싶은 영상의 느낌을 자유롭게 적어주세요."
+                                    className={`w-full h-full rounded-xl p-3 text-[14px] resize-none transition-all outline-none border leading-relaxed ${isAutoPrompt
                                         ? 'bg-blue-50/50 border-blue-200 text-[#002B7A] focus:bg-white focus:border-[#002B7A] focus:ring-1 focus:ring-[#002B7A]'
                                         : 'bg-white border-gray-200 text-[#191F28] focus:border-[#002B7A] focus:ring-1 focus:ring-[#002B7A]'
                                         }`}
                                 />
                                 {isAutoPrompt && (
-                                    <div className="absolute bottom-2 right-2 mb-1 flex items-center gap-1 text-[11px] text-[#002B7A] font-bold bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded-full shadow-sm border border-blue-100 group-hover/prompt:opacity-0 transition-opacity pointer-events-none">
-                                        <Wand2 size={11} /> AI가 작성함 (클릭하여 수정)
+                                    <div className="absolute bottom-2 right-2 mb-1 flex items-center gap-1 text-[12px] text-[#002B7A] font-bold bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-blue-100 group-hover/prompt:opacity-0 transition-opacity pointer-events-none">
+                                        <Wand2 size={12} /> AI가 작성함 (클릭하여 수정)
                                     </div>
                                 )}
                             </div>
@@ -314,10 +400,10 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                             <div className="relative z-50">
                                 <button
                                     onClick={() => setIsQualityMenuOpen(!isQualityMenuOpen)}
-                                    className="w-full px-3 py-2.5 bg-gray-50 rounded-xl border border-gray-200 text-[12px] font-bold text-[#191F28] flex items-center justify-between hover:bg-gray-100 transition-colors"
+                                    className="w-full px-3 py-2.5 bg-white rounded-xl border border-gray-100 text-[13px] font-medium text-gray-400 flex items-center justify-between hover:bg-gray-50 transition-colors"
                                 >
-                                    {qualityMode === 'standard' ? '표준 모드' : '프로 모드'}
-                                    <ChevronDown size={12} className={`text-gray-400 transition-transform ${isQualityMenuOpen ? 'rotate-180' : ''}`} />
+                                    {qualityMode === 'standard' ? '표준 화질' : '고화질 (Pro)'}
+                                    <ChevronDown size={12} className={`text-gray-300 transition-transform ${isQualityMenuOpen ? 'rotate-180' : ''}`} />
                                 </button>
                                 {isQualityMenuOpen && (
                                     <div className="absolute bottom-full left-0 w-full bg-white rounded-xl shadow-xl border border-gray-100 mb-2 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
@@ -332,25 +418,45 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                         </button>
                                         <button
                                             onClick={() => {
-                                                setQualityMode('pro');
+                                                // [PRO LOCK LOGIC]
+                                                if (confirm("Pro 플랜 전용 기능입니다. 지금 업그레이드하고 4K 화질을 경험해보세요!")) {
+                                                    onNavigate('subscription');
+                                                }
                                                 setIsQualityMenuOpen(false);
                                             }}
-                                            className="w-full text-left px-3 py-2.5 text-[12px] font-medium text-[#191F28] flex justify-between items-center transition-all duration-200 hover:bg-orange-50 hover:text-orange-700 hover:pl-4"
+                                            className="w-full text-left px-3 py-2.5 text-[12px] font-medium text-gray-400 flex justify-between items-center transition-all duration-200 hover:bg-gray-50 bg-gray-50/50 cursor-pointer"
                                         >
-                                            프로 모드 (고화질) <Crown size={12} className="text-orange-500" />
+                                            <span className="flex items-center gap-1.5">프로 모드 <Lock size={10} /></span>
+                                            <Crown size={12} className="text-gray-300" />
                                         </button>
                                     </div>
                                 )}
                             </div>
 
                             {/* Duration */}
-                            <button className="px-3 py-2.5 bg-gray-50 rounded-xl border border-gray-200 text-[12px] font-medium text-gray-500 flex items-center justify-between cursor-default">
-                                10초 영상 <Clock size={12} />
+                            <button className="px-3 py-2.5 bg-gray-50 rounded-xl border border-gray-200 text-[13px] font-bold text-[#191F28] flex items-center justify-between cursor-default">
+                                10초 영상 <Clock size={14} className="text-[#002B7A]" />
                             </button>
                         </div>
 
                         <button
-                            onClick={onGenerate}
+                            onClick={() => {
+                                try {
+                                    const payload = generateVeoPayload();
+
+                                    // [Backend Integration Bridge]
+                                    // 1. payload: VEO3 생성 옵션 JSON
+                                    // 2. selectedFile: 업로드할 원본 이미지 파일 (File Object)
+                                    // 백엔드에서는 selectedFile을 스토리지에 업로드 후, 그 ID를 payload에 추가하여 VEO3로 요청해야 합니다.
+                                    console.log("[VEO3 Payload Verification]", JSON.stringify(payload, null, 2));
+                                    if (selectedFile) console.log("[Image File Ready]", selectedFile.name, selectedFile.size);
+
+                                    onGenerate(payload, selectedFile);
+                                } catch (error) {
+                                    console.error("[Payload Generation Error]", error);
+                                    alert("영상 생성 요청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+                                }
+                            }}
                             disabled={images.length === 0 || step === 'loading'}
                             className={`w-full py-3.5 rounded-xl font-bold text-[15px] flex items-center justify-center gap-2 transition-all shadow-lg ${images.length > 0 && step !== 'loading'
                                 ? 'bg-gradient-to-r from-[#FF5A36] to-[#FF8A65] text-white hover:shadow-orange-500/30 hover:scale-[1.02]'
@@ -387,7 +493,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                             </div>
                             <div className="text-center space-y-1.5 px-4">
                                 <p className="text-[14px] font-bold text-[#191F28]">영상이 여기에 표시됩니다</p>
-                                <p className="text-[11px] text-gray-400">좌측에서 이미지를 업로드하고<br />아래에서 스타일을 선택해보세요.</p>
+                                <p className="text-[12px] text-gray-400">좌측에서 이미지를 업로드하고<br />아래에서 스타일을 선택해보세요.</p>
                             </div>
                         </div>
                     )}
@@ -401,38 +507,32 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                         <Lightbulb size={18} />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-[15px]">AI가 그려본 우리 가게 이야기</h3>
-                                        <p className="text-[11px] opacity-80">사장님의 가게에 딱 맞는 이야기를 준비했어요.</p>
+                                        <h3 className="font-bold text-[16px]">AI가 그려본 우리 가게 이야기</h3>
+                                        <p className="text-[13px] opacity-80">사장님의 가게에 딱 맞는 이야기를 준비했어요.</p>
                                     </div>
                                 </div>
-                                <div className="text-[11px] bg-white/20 px-2 py-1 rounded-lg">
+                                <div className="text-[12px] bg-white/20 px-2.5 py-1 rounded-lg">
                                     총 4장면 / 10초
                                 </div>
                             </div>
                             <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-gray-50">
                                 {[
-                                    { scene: 1, time: '0~3초', desc: '시선을 사로잡는 메인 메뉴 클로즈업', visual: '김이 모락모락 나는 음식 확대', audio: '경쾌한 도입부 음악' },
-                                    { scene: 2, time: '3~7초', desc: '매장의 활기찬 분위기와 손님들', visual: '즐겁게 식사하는 사람들 풀샷', audio: '웅성거리는 현장음 + 밝은 BGM' },
-                                    { scene: 3, time: '7~12초', desc: '메뉴의 디테일과 먹음직스러운 순간', visual: '젓가락으로 음식을 집어올리는 장면', audio: '식욕을 자극하는 효과음' },
-                                    { scene: 4, time: '12~15초', desc: '방문 유도 문구와 로고 엔딩', visual: '오시는 길 약도와 로고 오버레이', audio: '임팩트 있는 마무리 효과음' }
+                                    { scene: 1, time: '0~3초', desc: '시선을 사로잡는 도입부 (Hook)', audio: '강렬한 비트의 트렌디한 BGM' },
+                                    { scene: 2, time: '3~7초', desc: '메인 메뉴와 가게 분위기 (Body)', audio: '리듬감 있는 화면 전환과 효과음' },
+                                    { scene: 3, time: '7~10초', desc: '방문 유도 및 로고 엔딩 (Outro)', audio: '임팩트 있는 마무리 사운드' }
                                 ].map((scene) => (
                                     <div key={scene.scene} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex gap-4">
-                                        <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 shrink-0 font-bold text-xs border border-gray-200">
-                                            Scene {scene.scene}
+                                        <div className="w-16 h-16 bg-blue-50 rounded-lg flex items-center justify-center text-[#002B7A] shrink-0 font-bold text-sm border border-blue-100">
+                                            #{scene.scene}
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-start mb-1">
-                                                <h4 className="font-bold text-[#191F28] text-[15px]">{scene.desc}</h4>
-                                                <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">{scene.time}</span>
+                                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                            <div className="flex justify-between items-center mb-1.5">
+                                                <h4 className="font-bold text-[#191F28] text-[16px]">{scene.desc}</h4>
+                                                <span className="text-[12px] text-[#002B7A] bg-blue-50 px-2.5 py-1 rounded-full font-bold">{scene.time}</span>
                                             </div>
-                                            <div className="space-y-1">
-                                                <p className="text-[11px] text-gray-500 flex items-center gap-1.5">
-                                                    <Info size={10} className="text-blue-500" /> {scene.visual}
-                                                </p>
-                                                <p className="text-[11px] text-gray-500 flex items-center gap-1.5">
-                                                    <Zap size={10} className="text-orange-500" /> {scene.audio}
-                                                </p>
-                                            </div>
+                                            <p className="text-[13px] text-gray-500 flex items-center gap-1.5 mt-0.5">
+                                                <Zap size={14} className="text-orange-500" /> {scene.audio}
+                                            </p>
                                         </div>
                                     </div>
                                 ))}
@@ -497,7 +597,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                     <h3 className="text-[14px] font-bold text-[#191F28] flex items-center gap-2">
                                         스타일 갤러리
                                     </h3>
-                                    <p className="text-[11px] text-gray-500 mt-0.5">원하는 분위기를 선택해보세요.</p>
+                                    <p className="text-[13px] text-gray-500 mt-0.5">원하는 분위기를 선택해보세요.</p>
                                 </div>
                             </div>
 
@@ -598,7 +698,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                             {/* Recommendation Badge (PULSE Recommended) */}
                                             {vibe.recommend && (
                                                 <div className="absolute top-3 right-3 z-20 animate-pulse">
-                                                    <div className="bg-gradient-to-r from-[#002B7A] to-[#4D85FF] text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1">
+                                                    <div className="bg-gradient-to-r from-[#002B7A] to-[#4D85FF] text-white text-[11px] font-bold px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1">
                                                         <Sparkles size={10} className="text-yellow-300" /> PULSE 추천
                                                     </div>
                                                 </div>
@@ -612,7 +712,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                     <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 group-hover:text-gray-600 transition-colors shadow-sm">
                                         <Plus size={16} />
                                     </div>
-                                    <span className="text-[10px] text-gray-400 font-medium group-hover:text-gray-600">More Styles</span>
+                                    <span className="text-[12px] text-gray-400 font-medium group-hover:text-gray-600">스타일 더보기</span>
                                 </div>
                             </div>
                         </div>
@@ -637,7 +737,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                     />
                                     <button
                                         onClick={handleAITitle}
-                                        className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:scale-105 hover:shadow-md px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 shadow-sm"
+                                        className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[12px] font-bold text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:scale-105 hover:shadow-md px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 shadow-sm"
                                     >
                                         <Wand2 size={11} /> AI 추천
                                     </button>

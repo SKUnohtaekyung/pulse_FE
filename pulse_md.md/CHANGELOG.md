@@ -1,7 +1,7 @@
-    - **Interactive Profile List:** 부드러운 스프링 애니메이션이 적용된 "아코디언 스타일" 확장 기능 추가.
-    - **Journey Map:** "불편함(Pain Points)"과 "만족(Good Points)"을 시각화한 수평 레이아웃으로 리디자인.
-    - **AI Chat Interface:** 깔끔한 연한 파란색 배경의 전용 수직 채팅 패널 통합.
-    - **Visual Polish:** 프로필 그라디언트 적용, 버튼 스타일 통일, 호버 효과 개선.
+# PULSE Project Changelog (변경 이력)
+> 이 파일은 PULSE 프로젝트의 개발 진행 상황, 주요 업데이트 내역, 그리고 버그 수정 사항을 날짜별로 기록하는 문서입니다.
+
+## 2025-11-15
 - **Local Analysis Section (상권 분석):**
     - **Total Overhaul:** 디자인 시스템에 맞춰 엄격한 **3단 레이아웃** (아이덴티티, 분석, 채팅)으로 전면 개편.
     - **Golden Time Chart:** "피크 타임" 배지와 현실적인 데이터 시각화를 포함한 막대 차트 구현.
@@ -87,6 +87,14 @@
     * **Parameter Passing:** 대시보드 및 분석 페이지에서 홍보 영상 제작 페이지로 이동 시, 문맥 데이터(`title`, `vibe`) 전달 기능 구현.
     * **State Management:** `DashboardLayout`에서 네비게이션 파라미터 관리 및 `PromotionPage`로 전달.
     * **State Lifting:** `VideoCreator`의 `prompt` 및 `title` 상태를 `PromotionPage`로 상향 조정하여 외부 초기화 지원.
+* **VEO3 Payload Logic:**
+    - **Video Creator**:
+        - Refactored `VideoCreator.jsx` to bridge UI state with `Video.md` logic.
+        - Implemented `generateVeoPayload` function to verify VEO3 JSON output.
+        - Added console logging for payload verification.
+    - Added detailed Korean comments to critical logic sections (VEO3 Generator, Loading Logic, 3D Components).
+    - **Documentation**:
+        - Updated `Video.md` with structured tables and Pyton integration examples.
 * **CTA Updates:**
     * **Dashboard Home:** "퇴근길 직장인 타겟" (Energetic) 데이터 연동.
     * **Customer Analysis:** "단골 손님 시그니처 메뉴" (Emotional) 데이터 연동.
@@ -230,3 +238,30 @@
 *   **System Stability:**
     *   **Custom Hook:** `useSignupProgress` 훅을 도입하여 진행률, 메시지, 에러 상태를 체계적으로 관리.
     *   **Error Handling:** 네트워크 오류 등 예외 상황 발생 시 "재시도" UI가 즉시 노출되도록 안전장치 마련.
+
+---
+
+## 2026-02-01
+
+### 🎬 Promotion Video Creator VEO3 Integration (VEO3 영상 생성 모델 연동)
+*   **AI Payload Logic Implementation (VEO3 통신 규격 구현):**
+    *   **Payload Generator:** UI 상태(옵션, 프롬프트, 바이브)를 VEO3 모델이 이해할 수 있는 JSON 규격(`Video.md` 명세)으로 변환하는 `generateVeoPayload` 함수 구현.
+    *   **Verification Bridge:** 영상 생성 버튼 클릭 시 생성된 JSON 페이로드를 콘솔에 출력(`[VEO3 Payload Verification]`)하여 정합성 검증 가능.
+*   **Code Optimization (성능 최적화):**
+    *   **Memory Efficiency:** `VIBES`, `PERSONA_PROMPTS` 등 정적 데이터를 컴포넌트 외부로 분리하여 리렌더링 시 메모리 낭비 제거.
+    *   **Safety Net:** 페이로드 생성 중 발생할 수 있는 데이터 오류를 방지하기 위해 `try-catch` 기반의 에러 핸들링 및 사용자 알림(`alert`) 로직 추가.
+*   **Backend Interface Readiness (백엔드 실연동 준비):**
+    *   **Raw File Capture:** 프론트엔드용 `Blob URL`뿐만 아니라 실제 업로드용 `File Object`를 별도 상태(`selectedFile`)로 관리.
+    *   **API Callback Update:** `onGenerate` 콜백 호출 시 `payload`(JSON)와 `file`(Object)을 동시에 전달하도록 시그니처 개선.
+*   **Documentation (유지보수성 강화):**
+    *   **Korean Comments:** VEO3 파이프라인, 3D 로딩 인터랙션, 상태 관리 등 핵심 로직 전반에 상세한 한국어 주석 주입.
+
+### 💳 Subscription Page Implementation (구독 페이지 구현)
+*   **Clean Fintech Design (구독 페이지):**
+    *   **Light Mode:** 기존의 어두운 AI 느낌을 탈피하여, 금융 앱 스타일의 신뢰감 있는 White/Deep Blue 테마 적용 (`SubscriptionPage.jsx`).
+    *   **Pricing Card:** `PricingCard.jsx` 컴포넌트화. Growth 플랜(인기) 강조를 위한 **Best Choice 배지** 및 **Shine 효과** 구현.
+    *   **Objection Handling:** 결제 전 고객의 불안감을 해소하기 위해 아코디언 스타일의 **FAQ 섹션(`FaqSection.jsx`)** 추가.
+*   **Business Logic & UX:**
+    *   **Psychological Pricing:** 29,000원(Growth) vs 59,000원(Pro) 앵커링 효과 및 연간 결제 시 20% 할인 토글 인터랙션 구현.
+    *   **Entry Points:** 사이드바 프로필 영역 및 영상 제작 페이지의 'Pro 화질' 잠금 버튼을 통한 구독 전환 경로 구축.
+    *   **Localization:** 모든 UI 텍스트(플랜명, 버튼 등)를 자연스러운 한국어로 통일.
