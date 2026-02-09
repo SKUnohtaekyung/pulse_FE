@@ -8,11 +8,12 @@ import MyPage from '../../features/mypage/MyPage';
 import PromotionPage from '../../features/promotion/PromotionPage';
 import ReviewManagementPage from '../../features/reviewManagement/ReviewManagementPage';
 import SubscriptionPage from '../../pages/SubscriptionPage';
+import InfluencerMatchingPage from '../../features/influencer/InfluencerMatchingPage';
 import { COLORS } from '../../constants';
 import '../../styles/globals.css';
 
-export default function DashboardLayout() {
-    const [activeMenu, setActiveMenu] = useState('home');
+export default function DashboardLayout({ initialPage, content }) {
+    const [activeMenu, setActiveMenu] = useState(initialPage || 'home');
     const [isExpanded, setIsExpanded] = useState(false);
 
     const [navParams, setNavParams] = useState(null);
@@ -70,6 +71,15 @@ export default function DashboardLayout() {
                     ) : activeMenu === 'subscription' ? (
                         // SUBSCRIPTION VIEW
                         <SubscriptionPage />
+                    ) : activeMenu === 'influencer-matching' ? (
+                        // INFLUENCER MATCHING VIEW
+                        // content prop이 있으면(RequestPage 등) 그것을 렌더링, 아니면 메인 페이지
+                        content || (
+                            <>
+                                <Header title="우리 가게에 딱 맞는 인플루언서를 찾아보세요." />
+                                <InfluencerMatchingPage initialParams={navParams} />
+                            </>
+                        )
                     ) : (
                         // Placeholder for other menus
                         <div className="flex items-center justify-center h-full text-gray-400 flex-col gap-4">

@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import DashboardLayout from './components/layout/DashboardLayout';
 import AuthPage from './features/auth/AuthPage';
 import LandingPage from './pages/LandingPage';
+import InfluencerRequestPage from './features/influencer/InfluencerRequestPage';
 import './styles/globals.css';
 
 // 개발 모드: true로 설정하면 로그인 없이 대시보드 접근 가능
@@ -16,6 +17,8 @@ export default function App() {
             <Route path="/landing" element={<LandingPage />} /> /*나중에 메인으로 바꾸기*/
             <Route path="/dashboard" element={<DashboardLayout />} />
             <Route path="/subscription" element={<DashboardLayout initialPage="subscription" />} />
+            <Route path="/influencer-matching" element={<DashboardLayout initialPage="influencer-matching" />} />
+            <Route path="/influencer-matching/request/:id" element={<DashboardLayout initialPage="influencer-matching" content={<InfluencerRequestPage />} />} />
             <Route path="/" element={DEV_MODE ? <DashboardLayout /> : <LandingPage />} />
             <Route path="*" element={<DashboardLayout />} />
         </Routes>

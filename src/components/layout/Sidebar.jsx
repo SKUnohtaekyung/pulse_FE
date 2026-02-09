@@ -21,7 +21,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded }) => {
         { id: 'insight', icon: <BarChart2 size={24} />, label: '손님 분석' },
         { id: 'promotion', icon: <PlayCircle size={24} />, label: '홍보 영상 만들기' },
         { id: 'review', icon: <MessageCircle size={24} />, label: '리뷰 관리 & 답변' },
-        { id: 'expert', icon: <Users size={24} />, label: '인플루언서 매칭' },
+        { id: 'influencer-matching', icon: <Users size={24} />, label: '인플루언서 매칭', badge: 'Pro' },
         { id: 'mypage', icon: <Home size={24} />, label: '마이페이지' },
     ];
 
@@ -66,8 +66,13 @@ const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded }) => {
                             <div className="menu-icon">
                                 {menu.icon}
                             </div>
-                            <span className="menu-label text-[17px] font-medium">
+                            <span className="menu-label text-[17px] font-medium flex items-center gap-2">
                                 {menu.label}
+                                {menu.badge && (
+                                    <span className="px-2 py-0.5 bg-gradient-to-r from-[#FF5A36] to-[#FF8A36] text-white text-[10px] font-bold rounded-full">
+                                        {menu.badge}
+                                    </span>
+                                )}
                             </span>
                         </button>
                     ))}
