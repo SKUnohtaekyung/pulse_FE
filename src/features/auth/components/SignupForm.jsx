@@ -9,10 +9,10 @@ import '../AuthPage.css';
 const SignupForm = ({ onSwitch }) => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
-    
+
     // Status: 'idle' | 'loading' | 'success' | 'error'
     const { progress, message, status, startPolling } = useSignupProgress();
-    const [isLoading, setIsLoading] = useState(false); 
+    const [isLoading, setIsLoading] = useState(false);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -58,7 +58,7 @@ const SignupForm = ({ onSwitch }) => {
 
     const execDaumPostcode = () => {
         new window.daum.Postcode({
-            oncomplete: function(data) {
+            oncomplete: function (data) {
                 let addr = '';
                 let extraAddr = '';
 
@@ -68,14 +68,14 @@ const SignupForm = ({ onSwitch }) => {
                     addr = data.jibunAddress;
                 }
 
-                if(data.userSelectedType === 'R'){
-                    if(data.bname !== '' && /[동|로|가]$/g.test(data.bname)){
+                if (data.userSelectedType === 'R') {
+                    if (data.bname !== '' && /[동|로|가]$/g.test(data.bname)) {
                         extraAddr += data.bname;
                     }
-                    if(data.buildingName !== '' && data.apartment === 'Y'){
+                    if (data.buildingName !== '' && data.apartment === 'Y') {
                         extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
                     }
-                    if(extraAddr !== ''){
+                    if (extraAddr !== '') {
                         extraAddr = ' (' + extraAddr + ')';
                     }
                     addr += extraAddr;
@@ -93,17 +93,17 @@ const SignupForm = ({ onSwitch }) => {
     const handleNext = (e) => {
         e.preventDefault();
         if (step === 1) {
-            if (!formData.name || !formData.phone || !formData.email || !formData.password ) {
+            if (!formData.name || !formData.phone || !formData.email || !formData.password) {
                 alert("모든 필수 항목을 입력해주세요.");
                 return;
             }
-            
+
             const validation = validatePassword(formData.password);
             if (!validation.minLength || !validation.hasSpecialChar || !validation.hasLowerCase || !validation.hasNumber) {
                 alert("비밀번호는 8자 이상, 특수문자, 영어 소문자, 숫자를 포함해야 합니다.");
                 return;
             }
-            
+
             setStep(2);
         } else {
             handleSubmit();
@@ -111,11 +111,38 @@ const SignupForm = ({ onSwitch }) => {
     };
 
     const handleSubmit = async () => {
-        // Start Loading Process
+        // 한글 카테고리 → 영문 Enum 매핑 함수
+        const mapCategoryToEnum = (koreanCategory) => {
+            const mapping = {
+                '한식': 'KOREAN',
+                '중식': 'CHINESE',
+                '일식': 'JAPANESE',
+                '양식': 'WESTERN',
+                '카페/디저트': 'CAFE_DESSERT',
+                '주점': 'BAR',
+                '기타': 'ETC'
+            };
+            return mapping[koreanCategory] || 'KOREAN'; // 기본값: KOREAN
+        };
+
+        // Prepare payload for Spring Boot API
+        const payload = {
+            email: formData.email,
+            password: formData.password,
+            passwordConfirm: formData.password,
+            name: formData.name,
+            phone: formData.phone,
+            isPrivacyAgreed: formData.agreed,
+            shopInfo: {
+                name: formData.storeName,
+                address: `${formData.address} ${formData.detailAddress}`,
+                category: mapCategoryToEnum(formData.category)
+            }
+        };
+
+        // Start Loading Process with real API call
         setIsLoading(true);
-        // Pass true to test error roughly 20% of the time, or false for always success
-        // For production, this would be set to false or controlled by API errors
-        startPolling(false); 
+        startPolling(payload);
     };
 
     // Callback when user clicks "Start" on success screen
@@ -132,16 +159,16 @@ const SignupForm = ({ onSwitch }) => {
     return (
         <AnimatePresence mode="wait">
             {isLoading ? (
-                <SignupLoadingScreen 
-                    key="loading" 
-                    progress={progress} 
-                    message={message} 
+                <SignupLoadingScreen
+                    key="loading"
+                    progress={progress}
+                    message={message}
                     status={status}
                     onComplete={handleComplete}
                     onRetry={handleRetry}
                 />
             ) : (
-                <motion.div 
+                <motion.div
                     key="form"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -244,7 +271,7 @@ const SignupForm = ({ onSwitch }) => {
                                         value={formData.postcode}
                                         readOnly
                                     />
-                                    <div className="input-row" style={{ gap: '8px' , marginBottom: '0px'}}>
+                                    <div className="input-row" style={{ gap: '8px', marginBottom: '0px' }}>
                                         <input
                                             type="text"
                                             name="address"
@@ -259,7 +286,7 @@ const SignupForm = ({ onSwitch }) => {
                                             type="button"
                                             onClick={execDaumPostcode}
                                             className="submit-btn"
-                                            style={{ 
+                                            style={{
                                                 flex: '0 0 auto',
                                                 width: '120px',
                                                 padding: '0 15px',
@@ -321,7 +348,7 @@ const SignupForm = ({ onSwitch }) => {
 const PasswordInput = ({ name, placeholder, value, onChange, validation }) => {
     const [show, setShow] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
-    
+
     return (
         <div>
             <div className="password-wrapper-minimal">
@@ -340,7 +367,7 @@ const PasswordInput = ({ name, placeholder, value, onChange, validation }) => {
                     {show ? <EyeOff size={18} /> : <Eye size={18} />}
                 </div>
             </div>
-            
+
             {/* 비밀번호 유효성 검사 피드백 */}
             {validation && value && (
                 <div className="password-requirements" style={{
@@ -350,39 +377,39 @@ const PasswordInput = ({ name, placeholder, value, onChange, validation }) => {
                     borderRadius: '8px',
                     fontSize: '13px'
                 }}>
-                    <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '8px', 
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
                         marginBottom: '6px',
                         color: validation.minLength ? '#10b981' : '#6b7280'
                     }}>
                         <span>{validation.minLength ? '✓' : '○'}</span>
                         <span>8자 이상</span>
                     </div>
-                    <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '8px', 
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
                         marginBottom: '6px',
                         color: validation.hasSpecialChar ? '#10b981' : '#6b7280'
                     }}>
                         <span>{validation.hasSpecialChar ? '✓' : '○'}</span>
                         <span>특수문자 포함</span>
                     </div>
-                    <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '8px', 
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
                         marginBottom: '6px',
                         color: validation.hasLowerCase ? '#10b981' : '#6b7280'
                     }}>
                         <span>{validation.hasLowerCase ? '✓' : '○'}</span>
                         <span>영어 소문자 포함</span>
                     </div>
-                    <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
                         gap: '8px',
                         color: validation.hasNumber ? '#10b981' : '#6b7280'
                     }}>
