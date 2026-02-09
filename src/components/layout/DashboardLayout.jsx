@@ -6,6 +6,7 @@ import DashboardHome from '../../features/dashboard/DashboardHome';
 import UnifiedInsightPage from '../../features/insight/UnifiedInsightPage';
 import MyPage from '../../features/mypage/MyPage';
 import PromotionPage from '../../features/promotion/PromotionPage';
+import ReviewManagementPage from '../../features/reviewManagement/ReviewManagementPage';
 import SubscriptionPage from '../../pages/SubscriptionPage';
 import { COLORS } from '../../constants';
 import '../../styles/globals.css';
@@ -59,6 +60,12 @@ export default function DashboardLayout() {
                         <>
                             <Header title="사장님의 사진으로 홍보 영상을 빠르게 제작해 드려요." />
                             <PromotionPage initialParams={navParams} onNavigate={handleNavigate} />
+                        </>
+                    ) : activeMenu === 'review' ? (
+                        // REVIEW MANAGEMENT VIEW
+                        <>
+                            <Header title="리뷰를 관리하고 AI로 답변을 작성하세요." />
+                            <ReviewManagementPage />
                         </>
                     ) : activeMenu === 'subscription' ? (
                         // SUBSCRIPTION VIEW
