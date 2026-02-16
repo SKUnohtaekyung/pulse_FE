@@ -1,202 +1,348 @@
 import React, { useState } from 'react';
 import {
-    Sparkles,
     Clapperboard,
-    TrendingUp,
-    CloudRain,
-    Zap,
     BarChart2,
-    ArrowUpRight,
-    Bell,
     Smile,
-    Briefcase,
-    Heart
+    Heart,
+    Sparkles,
+    ChevronRight,
+    RefreshCw,
+    ArrowUpRight,
+    Search,
+    MousePointerClick,
+    Zap,
+    MapPin
 } from 'lucide-react';
-import { COLORS } from '../../constants';
+import {
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip as RechartsTooltip,
+    ResponsiveContainer,
+    AreaChart,
+    Area
+} from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
+import { WEATHER_TYPES } from './weatherData';
+import { WIDGET_BASE_CLASSES, LOADING_TIPS, CHART_DATA, KEYWORD_DATA } from './DashboardConstants';
+import WeatherAnimation from './components/WeatherAnimation';
+import WidgetHeader from './components/WidgetHeader';
+import InfoTooltip from './components/InfoTooltip';
+import SeasonAlert from './components/SeasonAlert';
 
-const DashboardHome = () => {
-    const [today] = useState(new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' }));
+const DashboardHome = ({ onNavigate }) => {
+    // State
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [weatherType, setWeatherType] = useState('rain');
+    const [loadingTip, setLoadingTip] = useState(LOADING_TIPS[0]);
+
+    const handleRefresh = () => {
+        setIsRefreshing(true);
+        setLoadingTip(LOADING_TIPS[Math.floor(Math.random() * LOADING_TIPS.length)]);
+        const types = Object.keys(WEATHER_TYPES);
+        const randomType = types[Math.floor(Math.random() * types.length)];
+        setWeatherType(randomType);
+        setTimeout(() => setIsRefreshing(false), 2000);
+    };
+
+    const currentWeather = WEATHER_TYPES[weatherType];
+    const WeatherIcon = currentWeather.icon;
 
     return (
-        <div className="flex flex-col h-full gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
+        <div className="flex flex-col flex-1 gap-4 overflow-hidden bg-[#F5F7FA] p-5 relative">
 
-            {/* Main Layout: 2 Columns (Left Content vs Right Widgets) - Fixed Height */}
-            <div className="grid grid-cols-12 gap-4 h-full min-h-0">
-
-                {/* LEFT COLUMN: Main Content (Hero & Performance) - col-span-9 */}
-                <div className="col-span-9 flex flex-col gap-4 h-full min-h-0">
-
-                    {/* 1. Hero Section: Today's Mission (Fixed Height ~35%) */}
-                    <div
-                        className="relative rounded-3xl p-6 flex items-center justify-between overflow-hidden group shadow-md shrink-0 h-[35%]"
-                        style={{ background: `linear-gradient(120deg, ${COLORS.primary} 0%, #003BB5 100%)` }}
+            {/* Loading Overlay */}
+            <AnimatePresence>
+                {isRefreshing && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-[100] bg-[#F5F7FA]/90 backdrop-blur-md flex flex-col items-center justify-center text-center p-8"
                     >
-                        <div className="absolute right-0 top-0 h-full w-1/2 bg-white/5 transform skew-x-12 pointer-events-none"></div>
+                        <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                            className="w-10 h-10 border-4 border-[#002B7A] border-t-transparent rounded-full mb-4"
+                        />
+                        <h3 className="text-xl font-bold text-[#191F28] mb-2">데이터를 분석하고 있어요...</h3>
+                        <p className="text-gray-500 text-sm max-w-md break-keep animate-pulse">
+                            💡 {loadingTip}
+                        </p>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-                        <div className="relative z-10 flex-1">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white/90 text-xs font-bold mb-3">
-                                <Sparkles size={12} className="text-yellow-300" />
-                                오늘의 AI 추천 미션
-                            </div>
-                            <h2 className="text-3xl font-bold text-white mb-2 leading-tight">
-                                "금요일 저녁 예약이 비었어요!<br />
-                                <span className="text-yellow-300">퇴근길 직장인 타겟</span> 릴스를 올려보세요."
-                            </h2>
-                            <button className="mt-4 px-6 py-3 bg-[#FF5A36] hover:bg-[#FF7052] text-white rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg hover:-translate-y-0.5">
-                                <Clapperboard size={20} />
-                                1분 만에 홍보 영상 만들기
+            {/* Header Section */}
+            <div className="flex flex-col justify-center shrink-0 mb-1">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-2xl font-bold text-[#002B7A] leading-tight">우리 가게 현황</h2>
+                        <div className="flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-gray-200 shadow-sm">
+                            <span className="text-xs text-gray-500 font-medium">
+                                {new Date().toLocaleDateString()} {new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 기준
+                            </span>
+                            <button
+                                onClick={handleRefresh}
+                                className={`text-gray-400 hover:text-[#002B7A] transition-colors ${isRefreshing ? 'animate-spin' : ''}`}
+                                title="데이터 새로고침"
+                            >
+                                <RefreshCw size={12} />
                             </button>
                         </div>
+                    </div>
+                </div>
+            </div>
 
-                        <div className="relative z-10 hidden md:block w-40 h-40 opacity-90">
-                            <div className="w-full h-full bg-gradient-to-br from-white/20 to-transparent rounded-full flex items-center justify-center backdrop-blur-sm border border-white/10">
-                                <div className="w-28 h-28 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
-                                    <TrendingUp size={56} className="text-white" />
-                                </div>
-                            </div>
-                        </div>
+            {/* Main Content Area - Split Layout */}
+            <div className="flex-1 flex flex-col gap-3 min-h-0">
+
+                {/* Section 1: Briefing (Flex 0.28) - Reduced Height */}
+                <div className="flex-[0.28] flex flex-col gap-2 min-h-0">
+                    <div className="flex items-center gap-2 shrink-0">
+                        <div className="w-1 h-4 bg-[#002B7A] rounded-full"></div>
+                        <h3 className="text-base font-bold text-[#191F28]">매장 브리핑</h3>
                     </div>
 
-                    {/* 2. Expanded Performance Section (Remaining Height ~65%) */}
-                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex-1 min-h-0 flex flex-col">
-                        <div className="flex items-center justify-between mb-4 shrink-0">
-                            <h3 className="font-bold text-[#191F28] text-xl flex items-center gap-2">
-                                <BarChart2 size={24} className="text-[#002B7A]" />
-                                지난주 성과 상세 분석
-                            </h3>
-                            <span className="text-xs text-gray-400 font-medium bg-gray-50 px-3 py-1 rounded-full">
-                                데이터 기준: 10.15 ~ 10.21
-                            </span>
-                        </div>
-
-                        <div className="flex gap-6 flex-1 min-h-0">
-                            {/* Left: Expert Insight & Trend Chart */}
-                            <div className="flex-1 flex flex-col gap-4">
-                                {/* Expert Insight */}
-                                <div className="bg-[#F5F7FA] p-4 rounded-2xl border border-[#002B7A]/5 flex gap-4 relative overflow-hidden shrink-0">
-                                    <div className="absolute top-0 left-0 w-1 h-full bg-[#002B7A]"></div>
-                                    <div className="shrink-0">
-                                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-[#002B7A]/10 shadow-sm">
-                                            <Briefcase size={18} className="text-[#002B7A]" />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="bg-[#002B7A] text-white text-[10px] font-bold px-1.5 py-0.5 rounded">AI 전문가</span>
-                                        </div>
-                                        <h4 className="text-sm font-bold text-[#191F28] mb-1">"노출은 훌륭하지만, 저장률 개선이 필요해요!"</h4>
-                                        <p className="text-xs text-gray-600 leading-relaxed">
-                                            지난주 대비 노출수가 <span className="text-green-600 font-bold">+15%</span> 증가했지만,
-                                            방문 의사를 나타내는 '저장' 비율은 3%에 머물렀어요.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Trend Chart */}
-                                <div className="bg-white rounded-xl border border-gray-100 p-4 flex-1 flex flex-col">
-                                    <h5 className="font-bold text-gray-800 mb-2 text-sm flex items-center gap-2">
-                                        <TrendingUp size={14} className="text-gray-400" /> 주간 노출 추이
-                                    </h5>
-                                    <div className="flex-1 flex items-end justify-between gap-2 px-2 pb-2">
-                                        {[45, 50, 75, 60, 90, 100, 85].map((h, i) => (
-                                            <div key={i} className="flex-1 flex flex-col gap-1 items-center group h-full justify-end">
-                                                <div
-                                                    className={`w-full rounded-t-sm transition-all duration-500 ${i === 5 ? 'bg-[#002B7A]' : 'bg-[#E8EEF5]'}`}
-                                                    style={{ height: `${h}%` }}
-                                                ></div>
-                                                <span className="text-[10px] text-gray-400">{['월', '화', '수', '목', '금', '토', '일'][i]}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
+                    <div className="grid grid-cols-12 gap-3 flex-1 min-h-0">
+                        {/* 1. Weather (Span 3) - Horizontal Layout */}
+                        <div className={`${WIDGET_BASE_CLASSES} col-span-3 flex-row p-4 items-center justify-between px-8 overflow-hidden min-h-full`}>
+                            <div className="absolute inset-0 z-0">
+                                <div className={`absolute inset-0 bg-gradient-to-br ${currentWeather.gradient} transition-colors duration-500`}></div>
+                                <WeatherAnimation animation={currentWeather.animation} />
                             </div>
 
-                            {/* Right: Engagement Split */}
-                            <div className="w-[40%] bg-white rounded-xl border border-gray-100 p-4 flex flex-col">
-                                <h5 className="font-bold text-gray-800 mb-4 text-sm flex items-center gap-2">
-                                    <Heart size={14} className="text-gray-400" /> 반응 유형 분석
-                                </h5>
-                                <div className="flex-1 flex flex-col justify-center gap-6">
-                                    {[
-                                        { label: '좋아요', val: 70, color: 'bg-red-400' },
-                                        { label: '저장', val: 20, color: 'bg-[#002B7A]' },
-                                        { label: '공유', val: 10, color: 'bg-green-500' }
-                                    ].map((item, i) => (
-                                        <div key={i}>
-                                            <div className="flex justify-between text-xs mb-1.5">
-                                                <span className="text-gray-500">{item.label}</span>
-                                                <span className="font-bold text-[#191F28]">{item.val}%</span>
-                                            </div>
-                                            <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                                                <div className={`h-full ${item.color}`} style={{ width: `${item.val}%` }}></div>
-                                            </div>
-                                        </div>
-                                    ))}
+                            {/* Icon (Left) */}
+                            <div className="relative z-10 shrink-0">
+                                <WeatherIcon size={42} className={`${currentWeather.textColor} fill-white/10`} strokeWidth={1.5} />
+                            </div>
+
+                            {/* Text (Right) */}
+                            <div className="relative z-10 flex flex-col items-start gap-0.5">
+                                <p className={`text-lg font-bold ${currentWeather.textColor} leading-none`}>{currentWeather.label}</p>
+                                <p className={`text-[11px] ${currentWeather.subTextColor} opacity-90 mb-1`}>유동인구 많음</p>
+                                <div className="bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                    💡 {currentWeather.recommendation}
                                 </div>
-                                <div className="mt-auto pt-4 text-center">
-                                    <p className="text-xs text-gray-500 mb-1">저장 비율 목표</p>
-                                    <p className="text-lg font-bold text-[#002B7A]">30%</p>
+                            </div>
+                        </div>
+
+                        {/* 2. Season Alert (Span 3) */}
+                        <div className="col-span-3 min-h-full">
+                            <SeasonAlert />
+                        </div>
+
+                        {/* 3. AI Marketing (Span 6) - Action Inducing Card */}
+                        <div className="col-span-6 bg-gradient-to-r from-[#002B7A] to-[#001F5C] rounded-[24px] p-0 shadow-lg text-white flex relative overflow-hidden group min-h-full">
+                            {/* Decorative Elements */}
+                            <div className="absolute top-0 right-0 w-80 h-80 bg-[#8FB6FF] rounded-full blur-[80px] opacity-20 -translate-y-1/2 translate-x-1/3 group-hover:opacity-30 transition-opacity duration-500"></div>
+
+                            <div className="flex-1 p-5 flex flex-col justify-center relative z-10">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="bg-[#FF5A36] p-1 rounded-md">
+                                        <Zap size={12} className="text-white fill-white" />
+                                    </div>
+                                    <span className="text-[#FF5A36] font-bold text-xs tracking-wide">AI 제안</span>
                                 </div>
+                                <h2 className="text-lg font-bold leading-tight mb-1.5 break-keep">
+                                    비 오는 날엔 <span className="text-[#FF5A36]">'파전'</span> 검색량이 급증해요! ☔
+                                </h2>
+                                <p className="text-blue-100/80 text-xs break-keep leading-relaxed">
+                                    <span className="font-bold text-white">따뜻하고 감성적인 파전 영상</span>으로
+                                    지금 바로 손님을 사로잡아보세요.
+                                </p>
+                            </div>
+
+                            <div
+                                className="flex items-center justify-center pr-6 pt-6"
+                                onClick={() => onNavigate && onNavigate('promotion', {
+                                    prompt: "비 오는 날, 따뜻하고 바삭한 파전이 지글지글 익어가는 감성적인 영상. 김이 모락모락 나는 클로즈업 샷, 빗소리가 들리는 듯한 분위기.",
+                                    title: "비 오는 날엔 파전에 막걸리 한 잔? ☔",
+                                    vibe: "emotional"
+                                })}
+                            >
+                                <button className="bg-white text-[#002B7A] px-5 py-2.5 rounded-full font-bold text-xs shadow-lg flex items-center gap-2 hover:bg-blue-50 transition-all transform hover:scale-105">
+                                    <Clapperboard size={16} className="text-[#002B7A]" />
+                                    영상 만들기
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* RIGHT COLUMN: Widgets (Trends, Weather, Sentiment) - col-span-3 */}
-                <div className="col-span-3 flex flex-col gap-4 h-full min-h-0">
+                {/* --- Section 2: Data & Analysis --- */}
+                <div className="flex-[0.72] flex gap-4 min-h-0">
+                    {/* 1. Store Data Analysis (Left ~60%) */}
+                    <div className="flex-[1.4] bg-white rounded-[24px] p-5 shadow-sm border border-gray-100 flex flex-col relative overflow-hidden">
+                        {/* Header (Vertical Bar Style - Unified) */}
+                        <div className="flex items-center justify-between mb-4 relative z-10 shrink-0">
+                            <div className="flex items-center gap-2">
+                                <div className="w-1 h-4 bg-[#002B7A] rounded-full"></div>
+                                <h3 className="text-lg font-bold text-[#191F28]">가게 데이터 분석</h3>
+                                <InfoTooltip text="지난 7일간의 매장 검색량 및 방문자 추이입니다." size={14} />
+                            </div>
+                            <button className="text-xs bg-[#E5EDFF] text-[#002B7A] px-3 py-1.5 rounded-full hover:bg-[#D0E0FF] transition-colors flex items-center gap-1 font-bold">
+                                상세 분석 보러가기 <ChevronRight size={12} />
+                            </button>
+                        </div>
 
-                    {/* 1. Real-time Trends (Flex-1) */}
-                    <div className="flex-1 bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between">
-                        <div>
-                            <h3 className="font-bold text-[#191F28] text-sm flex items-center gap-2 mb-3">
-                                <Bell size={16} className="text-[#FF5A36]" /> 실시간 트렌드
-                            </h3>
-                            <div className="flex flex-wrap gap-2 mb-4">
-                                <span className="px-2.5 py-1 bg-red-50 text-red-600 text-xs font-bold rounded-md">#하이볼</span>
-                                <span className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-md">#회식</span>
+                        {/* Summary Stats */}
+                        <div className="flex items-center gap-6 mb-3 relative z-10 shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                                    <Search size={16} />
+                                </div>
+                                <div>
+                                    <p className="text-[11px] text-gray-500 mb-0.5">매장 검색량</p>
+                                    <div className="flex items-end gap-1.5">
+                                        <span className="text-xl font-bold text-[#191F28]">1,250</span>
+                                        <span className="text-[10px] font-bold text-red-500 flex items-center bg-red-50 px-1 py-0.5 rounded">
+                                            <ArrowUpRight size={10} /> 15%
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="w-px h-8 bg-gray-100"></div>
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                                    <MousePointerClick size={16} />
+                                </div>
+                                <div>
+                                    <p className="text-[11px] text-gray-500 mb-0.5">플레이스 방문</p>
+                                    <div className="flex items-end gap-1.5">
+                                        <span className="text-xl font-bold text-[#191F28]">450</span>
+                                        <span className="text-[10px] font-bold text-red-500 flex items-center bg-red-50 px-1 py-0.5 rounded">
+                                            <ArrowUpRight size={10} /> 8%
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div>
-                            <p className="text-[11px] text-gray-400 mb-1.5">경쟁사 동향</p>
-                            <p className="text-sm font-bold text-[#191F28] leading-snug">
-                                주변 1위 '이자카야 텐'에서 <br />
-                                <span className="text-[#FF5A36]">하이볼 2+1 이벤트</span>를 시작했어요.
-                            </p>
+
+                        {/* Chart Area */}
+                        <div className="flex-1 w-full min-h-[250px] relative z-0">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={CHART_DATA} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#002B7A" stopOpacity={0.1} />
+                                            <stop offset="95%" stopColor="#002B7A" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f5f5f5" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} dy={10} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} />
+                                    <RechartsTooltip
+                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }}
+                                        cursor={{ stroke: '#002B7A', strokeWidth: 1, strokeDasharray: '4 4' }}
+                                    />
+                                    <Area type="monotone" dataKey="value" stroke="#002B7A" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
+                                </AreaChart>
+                            </ResponsiveContainer>
                         </div>
                     </div>
 
-                    {/* 2. Weather (Flex-1) */}
-                    <div className="flex-1 bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-yellow-50 rounded-bl-full -mr-4 -mt-4 opacity-50"></div>
-                        <h3 className="font-bold text-gray-500 text-sm flex items-center gap-1.5">
-                            <CloudRain size={16} /> 날씨 & 상권
-                        </h3>
-                        <div>
-                            <p className="text-xl font-bold text-[#191F28] mb-2">비 옴 / 많음</p>
-                            <div className="flex items-center gap-1.5 text-xs font-medium text-[#002B7A] bg-[#F5F7FA] px-2.5 py-1.5 rounded-lg w-fit">
-                                {/* <Zap size={14} className="text-yellow-500" />
-                                <span>추천: 전 굽는 소리 ASMR</span> */}
+                    {/* 2. Guest Analysis (Right ~40%) - Annotated Split Layout */}
+                    <div className="flex-1 bg-white rounded-[24px] shadow-sm border border-gray-100 relative group overflow-hidden flex flex-col p-6 pt-6 min-w-[320px]">
+                        {/* Decorative Background Blob */}
+                        <div className="absolute top-[-50px] right-[-50px] w-64 h-64 bg-blue-50/50 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
+
+                        {/* Top CTA Button */}
+                        <div className="flex justify-end mb-4 relative z-10 shrink-0">
+                            <button
+                                onClick={() => onNavigate && onNavigate('insight')}
+                                className="text-xs bg-[#E5EDFF] text-[#002B7A] px-3 py-1.5 rounded-full hover:bg-[#D0E0FF] transition-colors flex items-center gap-1 font-bold shadow-sm"
+                            >
+                                <MapPin size={12} className="text-[#002B7A]" />
+                                상권 & 손님 분석 보러가기 <ChevronRight size={12} className="group-hover/btn:translate-x-0.5 transition-transform" />
+                            </button>
+                        </div>
+
+                        {/* Content Body: Split Layout */}
+                        <div className="flex-1 flex gap-6 relative z-10 min-h-0">
+
+                            {/* LEFT COL (42%): Headline + Description */}
+                            <div className="w-[42%] flex flex-col">
+                                {/* Box 1: Headline Area */}
+                                <div className="mb-3">
+                                    <h2 className="text-[26px] font-extrabold text-[#191F28] leading-[1.2] tracking-tight break-keep mb-3">
+                                        <span className="bg-gradient-to-r from-[#002B7A] to-blue-500 bg-clip-text text-transparent">30대 직장인</span>이<br />
+                                        가장 많아요 👔
+                                    </h2>
+                                    <div className="flex flex-wrap gap-2 items-center">
+                                        <span className="px-2.5 py-1 bg-blue-50 text-[#002B7A] text-[11px] font-bold rounded-full border border-blue-100">
+                                            🔥 점심 피크 타임
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Box 3: Description Area (Moved Up) */}
+                                <div className="bg-[#F8F9FA] rounded-xl p-3.5 border border-gray-100 mb-2">
+                                    <p className="text-[11px] text-gray-600 leading-relaxed font-medium break-keep">
+                                        주변 오피스 근무자들이 점심 식사를 위해 활발히 이동하며,
+                                        <span className="text-[#002B7A] font-bold"> 가성비와 회전율</span>이 중요한
+                                        직장인 점심 & 저녁 회식 상권의 특징을 보입니다.
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* VERTICAL DIVIDER */}
+                            <div className="w-px bg-gray-100 h-full my-1"></div>
+
+                            {/* RIGHT COL (Flex-1): Persona List (Pushed Down) */}
+                            <div className="flex-1 flex flex-col min-h-0 pt-5">
+                                {/* Box 2: Header (Clean) */}
+                                <div className="mb-3 shrink-0">
+                                    <h3 className="text-sm font-bold text-[#002B7A] tracking-wide">주요 방문 손님</h3>
+                                </div>
+
+                                <div className="flex flex-col gap-2.5 flex-1">
+                                    {/* Persona 1 */}
+                                    <div className="flex items-center gap-3 group/item cursor-pointer p-1.5 rounded-xl hover:bg-gray-50 transition-colors bg-white/50 backdrop-blur-sm border border-transparent hover:border-gray-100">
+                                        <div className="w-9 h-9 rounded-full bg-red-50 flex items-center justify-center shrink-0 shadow-sm text-lg">
+                                            🥘
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex justify-between items-center mb-0.5">
+                                                <h4 className="text-xs font-bold text-[#191F28]">비 오면 '국물파'</h4>
+                                            </div>
+                                            <p className="text-[10px] text-gray-500 truncate">
+                                                비 오는 날 <span className="text-[#191F28] font-bold">전골/국밥</span> 찾는 손님 급증
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Persona 2 */}
+                                    <div className="flex items-center gap-3 group/item cursor-pointer p-1.5 rounded-xl hover:bg-gray-50 transition-colors bg-white/50 backdrop-blur-sm border border-transparent hover:border-gray-100">
+                                        <div className="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center shrink-0 shadow-sm text-lg">
+                                            💼
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex justify-between items-center mb-0.5">
+                                                <h4 className="text-xs font-bold text-[#191F28]">가성비 직장인</h4>
+                                            </div>
+                                            <p className="text-[10px] text-gray-500 truncate">
+                                                점심시간 <span className="text-[#191F28] font-bold">런치 세트</span> 선호도 1위
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Persona 3 */}
+                                    <div className="flex items-center gap-3 group/item cursor-pointer p-1.5 rounded-xl hover:bg-gray-50 transition-colors bg-white/50 backdrop-blur-sm border border-transparent hover:border-gray-100">
+                                        <div className="w-9 h-9 rounded-full bg-purple-50 flex items-center justify-center shrink-0 shadow-sm text-lg">
+                                            🍷
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex justify-between items-center mb-0.5">
+                                                <h4 className="text-xs font-bold text-[#191F28]">미식가 커플</h4>
+                                            </div>
+                                            <p className="text-[10px] text-gray-500 truncate">
+                                                주말 저녁 <span className="text-[#191F28] font-bold">와인/데이트</span> 코스 추천
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    {/* 3. Sentiment (Flex-1) */}
-                    <div className="flex-1 bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col justify-between">
-                        <h3 className="font-bold text-[#191F28] text-sm flex items-center gap-1.5">
-                            <Smile size={16} className="text-green-500" /> 오늘의 감정 온도
-                        </h3>
-                        <div className="flex items-end justify-between">
-                            <div>
-                                <span className="text-3xl font-bold text-green-600">36.5°</span>
-                                <p className="text-xs text-gray-400 mt-1">긍정적</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-sm font-bold text-[#191F28] mb-1">"친절해요"</p>
-                                <p className="text-xs text-gray-400">가장 많이 언급됨</p>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
 
             </div>
