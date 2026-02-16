@@ -10,7 +10,6 @@ import PromotionPage from '../../features/promotion/PromotionPage';
 import ReviewManagementPage from '../../features/reviewManagement/ReviewManagementPage';
 import SubscriptionPage from '../../pages/SubscriptionPage';
 import InfluencerMatchingPage from '../../features/influencer/InfluencerMatchingPage';
-
 import { COLORS } from '../../constants';
 import '../../styles/globals.css';
 
@@ -52,7 +51,6 @@ export default function DashboardLayout({ initialPage, content }) {
                             <Header title="우리 가게 주변 상권을 심층 분석합니다." />
                             <CommercialAnalysisPage />
                         </>
-
                     ) : activeMenu === 'insight' ? (
                         // INSIGHT VIEW
                         <>

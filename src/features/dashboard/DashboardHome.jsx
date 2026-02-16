@@ -218,7 +218,11 @@ const DashboardHome = ({ onNavigate }) => {
                         </div>
 
                         {/* Chart Area */}
+<<<<<<< HEAD
                         <div className="flex-1 w-full min-h-[250px] relative z-0">
+=======
+                        <div className="flex-1 w-full min-h-0 relative z-0">
+>>>>>>> origin/main
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={CHART_DATA} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
                                     <defs>
@@ -249,10 +253,16 @@ const DashboardHome = ({ onNavigate }) => {
                         <div className="flex justify-end mb-4 relative z-10 shrink-0">
                             <button
                                 onClick={() => onNavigate && onNavigate('insight')}
+<<<<<<< HEAD
                                 className="text-xs bg-[#E5EDFF] text-[#002B7A] px-3 py-1.5 rounded-full hover:bg-[#D0E0FF] transition-colors flex items-center gap-1 font-bold shadow-sm"
                             >
                                 <MapPin size={12} className="text-[#002B7A]" />
                                 상권 & 손님 분석 보러가기 <ChevronRight size={12} className="group-hover/btn:translate-x-0.5 transition-transform" />
+=======
+                                className="text-xs bg-[#E5EDFF] text-[#002B7A] px-3 py-1.5 rounded-full hover:bg-[#D0E0FF] transition-colors flex items-center gap-1 font-bold"
+                            >
+                                손님 분석 페이지로 이동 <ChevronRight size={12} className="group-hover/btn:translate-x-0.5 transition-transform" />
+>>>>>>> origin/main
                             </button>
                         </div>
 

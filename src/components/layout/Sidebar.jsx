@@ -42,6 +42,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded }) => {
                 setShowProfileMenu(false);
             }}
         >
+            {/* Logo Section - Transparent Background */}
             <div
                 className={`h-20 flex items-center pl-4 shrink-0 overflow-hidden transition-all duration-400 ease-[cubic-bezier(0.25,0.8,0.25,1)] ${isExpanded ? 'w-[260px]' : 'w-[68px]'} cursor-pointer`}
                 onClick={() => setActiveMenu('home')}
@@ -79,16 +80,20 @@ const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded }) => {
                     ))}
                 </div>
 
+                {/* Profile Section with Integrated Logout */}
                 <div className="mb-2 shrink-0 relative px-2">
                     <div
                         className={`relative flex items-center h-16 transition-all duration-200 rounded-2xl ${isExpanded ? 'bg-white/10 px-3 justify-between' : 'justify-center hover:bg-white/5'
                             }`}
                     >
+                        {/* Profile Info Group */}
                         <div className="flex items-center gap-3 overflow-hidden">
+                            {/* Avatar */}
                             <div className="shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-white/20 to-white/5 flex items-center justify-center border border-white/10 shadow-inner">
                                 <User size={18} className="text-white" />
                             </div>
 
+                            {/* Text Info (Visible only when expanded) */}
                             <div
                                 className={`flex flex-col justify-center transition-all duration-300 ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 hidden'} cursor-pointer hover:opacity-80`}
                                 onClick={(e) => {
@@ -104,6 +109,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded }) => {
                             </div>
                         </div>
 
+                        {/* Logout Button (Visible only when expanded) */}
                         {isExpanded && (
                             <button
                                 onClick={handleLogout}
@@ -115,7 +121,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded }) => {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

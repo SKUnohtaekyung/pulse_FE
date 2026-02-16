@@ -32,7 +32,34 @@ export default {
                 warning: '#D97706',
             },
             fontFamily: {
-                pretendard: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif'],
+                pretendard: ['"Pretendard Variable"', 'Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif'],
+            },
+            fontSize: {
+                // Headings (Bold/SemiBold, -2% tracking, 140% leading)
+                'head-1': ['34px', { lineHeight: '1.4', letterSpacing: '-0.02em', fontWeight: '700' }],
+                'head-2': ['32px', { lineHeight: '1.4', letterSpacing: '-0.02em', fontWeight: '600' }],
+                'head-3': ['26px', { lineHeight: '1.4', letterSpacing: '-0.02em', fontWeight: '600' }],
+                'head-4': ['22px', { lineHeight: '1.4', letterSpacing: '-0.02em', fontWeight: '600' }],
+                'head-5': ['20px', { lineHeight: '1.4', letterSpacing: '-0.02em', fontWeight: '600' }],
+
+                // Body (Various weights, -2% tracking)
+                'body-1': ['18px', { letterSpacing: '-0.02em', fontWeight: '700' }],
+                'body-2': ['18px', { letterSpacing: '-0.02em', fontWeight: '500' }],
+                'body-3': ['18px', { letterSpacing: '-0.02em', fontWeight: '400' }],
+                'body-4': ['16px', { letterSpacing: '-0.02em', fontWeight: '400' }],
+                'body-5': ['14px', { letterSpacing: '-0.02em', fontWeight: '700' }],
+                'body-6': ['14px', { letterSpacing: '-0.02em', fontWeight: '600' }],
+                'body-7': ['14px', { letterSpacing: '-0.02em', fontWeight: '400' }],
+
+                // Caption
+                'caption': ['12px', { letterSpacing: '-0.02em', fontWeight: '400' }],
+
+                // Buttons
+                'btn-main': ['16px', { letterSpacing: '-0.02em', fontWeight: '600' }],
+                'btn-sub': ['15px', { letterSpacing: '-0.02em', fontWeight: '500' }],
+
+                // Error
+                'error': ['13px', { letterSpacing: '-0.02em', fontWeight: '500' }],
             },
             boxShadow: {
                 'soft': '0 4px 20px rgba(0, 43, 122, 0.15)',

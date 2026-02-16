@@ -2,15 +2,32 @@ import React, { useState } from 'react';
 import VideoCreator from './VideoCreator';
 import GalleryPage from './GalleryPage';
 
-export default function PromotionPage() {
+export default function PromotionPage({ initialParams, onNavigate }) {
     const [viewMode, setViewMode] = useState('split'); // 'split' | 'gallery'
     const [images, setImages] = useState([]);
-    const [options, setOptions] = useState({ vibe: 'energetic', title: '' });
+    const [options, setOptions] = useState({ vibe: 'energetic', title: '', prompt: '' });
 
     const [step, setStep] = useState('input'); // 'input' | 'loading' | 'result'
     const [resultData, setResultData] = useState(null);
 
+    // Handle initial params from navigation
+    React.useEffect(() => {
+        if (initialParams) {
+            setOptions(prev => ({
+                ...prev,
+                vibe: initialParams.vibe || 'energetic',
+                title: initialParams.title || '', // Pre-fill result title
+                prompt: initialParams.prompt || '', // Correctly read prompt
+                personaId: initialParams.personaId || null // [NEW] Read personaId
+            }));
+        }
+    }, [initialParams]);
+
     const handleGenerate = () => {
+        setStep('storyboard');
+    };
+
+    const handleConfirmStoryboard = () => {
         setStep('loading');
         // Simulate AI Generation
         setTimeout(() => {
@@ -49,6 +66,8 @@ export default function PromotionPage() {
                 options={options}
                 setOptions={setOptions}
                 onGenerate={handleGenerate}
+                onConfirm={handleConfirmStoryboard}
+                onNavigate={onNavigate}
             />
         </div>
     );

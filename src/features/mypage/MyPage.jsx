@@ -108,7 +108,7 @@ const MyPage = () => {
                     <div className="flex items-center justify-between mb-4 shrink-0">
                         <h3 className="font-bold text-[#191F28] text-base flex items-center gap-2">
                             <User size={18} className="text-[#002B7A]" />
-                            내 가게 페르소나
+                            내 가게 대표 손님
                         </h3>
                         <button className="text-gray-400 hover:text-[#002B7A] transition-colors">
                             <Settings size={16} />
@@ -170,7 +170,7 @@ const MyPage = () => {
                         <div className="pt-3 border-t border-gray-100">
                             <div className="flex justify-between items-center mb-1.5">
                                 <span className="text-xs text-gray-600">다음 결제일</span>
-                                <span className="text-xs font-bold">2023. 11. 01</span>
+                                <span className="text-xs font-bold">2025. 12. 01</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-xs text-gray-600">결제 수단</span>
