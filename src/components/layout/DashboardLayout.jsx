@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import DashboardHome from '../../features/dashboard/DashboardHome';
 import UnifiedInsightPage from '../../features/insight/UnifiedInsightPage';
+import CommercialAnalysisPage from '../../features/insight/CommercialAnalysisPage';
 import MyPage from '../../features/mypage/MyPage';
 import PromotionPage from '../../features/promotion/PromotionPage';
 import ReviewManagementPage from '../../features/reviewManagement/ReviewManagementPage';
@@ -35,14 +36,20 @@ export default function DashboardLayout({ initialPage, content }) {
             />
 
             <main
-                className={`flex-1 p-6 overflow-y-auto flex flex-col main-content ${isExpanded ? 'ml-[276px]' : 'ml-[96px]'}`}
+                className={`flex-1 p-6 h-full flex flex-col main-content ${isExpanded ? 'ml-[276px]' : 'ml-[96px]'}`}
             >
-                <div className="max-w-[1400px] flex flex-col w-full mx-auto">
+                <div className="max-w-[1400px] h-full flex flex-col w-full mx-auto">
                     {activeMenu === 'home' ? (
                         // DASHBOARD VIEW
                         <>
                             <Header title="오늘도 힘차게 시작해볼까요?" />
                             <DashboardHome onNavigate={handleNavigate} />
+                        </>
+                    ) : activeMenu === 'commercial-analysis' ? (
+                        // COMMERCIAL ANALYSIS VIEW
+                        <>
+                            <Header title="우리 가게 주변 상권을 심층 분석합니다." />
+                            <CommercialAnalysisPage />
                         </>
                     ) : activeMenu === 'insight' ? (
                         // INSIGHT VIEW
