@@ -188,9 +188,7 @@ export default function JourneyMapSection({ persona }) {
                         <div className="bg-blue-50/50 p-5 rounded-xl border border-[#E5E8EB]">
                             <span className="block text-[12px] font-bold text-[#002B7A] mb-2">💡 분석 총평</span>
                             <p className="text-[14px] font-bold text-[#191F28] leading-relaxed">
-                                {timelineData.some(d => d.type === 'pain')
-                                    ? <span>초반 탐색과 방문 단계는 훌륭했지만, <span className="text-[#FF5A36] underline decoration-wavy">마지막 공유 단계에서 경험이 급격히 하락</span>했습니다. 이 부분을 놓치면 재방문율이 0%가 될 수 있습니다.</span>
-                                    : "전체적인 여정이 매끄럽습니다. 특히 방문 단계에서의 만족도가 높아, 이 경험을 리뷰로 연결한다면 신규 고객 유입이 2배 이상 늘어날 것입니다."}
+                                {persona.overall_comment || '분석 총평 데이터를 불러오는 중입니다...'}
                             </p>
                         </div>
 
@@ -203,7 +201,7 @@ export default function JourneyMapSection({ persona }) {
                                 </div>
                             </div>
                             <p className="text-[15px] font-bold leading-snug">
-                                {timelineData.find(d => d.type === 'pain')?.opportunity || timelineData[timelineData.length - 1].opportunity}
+                                {persona.action_recommendation || '액션 제안 데이터를 불러오는 중입니다...'}
                             </p>
                         </div>
                     </div>
