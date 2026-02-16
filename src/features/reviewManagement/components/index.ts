@@ -16,7 +16,6 @@ export type { TabType } from './SharedComponents';
 
 // Review Components
 export { ReviewCard, ReviewDashboard } from './ReviewComponents';
-export { ReviewSummary } from './ReviewSummary';
 export type { Review } from './ReviewComponents';
 
 // AI Components
@@ -26,3 +25,18 @@ export type { Tone, Length, Settings, GeneratedReply } from './AIComponents';
 // Template Components
 export { SaveTemplateModal, SavedTemplatesTab } from './TemplateComponents';
 export type { SavedTemplate } from './TemplateComponents';
+
+// Quick Settings Component
+export { QuickSettings } from './QuickSettings';
+export type { Settings as QuickSettingsType } from './QuickSettings';
+
+// Exception Case Settings Component
+export { ExceptionCaseSettings, DEFAULT_CASES } from './ExceptionCaseSettings';
+export type { ExceptionCase, ExceptionCaseType } from './ExceptionCaseSettings';
+
+// Review List Component
+export { ReviewList } from './ReviewList';
+export type { Review as ReviewType } from './ReviewList';
+
+// Review Summary Component
+export { ReviewSummary } from './ReviewSummary';

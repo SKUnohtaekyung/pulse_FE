@@ -259,7 +259,7 @@ export function SavedTemplatesTab({ templates, onDelete }: SavedTemplatesTabProp
     <div className="max-w-5xl">
       {/* Search and Filter */}
       <div className="mb-6 space-y-4">
-        <div className="relative">
+        <div className="relative max-w-md">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400" />
           <input
             type="text"

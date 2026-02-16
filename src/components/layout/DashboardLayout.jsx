@@ -35,9 +35,9 @@ export default function DashboardLayout({ initialPage, content }) {
             />
 
             <main
-                className={`flex-1 p-6 h-full flex flex-col main-content ${isExpanded ? 'ml-[276px]' : 'ml-[96px]'}`}
+                className={`flex-1 p-6 overflow-y-auto flex flex-col main-content ${isExpanded ? 'ml-[276px]' : 'ml-[96px]'}`}
             >
-                <div className="max-w-[1400px] h-full flex flex-col w-full mx-auto">
+                <div className="max-w-[1400px] flex flex-col w-full mx-auto">
                     {activeMenu === 'home' ? (
                         // DASHBOARD VIEW
                         <>
