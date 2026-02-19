@@ -157,7 +157,9 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
     };
 
     const handleAITitle = () => {
-        setOptions(prev => ({ ...prev, title: "범계 로데오의 숨은 보석, 감성 카페 오픈!" }));
+        // API 응답의 videoTitle이 있으면 사용, 없으면 기본 목업 타이틀
+        const aiTitle = resultData?.videoTitle || '범계 로데오의 숨은 보석, 감성 카페 오픈!';
+        setOptions(prev => ({ ...prev, title: aiTitle }));
     };
 
     // --- Round 9: Text Update & Premium AI UI ---
@@ -251,7 +253,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                         <h2 className="text-[18px] font-bold text-[#002B7A] flex items-center gap-2">
                             홍보 영상 만들기
                         </h2>
-                        <p className="text-[14px] text-gray-500 mt-0.5">우리 가게의 매력을 담은 맞춤 홍보 영상을 쉽고 빠르게 만들어보세요!</p>
+                        <p className="text-[13px] text-gray-500 mt-0.5 leading-snug">우리 가게의 매력을 담은 맞춤 홍보 영상을 쉽고 빠르게 만들어보세요!</p>
                     </div>
 
                     {/* Scrollable Content Area */}
@@ -259,10 +261,10 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
 
                         {/* Image Upload */}
                         <div className="space-y-2 shrink-0">
-                            <div className="flex justify-between items-center">
-                                <label className="text-[15px] font-bold text-[#191F28]">원본 이미지 (필수)</label>
-                                <div className="flex items-center gap-1 text-[12px] text-[#002B7A] bg-blue-50 px-2.5 py-1 rounded-full">
-                                    <Info size={12} /> <span>음식이나 가게의 분위기 중심 사진을 권장해요.</span>
+                            <div className="flex justify-between items-center gap-2">
+                                <label className="text-[14px] font-bold text-[#191F28] shrink-0 whitespace-nowrap">원본 이미지 (필수)</label>
+                                <div className="flex items-center gap-1 text-[11px] text-[#002B7A] bg-blue-50 px-2 py-1 rounded-full whitespace-nowrap shrink-0">
+                                    <Info size={11} className="shrink-0" /> <span>음식이나 가게의 분위기 중심 사진을 권장해요.</span>
                                 </div>
                             </div>
                             <div
@@ -541,7 +543,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                 <button onClick={onReset} className="flex-1 py-3 rounded-xl border border-gray-200 font-bold text-[14px] text-gray-600 hover:bg-gray-50 transition-colors">
                                     수정하기
                                 </button>
-                                <button onClick={onConfirm} className="flex-[2] py-3 rounded-xl bg-[#002B7A] text-white font-bold text-[14px] hover:bg-[#001F5C] shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
+                                <button onClick={() => onConfirm(selectedFile, qualityMode)} className="flex-[2] py-3 rounded-xl bg-[#002B7A] text-white font-bold text-[14px] hover:bg-[#001F5C] shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
                                     <Wand2 size={16} /> 이대로 영상 만들기
                                 </button>
                             </div>
@@ -720,41 +722,64 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
 
                     {/* B. Result Controls (Result Step) - NEW LAYOUT (Horizontal) */}
                     {step === 'result' && (
-                        <div className="animate-in slide-in-from-bottom-5 duration-500 flex flex-row gap-4 h-full items-center">
+                        <div className="animate-in slide-in-from-bottom-5 duration-500 flex flex-col gap-3 h-full justify-center">
 
-                            {/* Left Side: Title Input & AI Button */}
-                            <div className="flex-1 flex flex-col gap-2">
-                                <label className="text-[12px] font-bold text-[#002B7A] flex items-center gap-1">
-                                    영상 제목 <Wand2 size={10} className="text-blue-400" />
-                                </label>
-                                <div className="relative w-full">
-                                    <input
-                                        type="text"
-                                        value={options.title}
-                                        onChange={(e) => setOptions({ ...options, title: e.target.value })}
-                                        placeholder="영상 제목을 입력해주세요"
-                                        className="w-full h-11 rounded-xl bg-white border border-gray-200 px-3 pr-24 text-[13px] focus:border-[#002B7A] focus:ring-1 focus:ring-[#002B7A] transition-all outline-none shadow-sm"
-                                    />
-                                    <button
-                                        onClick={handleAITitle}
-                                        className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[12px] font-bold text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:scale-105 hover:shadow-md px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 shadow-sm"
-                                    >
-                                        <Wand2 size={11} /> AI 추천
+                            {/* Hashtags & GenerationTime (API 응답 데이터) */}
+                            {resultData && (
+                                <div className="flex items-center gap-3 flex-wrap">
+                                    {/* 해시태그 */}
+                                    {resultData.hashtags && resultData.hashtags.length > 0 && (
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            <Hash size={13} className="text-[#002B7A] shrink-0" />
+                                            {resultData.hashtags.map((tag, i) => (
+                                                <span key={i} className="text-[12px] font-medium text-[#002B7A] bg-blue-50 px-2 py-0.5 rounded-full">
+                                                    {tag}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {/* 생성 시간 */}
+                                    {resultData.generationTime && (
+                                        <span className="text-[11px] text-gray-400 flex items-center gap-1 ml-auto shrink-0">
+                                            <Clock size={11} /> {resultData.generationTime} 소요
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Title Input & Actions */}
+                            <div className="flex flex-row justify-between items-center gap-4">
+                                {/* Left Side: Title Input & AI Button */}
+                                <div className="w-1/2 flex flex-col gap-1.5">
+                                    <label className="text-[12px] font-bold text-[#002B7A] flex items-center gap-1">
+                                        영상 제목 <Wand2 size={10} className="text-blue-400" />
+                                    </label>
+                                    <div className="relative w-full">
+                                        <input
+                                            type="text"
+                                            value={options.title}
+                                            onChange={(e) => setOptions({ ...options, title: e.target.value })}
+                                            placeholder="영상 제목을 입력해주세요"
+                                            className="w-full h-11 rounded-xl bg-white border border-gray-200 px-3 pr-24 text-[13px] focus:border-[#002B7A] focus:ring-1 focus:ring-[#002B7A] transition-all outline-none shadow-sm"
+                                        />
+                                        <button
+                                            onClick={handleAITitle}
+                                            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[12px] font-bold text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:scale-105 hover:shadow-md px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 shadow-sm"
+                                        >
+                                            <Wand2 size={11} /> AI 추천
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Right Side: Action Buttons */}
+                                <div className="flex items-end gap-2 pb-1">
+                                    <button onClick={onReset} className="h-11 w-11 rounded-xl bg-white border border-gray-200 text-gray-500 hover:text-[#002B7A] hover:border-[#002B7A] hover:bg-blue-50 shadow-sm flex items-center justify-center transition-all group" title="다시 만들기">
+                                        <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" />
+                                    </button>
+                                    <button className="h-11 px-6 rounded-xl bg-[#002B7A] text-white font-bold text-[14px] shadow-md hover:bg-[#001F5C] hover:shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02]">
+                                        <Download size={16} /> 저장하기
                                     </button>
                                 </div>
-                            </div>
-
-                            {/* Right Side: Action Buttons */}
-                            <div className="flex items-end gap-2 h-full pb-1">
-                                {/* Reset Button: Compact */}
-                                <button onClick={onReset} className="h-11 w-11 rounded-xl bg-white border border-gray-200 text-gray-500 hover:text-[#002B7A] hover:border-[#002B7A] hover:bg-blue-50 shadow-sm flex items-center justify-center transition-all group" title="다시 만들기">
-                                    <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" />
-                                </button>
-
-                                {/* Save Button: Solid Main Blue, No Border */}
-                                <button className="h-11 px-6 rounded-xl bg-[#002B7A] text-white font-bold text-[14px] shadow-md hover:bg-[#001F5C] hover:shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02]">
-                                    <Download size={16} /> 저장하기
-                                </button>
                             </div>
                         </div>
                     )}

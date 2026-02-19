@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Zap } from 'lucide-react';
 import '../AuthPage.css';
+
+// 개발 편의용 플래그 — ProtectedRoute의 DEV_MODE와 동일하게 맞춰주세요
+const DEV_MODE = true;
 
 const LoginForm = ({ onSwitch }) => {
     const navigate = useNavigate();
@@ -32,6 +35,18 @@ const LoginForm = ({ onSwitch }) => {
             console.error('Login Error:', error);
             alert('로그인 처리 중 오류가 발생했습니다.');
         }
+    };
+
+    // 개발자 빠른 진입: mock 유저로 즉시 로그인
+    const handleDevQuickLogin = () => {
+        const mockUser = {
+            id: 1,
+            email: 'dev@pulse.com',
+            name: '김사장 (Dev)',
+            storeName: '펄스 식당'
+        };
+        localStorage.setItem('user', JSON.stringify(mockUser));
+        navigate('/dashboard');
     };
 
     return (
@@ -72,6 +87,40 @@ const LoginForm = ({ onSwitch }) => {
                 <p className="switch-text">아직 PULSE 계정이 없으신가요?</p>
                 <button className="switch-btn" onClick={onSwitch}>회원가입 하러가기</button>
             </div>
+
+            {/* 개발 모드 전용 빠른 진입 버튼 */}
+            {DEV_MODE && (
+                <div style={{ marginTop: '24px', borderTop: '1px dashed rgba(255,255,255,0.2)', paddingTop: '16px' }}>
+                    <button
+                        type="button"
+                        onClick={handleDevQuickLogin}
+                        style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            padding: '10px 16px',
+                            background: 'rgba(251, 191, 36, 0.15)',
+                            border: '1px dashed rgba(251, 191, 36, 0.6)',
+                            borderRadius: '8px',
+                            color: '#fbbf24',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(251, 191, 36, 0.25)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(251, 191, 36, 0.15)'}
+                    >
+                        <Zap size={14} />
+                        개발자 빠른 진입 (DEV ONLY)
+                    </button>
+                    <p style={{ textAlign: 'center', fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginTop: '6px' }}>
+                        이 버튼은 DEV_MODE=true 일 때만 표시됩니다
+                    </p>
+                </div>
+            )}
         </div>
     );
 };
@@ -97,3 +146,5 @@ const PasswordInput = ({ name, placeholder, value, onChange }) => {
 };
 
 export default LoginForm;
+
+

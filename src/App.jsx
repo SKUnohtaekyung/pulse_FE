@@ -1,26 +1,28 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import DashboardLayout from './components/layout/DashboardLayout';
 import AuthPage from './features/auth/AuthPage';
 import LandingPage from './pages/LandingPage';
 import InfluencerRequestPage from './features/influencer/InfluencerRequestPage';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 import './styles/globals.css';
-
-// 개발 모드: true로 설정하면 로그인 없이 대시보드 접근 가능
-const DEV_MODE = true;
 
 export default function App() {
     return (
         <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<AuthPage />} />
             <Route path="/signup" element={<AuthPage />} />
-            <Route path="/landing" element={<LandingPage />} /> /*나중에 메인으로 바꾸기*/
-            <Route path="/dashboard" element={<DashboardLayout />} />
-            <Route path="/subscription" element={<DashboardLayout initialPage="subscription" />} />
-            <Route path="/influencer-matching" element={<DashboardLayout initialPage="influencer-matching" />} />
-            <Route path="/influencer-matching/request/:id" element={<DashboardLayout initialPage="influencer-matching" content={<InfluencerRequestPage />} />} />
-            <Route path="/" element={DEV_MODE ? <DashboardLayout /> : <LandingPage />} />
-            <Route path="*" element={<DashboardLayout />} />
+
+            {/* Protected routes — 로그인 필요 (DEV_MODE=true면 바로 통과) */}
+            <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>} />
+            <Route path="/subscription" element={<ProtectedRoute><DashboardLayout initialPage="subscription" /></ProtectedRoute>} />
+            <Route path="/influencer-matching" element={<ProtectedRoute><DashboardLayout initialPage="influencer-matching" /></ProtectedRoute>} />
+            <Route path="/influencer-matching/request/:id" element={<ProtectedRoute><DashboardLayout initialPage="influencer-matching" content={<InfluencerRequestPage />} /></ProtectedRoute>} />
+
+            {/* Fallback */}
+            <Route path="*" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>} />
         </Routes>
     );
 }
