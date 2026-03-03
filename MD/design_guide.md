@@ -105,6 +105,17 @@
         *   Icon: Bell (22px, Primary Color)
         *   Badge: Point Color (`#FF5A36`) Dot
 
+### 🌓 Auth & Full Screen Layout (인증 및 스플릿 스크린 규격)
+회원가입/로그인 등 초기 진입 화면은 서비스의 첫인상(Premium Experience)을 결정하므로 특별한 레이아웃을 사용합니다.
+
+*   **Split Screen (50:50):** 화면을 좌우 50% 분할 레이아웃으로 구성합니다.
+*   **Left Canvas (브랜드 무드):**
+    *   3D 인터랙티브 배경(`@react-three/fiber` 기반 곡면 왜곡 효과 등)을 적용하여 동적이고 현대적인 느낌을 줍니다.
+    *   브랜드 로고와 함께 서비스의 핵심 가치를 보여주는 큰 볼드체 텍스트(예: "우리 가게 마케팅, 이제 펄스가 알아서")를 배치합니다.
+*   **Right Form (입력 영역):**
+    *   사용자 입력 폼이 위치하며, 화이트 배경(`bg-white`)을 사용하여 텍스트 가독성을 극대화합니다.
+    *   2-Step 회원가입 플로우(기본정보 입력 → 가게정보 입력)를 부드러운 트랜지션(Framer Motion)과 함께 제공합니다.
+
 ---
 
 ## 5. Component Styling (컴포넌트 스타일링)

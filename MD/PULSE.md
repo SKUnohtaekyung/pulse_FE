@@ -34,6 +34,8 @@ It transforms the marketing process from "Owner does everything" to **"System su
 | **Insight** | `src/features/insight` | `UnifiedInsightPage.jsx` (List/Detail), `LocalAnalysisSection.jsx` (Macro), `JourneyMapSection.jsx` (Micro) |
 | **Promotion** | `src/features/promotion` | `PromotionPage.jsx`, `VideoCreator.jsx` (Storyboard/Result) |
 | **Common** | `src/components/layout` | `DashboardLayout.jsx` (Side/Header), `Sidebar.jsx`, `Header.jsx` (Inline Chat) |
+| **Review** | `src/features/reviewManagement` | `ReviewManagementPage.jsx` |
+| **Influencer**| `src/features/influencer`| `InfluencerMatchingPage.jsx`, `InfluencerCard.jsx` |
 | **Navigation** | `src/App.jsx` | Routing configuration |
 
 ---
@@ -90,10 +92,13 @@ The user experience is defined by a continuous loop of three stages.
 
 ## 5. Vision & Roadmap (Future Scope)
 
+> **Note**: The following features are **UI Mockup and Frontend Flow Completed**, waiting for backend integration.
+
+1.  **Influencer Matching (Pro)**: A dedicated loop for matching owners with food creators. (UI Implemented).
+2.  **Review Management**: Auto-reply and sentiment analysis hub. (UI Implemented).
+
 > **Note**: The following features are defined in the vision but are **not currently implemented** in the MVP code.
 
-1.  **Influencer Matching (Pro)**: A dedicated loop for matching owners with food creators. (Currently conceptual).
-2.  **Review Management**: Auto-reply and sentiment analysis hub. (Currently conceptual).
 3.  **PULSE Score**: gamified marketing score.
 
 ---
@@ -102,5 +107,5 @@ The user experience is defined by a continuous loop of three stages.
 
 - [ ] **Never break the loop**: Always ensure a feature leads to the next logical step.
 - [ ] **Preserve the aesthetic**: Do not introduce new colors outside the palette without reason.
-- [ ] **Respect the functionality**: Do not hallucinate features (like Influencer Matching) as "working" if they are not in the `src` folder. Describe them as "planned".
+- [ ] **Respect the functionality**: Do not hallucinate features (like PULSE Score) as "working" if they are not in the `src` folder. Describe them as "planned".
 - [ ] **Language**: All user-facing text must be in **Korean**.

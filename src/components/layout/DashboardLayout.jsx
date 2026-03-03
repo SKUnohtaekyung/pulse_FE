@@ -42,7 +42,6 @@ export default function DashboardLayout({ initialPage, content }) {
                     {activeMenu === 'home' ? (
                         // DASHBOARD VIEW
                         <>
-                            <Header title="오늘도 힘차게 시작해볼까요?" />
                             <DashboardHome onNavigate={handleNavigate} />
                         </>
                     ) : activeMenu === 'commercial-analysis' ? (
