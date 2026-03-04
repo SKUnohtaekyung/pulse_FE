@@ -70,10 +70,10 @@ export default function DashboardLayout({ initialPage, content }) {
                         </>
                     ) : activeMenu === 'review' ? (
                         // REVIEW MANAGEMENT VIEW
-                        <>
+                        <div className="flex-1 flex flex-col min-h-0">
                             <Header title="리뷰를 관리하고 AI로 답변을 작성하세요." />
                             <ReviewManagementPage />
-                        </>
+                        </div>
                     ) : activeMenu === 'subscription' ? (
                         // SUBSCRIPTION VIEW
                         <SubscriptionPage />

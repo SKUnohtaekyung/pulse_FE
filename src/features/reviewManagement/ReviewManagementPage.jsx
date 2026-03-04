@@ -40,8 +40,8 @@ export default function ReviewManagementPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6 pb-10">
-      <div className="bg-white rounded-2xl shadow-sm border border-neutral-200">
+    <div className="flex-1 flex flex-col min-h-0 gap-0">
+      <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 shrink-0">
         <div className="flex border-b border-neutral-200">
           <button onClick={() => setActiveTab('review-management')} className={`flex-1 px-6 py-4 font-bold transition-colors relative ${activeTab === 'review-management' ? 'text-[#002B7A]' : 'text-neutral-500 hover:text-neutral-700'}`}>
             리뷰관리
@@ -59,25 +59,28 @@ export default function ReviewManagementPage() {
         <div className="px-6 py-3 bg-neutral-50 text-sm text-neutral-600">{tabDescriptions[activeTab]}</div>
       </div>
 
-      {activeTab === 'review-management' && (
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <ReviewSummary averageRating={mockReviewData.averageRating} totalReviews={mockReviewData.totalReviews} evaluationMetrics={mockReviewData.evaluationMetrics} />
-          </div>
-          <div>
-            <ReviewList reviews={mockReviews} />
-          </div>
-        </div>
-      )}
+      <div className="flex-1 min-h-0 overflow-y-auto pt-6 pb-10 custom-scrollbar">
 
-      {activeTab === 'quick-settings' && (
-        <QuickSettings 
-          settings={settings}
-          onSettingsChange={setSettings}
-        />
-      )}
+        {activeTab === 'review-management' && (
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <ReviewSummary averageRating={mockReviewData.averageRating} totalReviews={mockReviewData.totalReviews} evaluationMetrics={mockReviewData.evaluationMetrics} />
+            </div>
+            <div>
+              <ReviewList reviews={mockReviews} />
+            </div>
+          </div>
+        )}
 
-      {activeTab === 'saved-templates' && <SavedTemplatesTab templates={savedTemplates} onDelete={(id) => setSavedTemplates(prev => prev.filter(t => t.id !== id))} />}
+        {activeTab === 'quick-settings' && (
+          <QuickSettings
+            settings={settings}
+            onSettingsChange={setSettings}
+          />
+        )}
+
+        {activeTab === 'saved-templates' && <SavedTemplatesTab templates={savedTemplates} onDelete={(id) => setSavedTemplates(prev => prev.filter(t => t.id !== id))} />}
+      </div>
     </div>
   );
 }
