@@ -98,7 +98,7 @@ const PERSONA_PROMPTS = [
     }
 ];
 
-export default function VideoCreator({ step, resultData, onReset, images, setImages, options, setOptions, onGenerate, onConfirm, onNavigate }) {
+export default function VideoCreator({ step, resultData, onReset, images, setImages, options, setOptions, onGenerate, onConfirm, onNavigate, progress = 0, progressMessage = '' }) {
     const fileInputRef = useRef(null);
 
     // Local State for UI (화면 제어를 위한 로컬 상태)
@@ -108,33 +108,14 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
     const [selectedFile, setSelectedFile] = useState(null); // 백엔드 전송용 원본 파일 객체 (Backend Integration)
     // promptText와 videoTitle은 부모 컴포넌트(PromotionPage)에서 관리합니다 (상태 끌어올리기)
 
-    // Loading Progress Logic (로딩 진행률 시뮬레이션)
-    // 실제 서버 응답과 관계없이 사용자 경험을 위해 8초간 자연스럽게 게이지가 찹니다.
-    const [progress, setProgress] = useState(0);
     const [activeTooltip, setActiveTooltip] = useState(null); // 'persona' | 'desc' | null
-    const logs = ["사진을 분석하고 있어요...", "어울리는 음악을 고르고 있어요...", "장면을 최적화하고 있어요...", "영상을 렌더링하고 있어요..."];
-    const LOADING_DURATION = 8000; // 8 seconds fixed
+
+    // Loading message steps (progressMessage prop이 없을 때 fallback 메시지)
+    const LOADING_LOGS = ['사진을 분석하고 있어요...', '영상을 생성하고 있어요...', '장면을 최적화하고 있어요...', '영상을 렌더링하고 있어요...'];
+    const displayMessage = progressMessage || LOADING_LOGS[Math.min(Math.floor(progress / 25), LOADING_LOGS.length - 1)];
+
     const DEFAULT_PROMPT = "따뜻한 햇살이 비치는 창가에서 김이 모락모락 나는 커피 한 잔의 여유로움";
 
-    useEffect(() => {
-        if (step === 'loading') {
-            setProgress(0);
-            const intervalTime = 50;
-            const steps = LOADING_DURATION / intervalTime;
-            const increment = 100 / steps;
-
-            const interval = setInterval(() => {
-                setProgress((prev) => {
-                    if (prev >= 100) {
-                        clearInterval(interval);
-                        return 100;
-                    }
-                    return prev + increment;
-                });
-            }, intervalTime);
-            return () => clearInterval(interval);
-        }
-    }, [step]);
 
     // Auto-generate prompt (이미지 업로드 시 프롬프트 자동 완성)
     // 이미지를 올리면 기본 프롬프트를 자동으로 채워줘서 사용자가 막막하지 않게 돕습니다.
@@ -445,15 +426,10 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                             onClick={() => {
                                 try {
                                     const payload = generateVeoPayload();
-
-                                    // [Backend Integration Bridge]
-                                    // 1. payload: VEO3 생성 옵션 JSON
-                                    // 2. selectedFile: 업로드할 원본 이미지 파일 (File Object)
-                                    // 백엔드에서는 selectedFile을 스토리지에 업로드 후, 그 ID를 payload에 추가하여 VEO3로 요청해야 합니다.
                                     console.log("[VEO3 Payload Verification]", JSON.stringify(payload, null, 2));
                                     if (selectedFile) console.log("[Image File Ready]", selectedFile.name, selectedFile.size);
-
-                                    onGenerate(payload, selectedFile);
+                                    // 콘티(storyboard) 단계 없이 바로 생성 로딩으로 이동
+                                    onConfirm(selectedFile, qualityMode);
                                 } catch (error) {
                                     console.error("[Payload Generation Error]", error);
                                     alert("영상 생성 요청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
@@ -470,7 +446,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                             ) : (
                                 <Wand2 size={16} />
                             )}
-                            {step === 'loading' ? '제작 중...' : step === 'storyboard' ? '콘티 확인 중' : '영상 생성하기'}
+                            {step === 'loading' ? '제작 중...' : '영상 생성하기'}
                         </button>
                     </div>
                 </div>
@@ -500,57 +476,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                         </div>
                     )}
 
-                    {/* STORYBOARD STATE: Planning View */}
-                    {step === 'storyboard' && (
-                        <div className="relative w-full h-full flex flex-col animate-in fade-in zoom-in-95 duration-500 bg-white rounded-[24px] shadow-xl overflow-hidden">
-                            <div className="bg-[#002B7A] p-4 text-white flex justify-between items-center shrink-0">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
-                                        <Lightbulb size={18} />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-[16px]">AI가 그려본 우리 가게 이야기</h3>
-                                        <p className="text-[13px] opacity-80">사장님의 가게에 딱 맞는 이야기를 준비했어요.</p>
-                                    </div>
-                                </div>
-                                <div className="text-[12px] bg-white/20 px-2.5 py-1 rounded-lg">
-                                    총 4장면 / 10초
-                                </div>
-                            </div>
-                            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-gray-50">
-                                {[
-                                    { scene: 1, time: '0~3초', desc: '시선을 사로잡는 도입부 (Hook)', audio: '강렬한 비트의 트렌디한 BGM' },
-                                    { scene: 2, time: '3~7초', desc: '메인 메뉴와 가게 분위기 (Body)', audio: '리듬감 있는 화면 전환과 효과음' },
-                                    { scene: 3, time: '7~10초', desc: '방문 유도 및 로고 엔딩 (Outro)', audio: '임팩트 있는 마무리 사운드' }
-                                ].map((scene) => (
-                                    <div key={scene.scene} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex gap-4">
-                                        <div className="w-16 h-16 bg-blue-50 rounded-lg flex items-center justify-center text-[#002B7A] shrink-0 font-bold text-sm border border-blue-100">
-                                            #{scene.scene}
-                                        </div>
-                                        <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                            <div className="flex justify-between items-center mb-1.5">
-                                                <h4 className="font-bold text-[#191F28] text-[16px]">{scene.desc}</h4>
-                                                <span className="text-[12px] text-[#002B7A] bg-blue-50 px-2.5 py-1 rounded-full font-bold">{scene.time}</span>
-                                            </div>
-                                            <p className="text-[13px] text-gray-500 flex items-center gap-1.5 mt-0.5">
-                                                <Zap size={14} className="text-orange-500" /> {scene.audio}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="p-4 border-t border-gray-100 bg-white shrink-0 flex gap-3">
-                                <button onClick={onReset} className="flex-1 py-3 rounded-xl border border-gray-200 font-bold text-[14px] text-gray-600 hover:bg-gray-50 transition-colors">
-                                    수정하기
-                                </button>
-                                <button onClick={() => onConfirm(selectedFile, qualityMode)} className="flex-[2] py-3 rounded-xl bg-[#002B7A] text-white font-bold text-[14px] hover:bg-[#001F5C] shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2">
-                                    <Wand2 size={16} /> 이대로 영상 만들기
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* LOADING STATE: 3D Animation (5 Satellites, Wider Canvas) */}
+                    {/* LOADING STATE: 3D Animation */}
                     {step === 'loading' && (
                         <div className="relative w-full h-full flex flex-col items-center justify-center animate-in fade-in duration-500">
                             <div className="relative w-full h-[80%] mb-4">
@@ -570,7 +496,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                             </div>
                             <div className="text-center space-y-3 z-10">
                                 <h2 className="text-[24px] font-bold text-[#191F28] animate-pulse">
-                                    {logs[Math.min(Math.floor(progress / 25), 3)]}
+                                    {displayMessage}
                                 </h2>
                                 <div className="w-[280px] bg-gray-200 h-1.5 rounded-full overflow-hidden mx-auto">
                                     <div className="h-full bg-[#002B7A] transition-all duration-300 ease-out" style={{ width: `${progress}%` }}></div>
@@ -726,7 +652,13 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
 
                             {/* Hashtags & GenerationTime (API 응답 데이터) */}
                             {resultData && (
-                                <div className="flex items-center gap-3 flex-wrap">
+                                <div className="flex flex-col gap-1.5">
+                                    {/* 생성 시간 - 해시태그 위 */}
+                                    {resultData.generationTime && (
+                                        <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                                            <Clock size={11} /> {resultData.generationTime} 소요
+                                        </span>
+                                    )}
                                     {/* 해시태그 */}
                                     {resultData.hashtags && resultData.hashtags.length > 0 && (
                                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -738,41 +670,41 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                             ))}
                                         </div>
                                     )}
-                                    {/* 생성 시간 */}
-                                    {resultData.generationTime && (
-                                        <span className="text-[11px] text-gray-400 flex items-center gap-1 ml-auto shrink-0">
-                                            <Clock size={11} /> {resultData.generationTime} 소요
-                                        </span>
-                                    )}
                                 </div>
                             )}
 
-                            {/* Title Input & Actions */}
-                            <div className="flex flex-row justify-between items-center gap-4">
-                                {/* Left Side: Title Input & AI Button */}
-                                <div className="w-1/2 flex flex-col gap-1.5">
-                                    <label className="text-[12px] font-bold text-[#002B7A] flex items-center gap-1">
-                                        영상 제목 <Wand2 size={10} className="text-blue-400" />
-                                    </label>
-                                    <div className="relative w-full">
-                                        <input
-                                            type="text"
-                                            value={options.title}
-                                            onChange={(e) => setOptions({ ...options, title: e.target.value })}
-                                            placeholder="영상 제목을 입력해주세요"
-                                            className="w-full h-11 rounded-xl bg-white border border-gray-200 px-3 pr-24 text-[13px] focus:border-[#002B7A] focus:ring-1 focus:ring-[#002B7A] transition-all outline-none shadow-sm"
-                                        />
-                                        <button
-                                            onClick={handleAITitle}
-                                            className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[12px] font-bold text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:scale-105 hover:shadow-md px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 shadow-sm"
-                                        >
-                                            <Wand2 size={11} /> AI 추천
-                                        </button>
-                                    </div>
+                            {/* Title Input & Actions — 같은 가로열 */}
+                            <div className="flex flex-row items-center gap-3">
+                                {/* 영상 제목 라벨 */}
+                                <label className="text-[12px] font-bold text-[#002B7A] flex items-center gap-1 shrink-0 whitespace-nowrap">
+                                    영상 제목 <Wand2 size={10} className="text-blue-400" />
+                                </label>
+
+                                {/* 인풋 (flex-1 로 남은 공간 채움) */}
+                                <div className="relative w-[280px] shrink-0">
+                                    <input
+                                        type="text"
+                                        value={options.title}
+                                        onChange={(e) => setOptions({ ...options, title: e.target.value })}
+                                        placeholder="영상 제목을 입력해주세요"
+                                        className="w-full h-11 rounded-xl bg-white border border-gray-200 px-3 pr-24 text-[13px] focus:border-[#002B7A] focus:ring-1 focus:ring-[#002B7A] transition-all outline-none shadow-sm"
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            if (options.title) {
+                                                navigator.clipboard.writeText(options.title)
+                                                    .then(() => alert('제목이 복사됐어요!'))
+                                                    .catch(() => alert('복사에 실패했습니다.'));
+                                            }
+                                        }}
+                                        className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[12px] font-bold text-amber-700 bg-gradient-to-r from-amber-50 to-orange-100 hover:from-amber-100 hover:to-orange-200 border border-amber-200 hover:scale-105 px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 shadow-sm"
+                                    >
+                                        <Copy size={11} /> 복사하기
+                                    </button>
                                 </div>
 
-                                {/* Right Side: Action Buttons */}
-                                <div className="flex items-end gap-2 pb-1">
+                                {/* 새로고침 + 저장 버튼 */}
+                                <div className="flex items-center gap-2 shrink-0">
                                     <button onClick={onReset} className="h-11 w-11 rounded-xl bg-white border border-gray-200 text-gray-500 hover:text-[#002B7A] hover:border-[#002B7A] hover:bg-blue-50 shadow-sm flex items-center justify-center transition-all group" title="다시 만들기">
                                         <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" />
                                     </button>

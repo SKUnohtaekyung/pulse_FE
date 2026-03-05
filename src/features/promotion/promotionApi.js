@@ -24,8 +24,18 @@ const MOCK_RESPONSE = {
     }
 };
 
-// 목업 지연 시뮬레이션 (8초) - API 없을 때만 사용, 로딩 UX 유지용
-const MOCK_DELAY_MS = 8000;
+// ─── progress 메시지 단계 ──────────────────────────────────────────────────
+const MOCK_PROGRESS_STEPS = [
+    { progress: 10, message: '사진을 분석하고 있어요...' },
+    { progress: 30, message: '영상 컨셉을 구성하고 있어요...' },
+    { progress: 55, message: '영상을 생성하고 있어요...' },
+    { progress: 75, message: '장면을 최적화하고 있어요...' },
+    { progress: 90, message: '영상을 렌더링하고 있어요...' },
+    { progress: 100, message: '완성됐어요!' },
+];
+
+// 폴링 간격 (ms)
+const POLL_INTERVAL_MS = 2000;
 
 /**
  * vibe ID → API style 파라미터 변환
@@ -50,27 +60,30 @@ const QUALITY_TO_MODE = {
 };
 
 /**
- * 홍보 영상 생성 API 호출
+ * 홍보 영상 생성 API 호출 (progress 콜백 지원)
  *
- * @param {Object} params
- * @param {string} params.target      - 타겟 손님 (예: "30대 직장인 남성")
- * @param {string} params.concept     - 영상 컨셉 (예: "속쉬에 찌든 직장인이...")
- * @param {string} params.mode        - 생성 모드 ("standard" | "standard_fast")
- * @param {string} params.style       - 영상 스타일 ("energy" | "premium" | "mood")
- * @param {File}   params.imageFile   - 업로드할 이미지 파일
+ * @param {Object}   params
+ * @param {string}   params.target      - 타겟 손님
+ * @param {string}   params.concept     - 영상 컨셉
+ * @param {string}   params.mode        - 생성 모드 ("standard" | "standard_fast")
+ * @param {string}   params.style       - 영상 스타일 ("energy" | "premium" | "mood")
+ * @param {File}     params.imageFile   - 업로드할 이미지 파일
+ * @param {Function} params.onProgress  - (percent: number, message: string) => void
  *
  * @returns {Promise<{ videoUrl, videoTitle, hashtags, generationTime }>}
  */
-export async function generatePromotionVideo({ target, concept, mode, style, imageFile }) {
-    // API Base URL이 없으면 목업 데이터 반환 (개발 환경)
+export async function generatePromotionVideo({ target, concept, mode, style, imageFile, onProgress }) {
+    const notify = onProgress || (() => {});
+
+    // ─── MOCK 모드 (API_BASE_URL 미설정 시) ─────────────────────────────────
     if (!API_BASE_URL) {
         console.warn('[promotionApi] VITE_API_BASE_URL 미설정 → 목업 데이터 반환');
-        await new Promise(resolve => setTimeout(resolve, MOCK_DELAY_MS));
+        await _simulateMockProgress(notify);
         return MOCK_RESPONSE.data;
     }
 
+    // ─── 실제 API 모드 ──────────────────────────────────────────────────────
     try {
-        // ⚠️ 백엔드 연결 시 실제 토큰 키 확인 필요 (AUTH_TOKEN_KEY 참고)
         const token = localStorage.getItem(AUTH_TOKEN_KEY);
 
         const formData = new FormData();
@@ -82,35 +95,103 @@ export async function generatePromotionVideo({ target, concept, mode, style, ima
             formData.append('image', imageFile);
         }
 
-        const response = await fetch(`${API_BASE_URL}/api/info/generate`, {
+        notify(5, '요청을 전송하고 있어요...');
+
+        // STEP 1: 생성 작업 시작 → task_id 수신
+        const startRes = await fetch(`${API_BASE_URL}/api/info/generate`, {
             method: 'POST',
             headers: {
                 ...(token ? { Authorization: `Bearer ${token}` } : {})
-                // Content-Type은 FormData 사용 시 자동으로 multipart/form-data로 설정됨
             },
             body: formData
         });
 
-        if (!response.ok) {
-            console.warn(`[promotionApi] 응답 오류 (${response.status}) → 목업 데이터 대체`);
-            await new Promise(resolve => setTimeout(resolve, MOCK_DELAY_MS));
+        if (!startRes.ok) {
+            console.warn(`[promotionApi] 응답 오류 (${startRes.status}) → 목업 데이터 대체`);
+            await _simulateMockProgress(notify);
             return MOCK_RESPONSE.data;
         }
 
-        const json = await response.json();
+        const startJson = await startRes.json();
 
-        if (json.status !== 'success' || !json.data) {
-            console.warn('[promotionApi] API 응답 형식 오류. 목업 데이터로 대체합니다.', json);
+        // 백엔드가 task_id를 즉시 반환하는 비동기 방식인 경우
+        const taskId = startJson?.task_id;
+
+        if (taskId) {
+            // STEP 2: task_id가 있으면 → 폴링으로 진행률 추적
+            return await _pollStatus(taskId, token, notify);
+        }
+
+        // 백엔드가 progress 없이 결과를 바로 반환하는 동기 방식인 경우
+        if (startJson.status !== 'success' || !startJson.data) {
+            console.warn('[promotionApi] API 응답 형식 오류. 목업 데이터로 대체합니다.', startJson);
             return MOCK_RESPONSE.data;
         }
 
-        return json.data;
+        notify(100, '완성됐어요!');
+        return startJson.data;
 
     } catch (error) {
         console.warn('[promotionApi] API 연결 실패. 목업 데이터로 대체합니다.', error.message);
-        await new Promise(resolve => setTimeout(resolve, MOCK_DELAY_MS));
+        await _simulateMockProgress(notify);
         return MOCK_RESPONSE.data;
     }
+}
+
+/**
+ * task_id 기반 폴링으로 진행률 추적
+ * 백엔드 /api/info/status/{task_id} 응답 형식:
+ * { status: 'processing' | 'complete' | 'error', progress: 0~100, message: '...' , data?: {...} }
+ *
+ * @private
+ */
+async function _pollStatus(taskId, token, onProgress) {
+    const statusUrl = `${API_BASE_URL}/api/info/status/${taskId}`;
+
+    while (true) {
+        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
+
+        const res = await fetch(statusUrl, {
+            headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) }
+        });
+
+        if (!res.ok) {
+            console.warn(`[promotionApi] 상태 폴링 오류 (${res.status}) → 목업 전환`);
+            await _simulateMockProgress(onProgress);
+            return MOCK_RESPONSE.data;
+        }
+
+        const json = await res.json();
+        const { status, progress, message, data } = json;
+
+        onProgress(progress ?? 0, message ?? '처리 중...');
+
+        if (status === 'complete' && data) {
+            return data;
+        }
+
+        if (status === 'error') {
+            console.warn('[promotionApi] 백엔드 오류 → 목업 전환');
+            return MOCK_RESPONSE.data;
+        }
+    }
+}
+
+/**
+ * mock 환경에서 자연스러운 progress 시뮬레이션
+ * 각 단계마다 딜레이를 두어 실제 진행처럼 보이도록 합니다.
+ *
+ * @private
+ */
+async function _simulateMockProgress(onProgress) {
+    for (const step of MOCK_PROGRESS_STEPS) {
+        // 각 단계의 딜레이를 전체 5000ms 기준으로 분산
+        const delay = step.progress === 100 ? 300 : 700;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        onProgress(step.progress, step.message);
+    }
+    // 마지막 단계 후 짧은 대기
+    await new Promise(resolve => setTimeout(resolve, 300));
 }
 
 /**

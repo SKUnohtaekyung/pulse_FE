@@ -31,9 +31,11 @@ export default function PromotionPage({ initialParams, onNavigate }) {
     const [images, setImages] = useState([]);
     const [options, setOptions] = useState({ vibe: DEFAULT_VIBE, title: '', prompt: '' });
 
-    const [step, setStep] = useState('input'); // 'input' | 'storyboard' | 'loading' | 'result'
+    const [step, setStep] = useState('input'); // 'input' | 'loading' | 'result'
     const [resultData, setResultData] = useState(null);
-    const [apiError, setApiError] = useState(null); // API 에러 상태 (UI 표시용)
+    const [apiError, setApiError] = useState(null);
+    const [progress, setProgress] = useState(0);           // 0~100
+    const [progressMessage, setProgressMessage] = useState('');
 
     // Handle initial params from navigation (손님 마음 읽기 → 홍보 영상 만들기 컨텍스트 전달)
     React.useEffect(() => {
@@ -64,6 +66,8 @@ export default function PromotionPage({ initialParams, onNavigate }) {
     const handleConfirmStoryboard = async (selectedFile, qualityMode) => {
         setStep('loading');
         setApiError(null);
+        setProgress(0);
+        setProgressMessage('');
 
         const target = options.personaId
             ? (PERSONA_LABELS[options.personaId] ?? DEFAULT_TARGET)
@@ -72,13 +76,17 @@ export default function PromotionPage({ initialParams, onNavigate }) {
         try {
             const data = await generatePromotionVideo({
                 target,
-                concept: options.prompt || '맛있는 우리 가게 음식을 소개하는 영상',
-                mode: qualityToMode(qualityMode || 'standard'),
-                style: vibeToStyle(options.vibe || 'energetic'),
-                imageFile: selectedFile
+                concept: options.prompt || DEFAULT_CONCEPT,
+                mode: qualityToMode(qualityMode || DEFAULT_QUALITY),
+                style: vibeToStyle(options.vibe || DEFAULT_VIBE),
+                imageFile: selectedFile,
+                // 실제 백엔드 진행률 콜백: VideoCreator의 progress bar를 실시간으로 업데이트
+                onProgress: (percent, message) => {
+                    setProgress(percent);
+                    setProgressMessage(message);
+                }
             });
 
-            // API or 목업 응답 → resultData에 매핑
             setResultData({
                 videoUrl: data.videoUrl,
                 videoTitle: data.videoTitle,
@@ -86,14 +94,12 @@ export default function PromotionPage({ initialParams, onNavigate }) {
                 generationTime: data.generationTime
             });
 
-            // 영상 제목이 있으면 title 입력창에 자동 세팅
             if (data.videoTitle) {
                 setOptions(prev => ({ ...prev, title: data.videoTitle }));
             }
 
             setStep('result');
         } catch (error) {
-            // 이 경우는 promotionApi 내부에서 이미 fallback 처리되므로 거의 발생 안 함
             console.error('[PromotionPage] 영상 생성 실패:', error);
             setApiError('영상 생성 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.');
             setStep('input');
@@ -105,6 +111,8 @@ export default function PromotionPage({ initialParams, onNavigate }) {
         setImages([]);
         setResultData(null);
         setApiError(null);
+        setProgress(0);
+        setProgressMessage('');
     };
 
     if (viewMode === 'gallery') {
@@ -132,6 +140,8 @@ export default function PromotionPage({ initialParams, onNavigate }) {
                 onGenerate={handleGenerate}
                 onConfirm={handleConfirmStoryboard}
                 onNavigate={onNavigate}
+                progress={progress}
+                progressMessage={progressMessage}
             />
         </div>
     );

@@ -55,20 +55,22 @@ export default function SummaryPanel({ data, onPlaceClick, onRefresh, showHeader
                 {/* 앵커 분석 */}
                 <AnchorCard anchors={data.anchors} />
 
-                {/* 구분선 - 개선된 시각적 분리 */}
-                <div className="border-t-2 border-gray-200 pt-5 mt-2">
-                    <h3 className="text-[16px] font-bold text-[#191F28] mb-3 flex items-center gap-2">
-                        <span className="text-[#FF5A36]">💡</span>
-                        이번 주 실행 액션
-                    </h3>
-                </div>
+                {/* 구분선 + 액션 카드 - 백엔드 연결 시 표시 */}
+                {data.actions && data.actions.length > 0 && (
+                    <>
+                        <div className="border-t-2 border-gray-200 pt-5 mt-2">
+                            <h3 className="text-[16px] font-bold text-[#191F28] mb-3 flex items-center gap-2">
+                                <span className="text-[#FF5A36]">💡</span>
+                                이번 주 실행 액션
+                            </h3>
+                        </div>
+                        {data.actions.map((action, i) => (
+                            <ActionCard key={i} action={action} index={i} />
+                        ))}
+                    </>
+                )}
 
-                {/* 액션 카드 3개 */}
-                {data.actions.map((action, i) => (
-                    <ActionCard key={i} action={action} index={i} />
-                ))}
-
-                {/* 하단 노트 - 개선된 여백 */}
+                {/* 하단 노트 */}
                 {data.note && (
                     <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
                         <p className="text-[13px] text-gray-600 leading-relaxed">
