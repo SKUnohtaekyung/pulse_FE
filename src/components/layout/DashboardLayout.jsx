@@ -3,6 +3,7 @@ import { MoreHorizontal } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import DashboardHome from '../../features/dashboard/DashboardHome';
+import StatusV2Page from '../../features/dashboard-v2/StatusV2Page';
 import UnifiedInsightPage from '../../features/insight/UnifiedInsightPage';
 import CommercialAnalysisPage from '../../features/insight/CommercialAnalysisPage';
 import MyPage from '../../features/mypage/MyPage';
@@ -43,6 +44,11 @@ export default function DashboardLayout({ initialPage, content }) {
                         // DASHBOARD VIEW
                         <>
                             <DashboardHome onNavigate={handleNavigate} />
+                        </>
+                    ) : activeMenu === 'status-v2' ? (
+                        // V2 DASHBOARD VIEW
+                        <>
+                            <StatusV2Page onNavigate={handleNavigate} />
                         </>
                     ) : activeMenu === 'commercial-analysis' ? (
                         // COMMERCIAL ANALYSIS VIEW

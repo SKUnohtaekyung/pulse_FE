@@ -13,7 +13,11 @@ export const INFLUENCER_DATA = [
         niche: ["맛집", "디저트"],
         location: "서울 강남구",
         rating: 4.8,
-        matchScore: 98, // [NEW] 매칭 점수
+        matchScore: 98,
+        keywords: ['#데이트', '#모던', '#신상맛집', '#분위기좋은', '#감성카페'],
+        followerBase: { age: [20, 30], gender: 'female' },
+        activityArea: ['강남구', '서초구', '송파구'],
+        matchReasons: ["사장님 가게의 '모던한' 분위기와 영상 스타일 일치", "2030 여성 타겟 도달률 상위 5%"],
         bio: "강남 맛집 탐방 전문 크리에이터입니다. 협업 문의는 DM으로!",
         portfolio: [
             {
@@ -42,6 +46,10 @@ export const INFLUENCER_DATA = [
         location: "서울 마포구",
         rating: 4.6,
         matchScore: 92,
+        keywords: ['#한식', '#가성비', '#회식', '#든든한', '#직장인'],
+        followerBase: { age: [30, 45], gender: 'all' },
+        activityArea: ['마포구', '용산구', '영등포구'],
+        matchReasons: ["한식 리뷰 전문 크리에이터", "마포구 직장인 타겟 도달률 높음"],
         bio: "한식 전문 푸드 크리에이터. 전통과 현대의 조화를 담아냅니다.",
         portfolio: [
             {
@@ -64,6 +72,10 @@ export const INFLUENCER_DATA = [
         location: "서울 송파구",
         rating: 4.9,
         matchScore: 95,
+        keywords: ['#일식', '#오마카세', '#데이트', '#깔끔한', '#분위기'],
+        followerBase: { age: [25, 35], gender: 'all' },
+        activityArea: ['송파구', '강동구', '강남구'],
+        matchReasons: ["일식 선호 및 30대 직장인 타겟 일치", "가게의 '차분한' 분위기와 영상 스타일 핏"],
         bio: "일식 러버 🍣 맛집 탐방과 리뷰를 전문으로 합니다.",
         portfolio: [
             {
@@ -92,6 +104,7 @@ export const INFLUENCER_DATA = [
         location: "서울 용산구",
         rating: 4.5,
         matchScore: 88,
+        matchReasons: ["용산구 중심 활동 크리에이터", "기념일 데이트 타겟 최적화"],
         bio: "파스타와 피자를 사랑하는 양식 전문 크리에이터입니다.",
         portfolio: [
             {
@@ -114,6 +127,7 @@ export const INFLUENCER_DATA = [
         location: "서울 강서구",
         rating: 4.7,
         matchScore: 96,
+        matchReasons: ["1020 학생 타겟 도달률 1위", "가성비 메뉴 호응도 최상"],
         bio: "먹방 전문! 맛있는 건 다 먹어봅니다 🍔🍕🍗",
         portfolio: [
             {
@@ -142,6 +156,10 @@ export const INFLUENCER_DATA = [
         location: "서울 성동구",
         rating: 4.8,
         matchScore: 93,
+        keywords: ['#성수카페', '#디저트', '#감성', '#커피', '#분위기'],
+        followerBase: { age: [20, 25], gender: 'female' },
+        activityArea: ['성동구', '광진구'],
+        matchReasons: ["성동구 카페 핵심 크리에이터", "가게의 '감성적인' 분위기와 완벽 일치"],
         bio: "카페 투어와 디저트 리뷰를 전문으로 하는 크리에이터입니다 ☕️🍰",
         portfolio: [
             {
@@ -170,6 +188,7 @@ export const INFLUENCER_DATA = [
         location: "서울 종로구",
         rating: 4.6,
         matchScore: 89,
+        matchReasons: ["주말 브런치 타겟 특화", "디저트 리뷰 전문 크리에이터"],
         bio: "브런치 카페 전문 크리에이터. 주말 브런치 맛집을 찾아다닙니다.",
         portfolio: [
             {
@@ -192,6 +211,10 @@ export const INFLUENCER_DATA = [
         location: "서울 서초구",
         rating: 4.9,
         matchScore: 97,
+        keywords: ['#감성카페', '#사진맛집', '#커피', '#디저트', '#공간'],
+        followerBase: { age: [20, 25], gender: 'female' },
+        activityArea: ['서초구', '강남구'],
+        matchReasons: ["인테리어 특화 리뷰어", "2030 여성 타겟 도달률 최상위"],
         bio: "감성 카페와 인테리어를 담는 크리에이터입니다 📸✨",
         portfolio: [
             {
@@ -220,6 +243,7 @@ export const INFLUENCER_DATA = [
         location: "서울 강남구",
         rating: 4.8,
         matchScore: 94,
+        matchReasons: ["강남구 뷰티 관심 고객 밀집", "메이크업 튜토리얼 스타일 일치"],
         bio: "뷰티 인플루언서 💄 메이크업 튜토리얼과 제품 리뷰를 전문으로 합니다.",
         portfolio: [
             {
@@ -248,6 +272,7 @@ export const INFLUENCER_DATA = [
         location: "서울 서초구",
         rating: 4.9,
         matchScore: 91,
+        matchReasons: ["스킨케어 제품 특화", "3040 타겟 신뢰도 매우 높음"],
         bio: "스킨케어 전문 크리에이터. 피부 고민 해결사입니다 ✨",
         portfolio: [
             {
@@ -270,6 +295,7 @@ export const INFLUENCER_DATA = [
         location: "서울 마포구",
         rating: 4.7,
         matchScore: 85,
+        matchReasons: ["잔잔한 일상 브이로그 무드", "친근하고 편안한 톤앤매너"],
         bio: "일상 브이로그와 라이프스타일을 공유하는 크리에이터입니다 🌿",
         portfolio: [
             {
@@ -292,6 +318,7 @@ export const INFLUENCER_DATA = [
         location: "서울 성북구",
         rating: 4.8,
         matchScore: 90,
+        matchReasons: ["홈카페 홈쿡 분야 전문", "1인가구 타겟 접근성 우수"],
         bio: "홈카페와 홈쿡 전문 크리에이터. 집에서 즐기는 여유를 담습니다 ☕️🏠",
         portfolio: [
             {

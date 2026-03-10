@@ -1,11 +1,34 @@
 import React from 'react';
-import { X, Users, Clock, Star, ExternalLink, MapPin, Award, ArrowRight } from 'lucide-react';
+import { X, Users, Clock, Star, ExternalLink, MapPin, Award, ArrowRight, Info } from 'lucide-react';
 
 /**
  * InfluencerDetailModal (Premium Redesign)
  * High-end profile card layout with split view
  */
 export default function InfluencerDetailModal({ influencer, onClose, onRequest }) {
+    // 툴팁에서 사용할 예시 상점 데이터 (실제로는 부모나 전역상태에서 받아옴)
+    const storeInfo = {
+        tags: ['#데이트', '#모던', '#하이볼', '#감성', '#신상맛집'],
+        targetAge: 20,
+        targetGender: 'female',
+        address: '서울 강남구 역삼동'
+    };
+
+    // Jaccard Similarity (교집합 / 합집합)
+    const storeTags = storeInfo.tags;
+    const infTags = influencer.keywords || [];
+    const intersection = storeTags.filter(tag => infTags.includes(tag)).length;
+    const union = new Set([...storeTags, ...infTags]).size;
+    const tagMatchPercent = union === 0 ? 0 : Math.round((intersection / union) * 100);
+
+    // Activity Area Match
+    const storeGu = storeInfo.address.split(' ')[1] || '';
+    const isAreaMatch = (influencer.activityArea || []).includes(storeGu);
+
+    // Audience Match
+    const isDemographicMatch = influencer.followerBase &&
+        storeInfo.targetAge >= influencer.followerBase.age[0] && storeInfo.targetAge <= influencer.followerBase.age[1] &&
+        (influencer.followerBase.gender === 'all' || influencer.followerBase.gender === storeInfo.targetGender);
     if (!influencer) return null;
 
     // Dummy AI Insight Text (In real app, this comes from backend analysis)
@@ -71,7 +94,45 @@ export default function InfluencerDetailModal({ influencer, onClose, onRequest }
                         </div>
                         <div className="col-span-2 bg-[#E8F3FF] p-4 rounded-2xl flex items-center justify-between border border-[#CFE5FF]">
                             <div className="flex flex-col">
-                                <span className="text-[11px] text-[#002B7A] font-bold opacity-80">매칭 적합도</span>
+                                <div className="flex items-center gap-1 mb-0.5">
+                                    <span className="text-[11px] text-[#002B7A] font-bold opacity-80">매칭 적합도</span>
+                                    <div className="relative group flex items-center">
+                                        <div className="p-1 -m-1 cursor-help text-[#002B7A] opacity-70 hover:opacity-100 transition-opacity">
+                                            <Info size={12} />
+                                        </div>
+                                        {/* Tooltip */}
+                                        <div className="absolute left-0 bottom-[calc(100%+8px)] w-[260px] bg-white text-[#191F28] border border-[#F2F4F6] shadow-xl rounded-xl p-4 z-[100] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none text-left font-normal whitespace-normal">
+                                            <h4 className="text-[13px] font-bold mb-3 text-[#002B7A] flex items-center gap-1.5 border-b border-[#F2F4F6] pb-2">
+                                                <Star size={14} className="text-[#002B7A]" />
+                                                AI 매칭 분석 상세
+                                            </h4>
+                                            <div className="flex flex-col gap-3.5">
+                                                {/* Metric 1 */}
+                                                <div>
+                                                    <div className="flex justify-between items-center mb-1">
+                                                        <span className="text-[12px] font-bold text-[#333D4B]">키워드 유사도 (Jaccard)</span>
+                                                        <span className="text-[12px] font-bold text-[#002B7A]">{tagMatchPercent}%</span>
+                                                    </div>
+                                                    <div className="w-full h-1.5 bg-[#F2F4F6] rounded-full overflow-hidden">
+                                                        <div className="h-full bg-[#002B7A] rounded-full" style={{ width: `${Math.max(tagMatchPercent, 10)}%` }}></div>
+                                                    </div>
+                                                </div>
+                                                {/* Metric 2 */}
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-2 h-2 rounded-full ${isAreaMatch ? 'bg-[#FF5A36]' : 'bg-[#D1D6DB]'}`}></div>
+                                                    <span className="text-[12px] text-[#4E5968]">활동 지역 일치 <strong className="text-[#333D4B]">({storeGu})</strong></span>
+                                                </div>
+                                                {/* Metric 3 */}
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-2 h-2 rounded-full ${isDemographicMatch ? 'bg-[#FF5A36]' : 'bg-[#D1D6DB]'}`}></div>
+                                                    <span className="text-[12px] text-[#4E5968]">타겟 고객 일치 <strong className="text-[#333D4B]">({storeInfo.targetAge}대 {storeInfo.targetGender === 'female' ? '여성' : '남성'})</strong></span>
+                                                </div>
+                                            </div>
+                                            {/* Arrow */}
+                                            <div className="absolute left-4 top-full w-3 h-3 bg-white border-b border-r border-[#F2F4F6] transform rotate-45 -mt-[6.5px]"></div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <span className="text-[22px] font-extrabold text-[#002B7A]">{influencer.matchScore}점</span>
                             </div>
                             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#002B7A] shadow-sm">
@@ -112,7 +173,7 @@ export default function InfluencerDetailModal({ influencer, onClose, onRequest }
                                 주요 포트폴리오
                             </h3>
                             <div className="grid grid-cols-2 gap-4">
-                                {influencer.portfolio.map((item, index) => (
+                                {influencer.portfolio?.map((item, index) => (
                                     <div key={index} className="group cursor-pointer">
                                         <div className="relative aspect-video rounded-xl overflow-hidden bg-gray-100 border border-[#E5E8EB] mb-2.5">
                                             <img
