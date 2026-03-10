@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Sparkles, Send } from 'lucide-react';
+import { ArrowLeft, Sparkles, Send, Info } from 'lucide-react';
 import { INFLUENCER_DATA } from '../../data/mockInfluencers';
 
 /**
@@ -37,6 +37,26 @@ export default function InfluencerRequestPage() {
         e.preventDefault();
         setIsSubmitting(true);
         await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // [NEW] 보낸 제안 메시지 로컬 스토리지에 저장
+        const newRequest = {
+            id: Date.now().toString(),
+            influencerId: influencer.id,
+            influencerName: influencer.name,
+            influencerImage: influencer.profileImage,
+            type: formData.type,
+            message: formData.message,
+            contact: formData.contact,
+            sentAt: new Date().toISOString()
+        };
+
+        try {
+            const existingRequests = JSON.parse(localStorage.getItem('sentInfluencerRequests') || '[]');
+            localStorage.setItem('sentInfluencerRequests', JSON.stringify([newRequest, ...existingRequests]));
+        } catch (error) {
+            console.error('Failed to save request to localStorage', error);
+        }
+
         alert(`✅ ${influencer.name}님에게 제안서가 전송되었습니다!`);
         navigate('/influencer-matching');
     };
@@ -66,7 +86,7 @@ export default function InfluencerRequestPage() {
                     <div>
                         <label className="block text-[14px] font-bold text-[#333D4B] mb-2">협업 방식</label>
                         <div className="flex gap-2">
-                            {['제품 협찬', '방문 리뷰', '영상 제작', '공동 구매'].map((type) => (
+                            {['제품 협찬', '방문 리뷰', '영상 제작', '기타'].map((type) => (
                                 <button
                                     key={type}
                                     type="button"
@@ -167,9 +187,28 @@ export default function InfluencerRequestPage() {
                     </div>
                     <div className="flex items-center gap-2 mb-0.5">
                         <h2 className="text-[20px] font-bold text-[#191F28]">{influencer.name}</h2>
-                        <span className="px-2 py-0.5 bg-[#FFF4E6] text-[#FF5A36] text-[11px] font-bold rounded-full">
-                            {influencer.matchScore}% 일치
-                        </span>
+                        <div className="relative group flex items-center">
+                            <span className="px-2 py-0.5 bg-[#FFF4E6] text-[#FF5A36] text-[11px] font-bold rounded-full flex items-center gap-1">
+                                {influencer.matchScore}% 일치
+                                <div className="p-1.5 -m-1.5 cursor-help opacity-70 hover:opacity-100 transition-opacity">
+                                    <Info size={14} />
+                                </div>
+                            </span>
+                            {/* Tooltip */}
+                            <div className="absolute left-1/2 -translate-x-1/2 bottom-[calc(100%+8px)] w-[240px] bg-white text-[#191F28] border border-[#F2F4F6] shadow-lg rounded-xl p-3 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none text-left">
+                                <h4 className="text-[13px] font-bold mb-1.5 text-[#002B7A]">매칭 분석 이유</h4>
+                                <ul className="flex flex-col gap-1.5">
+                                    {influencer.matchReasons?.map((reason, idx) => (
+                                        <li key={idx} className="text-[13px] text-[#4B5563] leading-relaxed break-keep flex items-start gap-1.5">
+                                            <span className="mt-[6px] shrink-0 text-[#FF5A36] text-[8px]">●</span>
+                                            <span>{reason}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                                {/* Arrow */}
+                                <div className="absolute left-1/2 -translate-x-1/2 top-full w-3 h-3 bg-white border-b border-r border-[#F2F4F6] transform rotate-45 -mt-[6.5px]"></div>
+                            </div>
+                        </div>
                     </div>
                     <p className="text-[#8B95A1] text-[13px] mb-4 line-clamp-2 max-w-[200px]">
                         {influencer.bio}

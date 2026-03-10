@@ -5,12 +5,15 @@ import FilterBar from './FilterBar';
 import InfluencerList from './InfluencerList';
 import UpgradePrompt from './UpgradePrompt';
 import InfluencerDetailModal from './InfluencerDetailModal';
+import SentRequestsDrawer from './SentRequestsDrawer';
+import { Send, MessageSquare } from 'lucide-react';
 
 export default function InfluencerMatchingPage({ initialParams }) {
     const CURRENT_USER_PLAN = "Pro";
     const [selectedCategory, setSelectedCategory] = useState("전체");
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedInfluencer, setSelectedInfluencer] = useState(null);
+    const [isSentRequestsDrawerOpen, setIsSentRequestsDrawerOpen] = useState(false);
 
     if (CURRENT_USER_PLAN !== "Pro") return <UpgradePrompt />;
 
@@ -38,7 +41,9 @@ export default function InfluencerMatchingPage({ initialParams }) {
 
                     {/* Search & Filter Section */}
                     <div className="flex flex-col gap-3">
-                        <h2 className="text-[20px] font-bold text-[#191F28] px-1 tracking-tight">파트너 찾기</h2>
+                        <div className="flex items-center justify-between px-1">
+                            <h2 className="text-[20px] font-bold text-[#191F28] tracking-tight">파트너 찾기</h2>
+                        </div>
 
                         {/* Search Input */}
                         <div className="relative">
@@ -61,8 +66,8 @@ export default function InfluencerMatchingPage({ initialParams }) {
                                     key={cat}
                                     onClick={() => setSelectedCategory(cat)}
                                     className={`px-3 py-1.5 rounded-xl text-[13px] font-bold transition-all ${selectedCategory === cat
-                                            ? "bg-[#191F28] text-white shadow-md transform scale-[1.02]"
-                                            : "bg-white border border-[#E5E8EB] text-[#505967] hover:bg-[#F9FAFB] hover:text-[#333D4B]"
+                                        ? "bg-[#191F28] text-white shadow-md transform scale-[1.02]"
+                                        : "bg-white border border-[#E5E8EB] text-[#505967] hover:bg-[#F9FAFB] hover:text-[#333D4B]"
                                         }`}
                                 >
                                     {cat}
@@ -101,8 +106,8 @@ export default function InfluencerMatchingPage({ initialParams }) {
                             <li className="flex gap-3 items-start relative pl-1">
                                 <div className="mt-1.5 w-2 h-2 rounded-full bg-[#002B7A] shrink-0"></div>
                                 <div>
-                                    <strong className="block text-[#333D4B] text-[14px] mb-0.5">매칭 점수 확인</strong>
-                                    <span className="text-[#8B95A1] leading-relaxed text-[13px] block break-keep">가게 데이터와 핏이 좋은지 점수로 확인하세요.</span>
+                                    <strong className="block text-[#333D4B] text-[14px] mb-0.5">매칭 적합도 분석</strong>
+                                    <span className="text-[#8B95A1] leading-relaxed text-[13px] block break-keep">우리 가게의 핵심 타겟과 잘 맞는 파트너인지 매칭 점수로 편리하게 확인해보세요.</span>
                                 </div>
                             </li>
                             <li className="flex gap-3 items-start relative pl-1">
@@ -158,6 +163,26 @@ export default function InfluencerMatchingPage({ initialParams }) {
                     onRequest={() => {/* TODO: Open Request Modal */ }}
                 />
             )}
+
+            {/* Sent Requests Drawer */}
+            <SentRequestsDrawer
+                isOpen={isSentRequestsDrawerOpen}
+                onClose={() => setIsSentRequestsDrawerOpen(false)}
+            />
+
+            {/* Floating Action Button for Inbox */}
+            <button
+                onClick={() => setIsSentRequestsDrawerOpen(true)}
+                className="fixed bottom-8 right-8 w-[52px] h-[52px] bg-[#191F28] text-white rounded-full shadow-lg hover:shadow-xl hover:bg-[#333D4B] hover:scale-105 transition-all duration-300 flex items-center justify-center z-30 group"
+                aria-label="제안 보관함 열기"
+            >
+                <div className="relative">
+                    <MessageSquare size={22} className="group-hover:opacity-0 transition-opacity absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                    <Send size={22} className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                    {/* Optional Notification Pip */}
+                    <div className="absolute -top-1 -right-1.5 w-2.5 h-2.5 bg-[#FF5A36] rounded-full border-2 border-[#191F28] group-hover:border-[#333D4B] transition-colors"></div>
+                </div>
+            </button>
         </div>
     );
 }
