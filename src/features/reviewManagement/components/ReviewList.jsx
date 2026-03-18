@@ -12,7 +12,7 @@ import { Star, Calendar, Camera } from 'lucide-react';
 // REVIEW CARD COMPONENT
 // ============================================================================
 
-function ReviewCard({ review }) {
+export function ReviewCard({ review }) {
     return (
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200 hover:shadow-md transition-shadow">
             {/* Header */}
@@ -28,18 +28,7 @@ function ReviewCard({ review }) {
                     )}
                 </div>
 
-                {/* Rating */}
-                <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                        <Star
-                            key={i}
-                            className={`w-4 h-4 ${i < review.rating
-                                    ? 'fill-yellow-400 text-yellow-400'
-                                    : 'text-neutral-300'
-                                }`}
-                        />
-                    ))}
-                </div>
+
             </div>
 
             {/* Content */}
@@ -65,7 +54,7 @@ export function ReviewList({ reviews }) {
                 </h3>
             </div>
 
-            <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto pr-2">
+            <div className="space-y-4">
                 {reviews.map((review) => (
                     <ReviewCard
                         key={review.id}

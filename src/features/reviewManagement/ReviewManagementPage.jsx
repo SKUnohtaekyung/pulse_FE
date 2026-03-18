@@ -30,7 +30,9 @@ export default function ReviewManagementPage() {
   const mockReviews = [
     { id: '1', author: '김철수', rating: 5, date: '2024-02-15', content: '음식이 정말 맛있었어요!', hasPhoto: true },
     { id: '2', author: '이영희', rating: 4, date: '2024-02-14', content: '분위기도 좋고 서비스도 친절했습니다.', hasPhoto: false },
-    { id: '3', author: '박민수', rating: 5, date: '2024-02-13', content: '가족과 함께 방문했는데 모두 만족했어요.', hasPhoto: true }
+    { id: '3', author: '박민수', rating: 5, date: '2024-02-13', content: '가족과 함께 방문했는데 모두 만족했어요.', hasPhoto: true },
+    { id: '4', author: '정다은', rating: 5, date: '2024-02-12', content: '직원분들이 너무 친절하셔서 기분 좋게 식사했습니다! 재방문 의사 100%예요.', hasPhoto: false },
+    { id: '5', author: '최지훈', rating: 4, date: '2024-02-10', content: '전반적으로 무난하고 괜찮았습니다. 양이 조금 더 많았으면 좋겠네요.', hasPhoto: true }
   ];
 
   const tabDescriptions = {
@@ -76,6 +78,8 @@ export default function ReviewManagementPage() {
           <QuickSettings
             settings={settings}
             onSettingsChange={setSettings}
+            recentReviews={mockReviews}
+            onAddTemplate={(template) => setSavedTemplates(prev => [template, ...prev])}
           />
         )}
 

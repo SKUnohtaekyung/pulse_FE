@@ -405,7 +405,7 @@ const PasswordInput = ({ name, placeholder, value, onChange, validation }) => {
                         color: validation.hasLowerCase ? '#10b981' : '#6b7280'
                     }}>
                         <span>{validation.hasLowerCase ? '✓' : '○'}</span>
-                        <span>영어 소문자 포함</span>
+                        <span>영어 포함</span>
                     </div>
                     <div style={{
                         display: 'flex',

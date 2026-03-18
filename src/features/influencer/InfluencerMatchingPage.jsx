@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { INFLUENCER_DATA, CATEGORIES, filterInfluencersByCategory } from '../../data/mockInfluencers';
 import FilterBar from './FilterBar';
@@ -9,6 +10,7 @@ import SentRequestsDrawer from './SentRequestsDrawer';
 import { Send, MessageSquare } from 'lucide-react';
 
 export default function InfluencerMatchingPage({ initialParams }) {
+    const navigate = useNavigate();
     const CURRENT_USER_PLAN = "Pro";
     const [selectedCategory, setSelectedCategory] = useState("전체");
     const [searchQuery, setSearchQuery] = useState("");
@@ -160,7 +162,7 @@ export default function InfluencerMatchingPage({ initialParams }) {
                 <InfluencerDetailModal
                     influencer={selectedInfluencer}
                     onClose={() => setSelectedInfluencer(null)}
-                    onRequest={() => {/* TODO: Open Request Modal */ }}
+                    onRequest={() => navigate(`/influencer-matching/request/${selectedInfluencer.id}`)}
                 />
             )}
 

@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { Wand2, Copy, Star, RefreshCw, Check } from 'lucide-react';
 import { ExceptionCaseSettings, DEFAULT_CASES } from './ExceptionCaseSettings';
 import { SaveTemplateModal } from './TemplateComponents';
+import { ReviewList, ReviewCard } from './ReviewList';
 
 // ============================================================================
 // TOGGLE SWITCH COMPONENT
@@ -93,13 +94,13 @@ function ReplyCard({ reply, onSaveTemplate, onRegenerate }) {
 // ============================================================================
 // QUICK SETTINGS COMPONENT
 // ============================================================================
-export function QuickSettings({ settings, onSettingsChange }) {
+export function QuickSettings({ settings, onSettingsChange, recentReviews = [], onAddTemplate }) {
     const [customPresets, setCustomPresets] = useState([]);
     const [showPresetInput, setShowPresetInput] = useState(false);
     const [newPresetName, setNewPresetName] = useState('');
     const [generatedReplies, setGeneratedReplies] = useState([]);
     const [isGenerating, setIsGenerating] = useState(false);
-    const [replyCount, setReplyCount] = useState(3);
+    const [replyCount, setReplyCount] = useState(1);
     const [showCountDropdown, setShowCountDropdown] = useState(false);
     const [showSaveModal, setShowSaveModal] = useState(false);
     const [contentToSave, setContentToSave] = useState('');
@@ -145,6 +146,16 @@ export function QuickSettings({ settings, onSettingsChange }) {
                 id: '3',
                 content: '따뜻한 리뷰 남겨주셔서 감사합니다! 항상 최선을 다하는 저희 매장이 되겠습니다. 또 뵙기를 바랍니다!',
                 isRecommended: false
+            },
+            {
+                id: '4',
+                content: '정성스러운 리뷰 작성에 깊이 감사드립니다. 변치 않는 맛과 서비스로 보답할 수 있도록 노력하겠습니다.',
+                isRecommended: false
+            },
+            {
+                id: '5',
+                content: '고객님의 칭찬에 힘이 납니다! 부족한 부분은 더욱 개선하여 다음에는 더 큰 만족을 드릴 수 있도록 하겠습니다.',
+                isRecommended: false
             }
         ];
 
@@ -172,30 +183,62 @@ export function QuickSettings({ settings, onSettingsChange }) {
             <div className="space-y-6">
                 {/* Show generated replies OR settings */}
                 {generatedReplies.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-6">
-                        <div className="space-y-4">
-                            {/* Generated Replies */}
-                            {generatedReplies.map((reply) => (
-                                <ReplyCard
-                                    key={reply.id}
-                                    reply={reply}
-                                    onSaveTemplate={handleSaveTemplate}
-                                    onRegenerate={handleRegenerate}
-                                />
-                            ))}
-
-                            {/* Back to Settings Button */}
-                            <div className="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200">
-                                <button
-                                    onClick={() => setGeneratedReplies([])}
-                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl font-semibold transition-colors"
-                                >
-                                    빠른 설정으로 돌아가기
-                                </button>
+                    <div className="flex flex-col gap-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h2 className="text-xl font-bold text-neutral-900">생성된 리뷰 답변</h2>
+                                <p className="text-sm text-neutral-500 mt-1">최근 리뷰를 바탕으로 템플릿이 적용된 답변입니다.</p>
                             </div>
+                            <button
+                                onClick={() => setGeneratedReplies([])}
+                                className="px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-lg font-semibold transition-colors text-sm"
+                            >
+                                뒤로가기 / 다시 생성
+                            </button>
                         </div>
-                        {/* 오른쪽 빈 공간 */}
-                        <div></div>
+
+                        <div className="space-y-6">
+                            {generatedReplies.map((reply, index) => {
+                                const matchingReview = recentReviews[index] || recentReviews[0] || { content: '리뷰 정보를 불러오는 중입니다.', date: '방금 전', rating: 5, hasPhoto: false };
+                                return (
+                                    <div key={reply.id} className="relative p-6 bg-neutral-50 rounded-2xl border border-neutral-200">
+                                        <div className="flex gap-4">
+                                            {/* 왼쪽: 리뷰 */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-3">
+                                                    <div className="w-8 h-8 bg-neutral-200 rounded-full flex items-center justify-center text-xs text-neutral-500">
+                                                        U
+                                                    </div>
+                                                    <span className="text-sm font-semibold text-neutral-700">고객 리뷰</span>
+                                                </div>
+                                                <ReviewCard review={matchingReview} />
+                                            </div>
+
+                                            {/* 중앙 연결선 아이콘 등 */}
+                                            <div className="w-8 flex items-center justify-center pt-[72px]">
+                                                <div className="w-full border-t-[2px] border-dashed border-neutral-300"></div>
+                                                <div className="w-2 h-2 rounded-full bg-neutral-300 absolute"></div>
+                                            </div>
+
+                                            {/* 오른쪽: 답변 */}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-3 px-1">
+                                                    <div className="w-8 h-8 bg-[#002B7A] rounded-full flex items-center justify-center text-white text-lg">
+                                                        🤖
+                                                    </div>
+                                                    <span className="text-sm font-semibold text-[#002B7A]">생성된 AI 답변</span>
+                                                </div>
+                                                <ReplyCard
+                                                    reply={reply}
+                                                    onSaveTemplate={handleSaveTemplate}
+                                                    onRegenerate={handleRegenerate}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 gap-6">
@@ -355,18 +398,26 @@ export function QuickSettings({ settings, onSettingsChange }) {
                                                     className="fixed inset-0 z-10"
                                                     onClick={() => setShowCountDropdown(false)}
                                                 />
-                                                <div className="absolute right-0 bottom-full mb-2 bg-white rounded-xl shadow-lg border border-neutral-200 py-2 z-20 min-w-[80px]">
-                                                    {[1, 3, 5].map((num) => (
+                                                <div className="absolute right-0 bottom-full mb-2 bg-white rounded-xl shadow-lg border border-neutral-200 py-2 z-20 min-w-fit whitespace-nowrap">
+                                                    {[
+                                                        { value: 1, label: '1개', isPro: false },
+                                                        { value: 5, label: '5개', isPro: true },
+                                                    ].map((option) => (
                                                         <button
-                                                            key={num}
+                                                            key={option.value}
                                                             onClick={() => {
-                                                                setReplyCount(num);
+                                                                setReplyCount(option.value);
                                                                 setShowCountDropdown(false);
                                                             }}
-                                                            className={`w-full px-4 py-2 text-left hover:bg-neutral-50 transition-colors ${replyCount === num ? 'text-[#002B7A] font-semibold' : 'text-neutral-700'
+                                                            className={`w-full px-4 py-2 flex items-center gap-3 text-left hover:bg-neutral-50 transition-colors ${replyCount === option.value ? 'text-[#002B7A] font-semibold' : 'text-neutral-700'
                                                                 }`}
                                                         >
-                                                            {num}개
+                                                            <span>{option.label}</span>
+                                                            {option.isPro ? (
+                                                                <span className="text-[10px] bg-[#333D4B] text-white px-1.5 py-0.5 rounded font-bold tracking-wider">PRO</span>
+                                                            ) : (
+                                                                <span className="text-[10px] bg-neutral-200 text-neutral-600 px-1.5 py-0.5 rounded font-bold tracking-wider">무료</span>
+                                                            )}
                                                         </button>
                                                     ))}
                                                 </div>
@@ -393,6 +444,16 @@ export function QuickSettings({ settings, onSettingsChange }) {
                     onClose={() => setShowSaveModal(false)}
                     onSave={(template) => {
                         console.log('Template saved:', { ...template, content: contentToSave });
+                        if (onAddTemplate) {
+                            onAddTemplate({
+                                id: Date.now().toString(),
+                                ...template,
+                                content: contentToSave,
+                                tone: settings.tone,
+                                length: settings.length,
+                                date: new Date().toISOString().split('T')[0]
+                            });
+                        }
                         setShowSaveModal(false);
                     }}
                 />
