@@ -26,31 +26,31 @@ export const fetchDashboardV2Data = async (isRefresh = false) => {
                         conversions: { value: conversionsVal, unit: "명", status: "up", compareText: "지난주보다 18% 늘었어요 📈" }
                     },
                     todayBrief: [
-                        { text: "현재 범계 상권 맛집을 찾는 사람 중 ", isHighlight: false },
-                        { text: "70%가 주변 다른 가게로 가고 ", isHighlight: true },
-                        { text: "있어요. 장사 시작 전 우리 가게를 다시 한 번 돋보이게 할 타이밍입니다! 🏃‍♂️", isHighlight: false }
+                        { text: "현재 범계 상권에서 해장/매운맛집을 찾는 사람 중 ", isHighlight: false },
+                        { text: "75%가 주변 다른 가게로 가고 ", isHighlight: true },
+                        { text: "있어요. 점심 피크타임 전 우리 가게의 얼큰함을 다시 한 번 돋보이게 할 타이밍입니다! 🏃‍♂️", isHighlight: false }
                     ],
                     actions: {
                         aiSuggestion: {
                             id: "sug_002",
                             evidence: "소식 안 올린 지 5일째",
                             confidence: "high",
-                            content: "이대로 주말을 맞이하면 평소보다 약 45만 원을 덜 벌게 될 수 있어요. 릴스를 하나 올려서 손님들의 발길을 다시 돌려보세요!",
-                            ctaLabel: "주말용 추천 릴스 만들기 🎬"
+                            content: "비 오는 오늘, 평소보다 약 30만 원을 더 벌 수 있는 기회예요. 끓는 수제비 릴스를 하나 올려서 손님들의 발길을 끌어보세요!",
+                            ctaLabel: "비 오는 날 맞춤 릴스 만들기 🎬"
                         },
                         operational: {
                             id: "opt_002",
-                            title: "최근 비슷한 주변 가게에는 인플루언서가 3명 왔는데, 우리 가게는 0명이에요.",
-                            ctaLabel: "인플루언서 초대하기 🤝"
+                            title: "최근 비슷한 범계역 식당에는 먹방 인플루언서가 3명 왔는데, 우리 가게는 0명이에요.",
+                            ctaLabel: "매운맛 인플루언서 초대하기 🤝"
                         }
                     },
                     insights: {
                         weather: { type: weatherType },
                         personas: [
-                            { emoji: "🧀", label: "치즈폭탄", detail: "이번 주 리뷰에서 15번 더 칭찬했어요" },
-                            { emoji: "🍷", label: "분위기 좋은", detail: "우리가 원하던 20대 손님 취향 저격!" }
+                            { emoji: "🌶️", label: "맵부심", detail: "이번 달 리뷰에서 '얼큰함' 언급이 상위 5%" },
+                            { emoji: "🍜", label: "해장 단골", detail: "직장인 점심/해장 손님 만족도 매우 높음" }
                         ],
-                        keywords: ["#치즈폭탄", "#데이트맛집"]
+                        keywords: ["#스트레스해소", "#가성비점심", "#핵불맛"]
                     },
                     trendChart: [
                         { name: 'D-3', value: 80 },

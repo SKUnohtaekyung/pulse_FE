@@ -18,8 +18,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded }) => {
     const [showProfileMenu, setShowProfileMenu] = useState(false);
 
     const menus = [
-        { id: 'home', icon: <LayoutDashboard size={24} />, label: '가게 현황 (AS-IS)' },
-        { id: 'status-v2', icon: <LayoutDashboard size={24} />, label: '가게 현황 V2', badge: 'New' },
+        { id: 'status-v2', icon: <LayoutDashboard size={24} />, label: '가게 현황' },
         { id: 'commercial-analysis', icon: <Map size={24} />, label: '주변 상권 분석' },
         { id: 'insight', icon: <BarChart2 size={24} />, label: '손님 분석' },
         { id: 'promotion', icon: <PlayCircle size={24} />, label: '홍보 영상 만들기' },

@@ -2,128 +2,34 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Users, Sparkles, AlertCircle, ChevronRight, Trophy, Clock, TrendingUp, Film, Loader2 } from 'lucide-react';
 import JourneyMapSection from './JourneyMapSection';
+import MOCK_JSON from './mock.json';
 import ReelCreationModal from './components/ReelCreationModal';
 
 // FastAPI 서버 주소
 const FASTAPI_URL = 'http://127.0.0.1:8000/api';
 
 // ─── 목업 데이터 (API 연결 실패 시 fallback) ────────────────────────────────
-// API 응답 구조와 동일하게 유지해야 합니다.
+// mock.json 구조: { data: { insight: {...}, personas: [...] } }
 const MOCK_ANALYSIS_DATA = {
-    store_name: '범계 로데오점',
-    store_summary: '범계역 로데오거리의 대표 맛집. 직장인 점심과 저녁 회식 수요가 높으며 재방문율이 높은 가게입니다.',
-    average_rating: 4.5,
+    store_name: '범계 수제비',
+    store_summary: MOCK_JSON.data.insight.overallReview,
+    average_rating: (MOCK_JSON.data.insight.satisfactionScore / 20).toFixed(1),
     total_reviews: 128,
-    personas: [
-        {
-            id: 1,
-            nickname: '시원한 국물파',
-            summary: '해장이 필요한 직장인, 시원한 국물 맛집을 찾아요',
-            img: 'https://api.dicebear.com/7.x/adventurer/svg?seed=hangover',
-            tags: ['30대', '직장인', '해장'],
-            overall_comment: '해장 수요가 높은 고객층으로 국물 메뉴 퀄리티와 속도가 핵심입니다. 이 그룹을 잡으면 평일 오전 매출이 올라갑니다.',
-            action_recommendation: '"10분 완성 해장국" 릴스를 제작해 월요일 아침에 업로드하세요. 공유율이 높아집니다.',
-            journey: {
-                explore: {
-                    action: '"범계 해장국 맛집" 키워드로 네이버 지도 검색',
-                    thought: '어제 너무 마셨는데... 빨리 속 풀어줄 곳이 필요해.',
-                    type: 'neutral',
-                    painPoint: '검색 결과에 가게 사진과 메뉴가 불명확해 선택이 어려움',
-                    opportunity: '네이버 플레이스에 해장 메뉴 대표 사진을 등록하면 클릭률이 올라갑니다.'
-                },
-                visit: {
-                    action: '출근 전 8시 30분에 방문',
-                    thought: '줄이 없네! 바로 앉을 수 있겠다.',
-                    type: 'good',
-                    opportunity: '오전 시간대 방문 고객에게 "얼리버드 사이드 메뉴" 서비스를 제공하면 충성도가 높아집니다.'
-                },
-                eat: {
-                    action: '순댓국 + 공깃밥 주문, 빠른 서빙 기대',
-                    thought: '국물이 진하고 뜨끈해서 딱 좋다. 역시 여기야.',
-                    type: 'good',
-                    opportunity: '"단골 순댓국" 사진 콘텐츠를 만들어 리뷰 작성을 유도하세요.'
-                },
-                share: {
-                    action: '지인에게 "여기 해장은 여기" 카톡 공유',
-                    thought: '나처럼 고생하는 친구한테 알려줘야지.',
-                    type: 'good',
-                    opportunity: '"영수증 리뷰" 이벤트로 공유 행동을 공식화하면 신규 유입이 늘어납니다.'
-                }
-            }
-        },
-        {
-            id: 2,
-            nickname: '가성비 직장인',
-            summary: '빠른 점심이 필요한 직장인, 가성비와 속도를 중시해요',
-            img: 'https://api.dicebear.com/7.x/adventurer/svg?seed=worker',
-            tags: ['20-30대', '점심', '가성비'],
-            overall_comment: '점심 피크타임 회전율이 핵심입니다. 이 그룹은 대기 시간에 매우 민감하며, 한 번 만족하면 고정 단골이 됩니다.',
-            action_recommendation: '"5분 안에 나오는 점심" 특선을 만들고, 테이블 QR 주문을 도입해보세요.',
-            journey: {
-                explore: {
-                    action: '동료와 함께 "오늘 뭐 먹지" 카톡 상의 후 결정',
-                    thought: '12시 30분까지 돌아와야 하는데... 빠른 데 어디 없나?',
-                    type: 'neutral',
-                    opportunity: '"10분 이내 제공 보장" 안내판을 가게 앞에 붙이면 선택받을 확률이 높아집니다.'
-                },
-                visit: {
-                    action: '12시 5분 방문, 줄 서서 대기',
-                    thought: '사람이 많네. 빨리 앉을 수 있을지 모르겠다.',
-                    type: 'pain',
-                    painPoint: '입구에 대기 인원 안내가 없어 불안감을 느낌',
-                    opportunity: '"현재 대기 0명" 실시간 보드를 설치하면 이탈률을 줄일 수 있습니다.'
-                },
-                eat: {
-                    action: '제육볶음 세트 주문, 10분 내 수령',
-                    thought: '양도 많고 맛도 있네. 가격 대비 완전 만족!',
-                    type: 'good',
-                    opportunity: '대표 세트 메뉴를 SNS에 #가성비점심 태그와 함께 노출하세요.'
-                },
-                share: {
-                    action: '팀 단체 카톡에 "여기 완전 좋다" 공유',
-                    thought: '다음에 팀원들이랑 같이 와야겠다.',
-                    type: 'good',
-                    opportunity: '"단체 방문 쿠폰" 발행으로 그룹 방문을 유도하세요.'
-                }
-            }
-        },
-        {
-            id: 3,
-            nickname: '미식가 커플',
-            summary: '데이트 맛집을 찾는 커플, 분위기와 플레이팅을 중시해요',
-            img: 'https://api.dicebear.com/7.x/adventurer/svg?seed=couple',
-            tags: ['20-30대', '커플', '데이트'],
-            overall_comment: '인스타그램 노출이 핵심입니다. 이 그룹이 올리는 사진 1장이 신규 고객 10명 이상을 데려올 수 있습니다.',
-            action_recommendation: '포토존 하나만 만들어도 인스타 바이럴이 폭발합니다. 대표 메뉴 플레이팅을 개선하세요.',
-            journey: {
-                explore: {
-                    action: '인스타그램에서 "범계 데이트 맛집" 검색',
-                    thought: '사진이 예쁘고 분위기 좋은 곳이면 좋겠다.',
-                    type: 'good',
-                    opportunity: '인스타 해시태그 #범계맛집 #데이트맛집을 프로필에 적극 활용하세요.'
-                },
-                visit: {
-                    action: '저녁 7시에 예약 없이 방문',
-                    thought: '분위기 있어 보이는데 자리가 있을지 모르겠다.',
-                    type: 'neutral',
-                    painPoint: '예약 시스템이 없어 발걸음을 돌릴 뻔함',
-                    opportunity: '네이버 예약 연동으로 커플 고객 이탈을 막으세요.'
-                },
-                eat: {
-                    action: '시그니처 메뉴 주문 후 사진 촬영',
-                    thought: '플레이팅이 예쁘다! 인스타에 올려야지.',
-                    type: 'good',
-                    opportunity: '"인스타 감성 세트" 메뉴를 만들고 포토존 조명을 설치하세요.'
-                },
-                share: {
-                    action: '인스타그램에 가게 태그 후 업로드',
-                    thought: '친구들한테도 자랑하고 싶다!',
-                    type: 'good',
-                    opportunity: '리포스팅 이벤트 운영으로 자발적 바이럴을 만드세요.'
-                }
-            }
-        }
-    ]
+    insight: MOCK_JSON.data.insight,
+    personas: MOCK_JSON.data.personas.map((p, idx) => {
+        // 페르소나별 개성이 드러나는 아바타 (micah 스타일)
+        const avatarImages = ['/persona_1.png', '/persona_2.png', '/persona_3.png'];
+        return {
+        id: p.personaId,
+        nickname: p.name,
+        summary: p.oneLineIntro,
+        img: avatarImages[idx] ?? `https://api.dicebear.com/7.x/micah/svg?seed=${idx}`,
+        tags: p.tags.map(t => t.replace('#', '')),
+        // journeyMap과 videoStrategy를 그대로 유지
+        journeyMap: p.journeyMap,
+        videoStrategy: p.videoStrategy,
+        };
+    }),
 };
 
 export default function UnifiedInsightPage({ onNavigate }) {
@@ -132,8 +38,9 @@ export default function UnifiedInsightPage({ onNavigate }) {
     const [personas, setPersonas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [insight, setInsight] = useState(null);
 
-    // ID 'local' 제거 - 첫 번째 페르소나를 기본으로 선택
+    // 첫 번째 페르소나를 기본으로 선택
     const [selectedId, setSelectedId] = useState(null);
 
     // API에서 페르소나 데이터 가져오기
@@ -147,15 +54,15 @@ export default function UnifiedInsightPage({ onNavigate }) {
 
                 if (!response.ok) {
                     if (response.status === 404) {
-                        // 분석 결과 없음 → 목업 데이터로 대체
                         console.warn('[InsightPage] 분석 결과 없음(404) → 목업 데이터 사용');
                         setAnalysisData(MOCK_ANALYSIS_DATA);
                         setPersonas(MOCK_ANALYSIS_DATA.personas);
+                        setInsight(MOCK_ANALYSIS_DATA.insight);
                     } else {
-                        // 다른 서버 오류 → 목업 데이터로 대체
                         console.warn(`[InsightPage] 서버 오류(${response.status}) → 목업 데이터 사용`);
                         setAnalysisData(MOCK_ANALYSIS_DATA);
                         setPersonas(MOCK_ANALYSIS_DATA.personas);
+                        setInsight(MOCK_ANALYSIS_DATA.insight);
                     }
                     return;
                 }
@@ -165,11 +72,13 @@ export default function UnifiedInsightPage({ onNavigate }) {
 
                 setAnalysisData(data);
                 setPersonas(data.personas || []);
+                setInsight(data.insight || null);
             } catch (err) {
                 // 서버 연결 자체 실패 → 목업 데이터로 대체 (페이지 정상 렌더링 유지)
                 console.warn('[InsightPage] API 연결 실패 → 목업 데이터 사용:', err.message);
                 setAnalysisData(MOCK_ANALYSIS_DATA);
                 setPersonas(MOCK_ANALYSIS_DATA.personas);
+                setInsight(MOCK_ANALYSIS_DATA.insight);
             } finally {
                 setLoading(false);
             }
@@ -230,8 +139,8 @@ export default function UnifiedInsightPage({ onNavigate }) {
             {/* Main Content - only show when data is loaded */}
             {!loading && !error && (
                 <>
-                    {/* [LEFT PANE] Unified List (Flex 0.35) */}
-                    <div className="flex-[0.35] flex flex-col min-h-0 gap-4">
+                    {/* [LEFT PANE] Fixed narrow width */}
+                    <div className="shrink-0 w-[400px] hover:w-[480px] transition-[width] duration-300 ease-in-out flex flex-col min-h-0 gap-4">
 
                         {/* 1. Brief Summary Card */}
                         <div className="bg-white rounded-[24px] p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-[#E5E8EB] shrink-0">
@@ -291,6 +200,12 @@ export default function UnifiedInsightPage({ onNavigate }) {
                                                     )}
                                                 </div>
                                                 <p className="text-[13px] text-[#8B95A1] truncate">{persona.summary}</p>
+                                                {/* 태그 */}
+                                                <div className="flex gap-1 mt-1.5 flex-wrap">
+                                                    {persona.tags?.slice(0, 3).map(tag => (
+                                                        <span key={tag} className="text-[10px] font-bold text-[#4E5968] bg-[#F2F4F6] px-1.5 py-0.5 rounded-md">{tag}</span>
+                                                    ))}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -299,8 +214,8 @@ export default function UnifiedInsightPage({ onNavigate }) {
                         </div>
                     </div>
 
-                    {/* [RIGHT PANE] Detail View (Flex 0.65) */}
-                    <div className="flex-[0.65] flex flex-col min-h-0">
+                    {/* [RIGHT PANE] Detail View — takes remaining space */}
+                    <div className="flex-1 flex flex-col min-h-0">
                         <AnimatePresence mode="wait">
 
                             {/* Persona Detail */}
@@ -322,7 +237,7 @@ export default function UnifiedInsightPage({ onNavigate }) {
                                                 </div>
                                                 <div>
                                                     <div className="flex gap-2 mb-2">
-                                                        {selectedPersona.tags.map(tag => (
+                                                        {selectedPersona.tags?.map(tag => (
                                                             <span key={tag} className="px-2 py-1 bg-[#F2F4F6] text-[#4E5968] text-[12px] font-bold rounded-lg">#{tag}</span>
                                                         ))}
                                                     </div>
@@ -339,7 +254,7 @@ export default function UnifiedInsightPage({ onNavigate }) {
                                                         title: `[${selectedPersona?.nickname}] 맞춤 홍보 영상`
                                                     });
                                                 }}
-                                                className="px-5 py-3 bg-[#FF5A36] hover:bg-[#E0492A] text-white rounded-xl text-[14px] font-bold shadow-lg shadow-orange-100 flex items-center gap-2 transition-all transform hover:scale-105"
+                                                className="px-5 py-3 bg-[#FF5A36] hover:bg-[#E0492A] text-white rounded-xl text-[13px] font-bold shadow-lg shadow-orange-100 flex items-center gap-2 transition-all transform hover:scale-105 whitespace-nowrap"
                                             >
                                                 <Film size={18} />
                                                 이 손님 맞춤 릴스 제작
@@ -352,7 +267,7 @@ export default function UnifiedInsightPage({ onNavigate }) {
                                                 <MapPin size={20} className="text-[#333D4B]" />
                                                 고객 여정 지도
                                             </h3>
-                                            <JourneyMapSection persona={selectedPersona} />
+                                            <JourneyMapSection persona={selectedPersona} insight={insight} />
                                         </div>
                                     </div>
                                 </motion.div>

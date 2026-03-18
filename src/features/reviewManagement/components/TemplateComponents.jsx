@@ -297,23 +297,35 @@ export function SavedTemplatesTab({ templates, onDelete }) {
  * - 복사, 수정, 삭제 버튼
  */
 function TemplateCard({ template, onCopy, onDelete, copied }) {
+    const [isExpanded, setIsExpanded] = useState(false);
+
     return (
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-neutral-200 hover:shadow-md transition-shadow">
             <div className="mb-3">
                 <h3 className="font-semibold text-neutral-900 mb-2">{template.name}</h3>
                 <div className="flex items-center gap-3 text-sm text-neutral-600 mb-3">
                     <span className="px-2 py-1 bg-[#002B7A1A] text-[#002B7A] rounded-md font-medium">
-                        {template.tone}
+                        {template.tone || '친근함'}
                     </span>
                     <span className="px-2 py-1 bg-neutral-100 text-neutral-700 rounded-md">
-                        {template.length}
+                        {template.length || '보통'}
                     </span>
                 </div>
             </div>
 
-            <p className="text-sm text-neutral-700 leading-relaxed mb-4 line-clamp-3">
-                {template.content}
-            </p>
+            <div className="mb-4">
+                <p className={`text-sm text-neutral-700 leading-relaxed whitespace-pre-wrap ${!isExpanded ? 'line-clamp-3' : ''}`}>
+                    {template.content}
+                </p>
+                {template.content.length > 80 && (
+                    <button 
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="text-xs text-neutral-500 mt-1 hover:text-[#002B7A] transition-colors"
+                    >
+                        {isExpanded ? '접기' : '더보기'}
+                    </button>
+                )}
+            </div>
 
             <div className="flex flex-wrap gap-2 mb-4">
                 {template.tags.slice(0, 3).map((tag) => (

@@ -11,7 +11,9 @@ const SignupForm = ({ onSwitch }) => {
     const [step, setStep] = useState(1);
 
     // Status: 'idle' | 'loading' | 'success' | 'error'
-    const { progress, message, status, startPolling } = useSignupProgress();
+    const [progress, setProgress] = useState(0);
+    const [message, setMessage] = useState('');
+    const [status, setStatus] = useState('idle');
     const [isLoading, setIsLoading] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -32,8 +34,6 @@ const SignupForm = ({ onSwitch }) => {
         hasLowerCase: false,
         hasNumber: false
     });
-
-    // No auto-redirect useEffect - waiting for user action on Success screen
 
     const validatePassword = (password) => {
         return {
@@ -100,7 +100,7 @@ const SignupForm = ({ onSwitch }) => {
 
             const validation = validatePassword(formData.password);
             if (!validation.minLength || !validation.hasSpecialChar || !validation.hasLowerCase || !validation.hasNumber) {
-                alert("비밀번호는 8자 이상, 특수문자, 영어 소문자, 숫자를 포함해야 합니다.");
+                alert("비밀번호는 8자 이상, 특수문자, 영어, 숫자를 포함해야 합니다.");
                 return;
             }
 
@@ -111,49 +111,36 @@ const SignupForm = ({ onSwitch }) => {
     };
 
     const handleSubmit = async () => {
-        // 한글 카테고리 → 영문 Enum 매핑 함수
-        const mapCategoryToEnum = (koreanCategory) => {
-            const mapping = {
-                '한식': 'KOREAN',
-                '중식': 'CHINESE',
-                '일식': 'JAPANESE',
-                '양식': 'WESTERN',
-                '카페/디저트': 'CAFE_DESSERT',
-                '주점': 'BAR',
-                '기타': 'ETC'
-            };
-            return mapping[koreanCategory] || 'KOREAN'; // 기본값: KOREAN
-        };
-
-        // Prepare payload for Spring Boot API
-        const payload = {
-            email: formData.email,
-            password: formData.password,
-            passwordConfirm: formData.password,
-            name: formData.name,
-            phone: formData.phone,
-            isPrivacyAgreed: formData.agreed,
-            shopInfo: {
-                name: formData.storeName,
-                address: `${formData.address} ${formData.detailAddress}`,
-                category: mapCategoryToEnum(formData.category)
-            }
-        };
-
-        // Start Loading Process with real API call
+        // Mock Loading Process
         setIsLoading(true);
-        startPolling(payload);
+        setStatus('loading');
+        setProgress(0);
+        setMessage('가게 정보를 등록하고 있습니다...');
+
+        // 4초 후 프로그레스 50%
+        setTimeout(() => {
+            setProgress(50);
+            setMessage('계정을 최종 생성 중입니다...');
+        }, 4000);
+
+        // 8초 후 완료
+        setTimeout(() => {
+            setProgress(100);
+            setStatus('success');
+            setMessage('회원가입이 완료되었습니다!');
+        }, 8000);
     };
 
     // Callback when user clicks "Start" on success screen
     const handleComplete = () => {
         setIsLoading(false);
-        onSwitch();
+        setStatus('idle');
+        onSwitch(); // 로그인 화면으로 전환
     };
 
     // Callback when user clicks "Retry" on error screen
     const handleRetry = () => {
-        startPolling(false);
+        handleSubmit();
     };
 
     return (
@@ -405,7 +392,7 @@ const PasswordInput = ({ name, placeholder, value, onChange, validation }) => {
                         color: validation.hasLowerCase ? '#10b981' : '#6b7280'
                     }}>
                         <span>{validation.hasLowerCase ? '✓' : '○'}</span>
-                        <span>영어 소문자 포함</span>
+                        <span>영어 포함</span>
                     </div>
                     <div style={{
                         display: 'flex',

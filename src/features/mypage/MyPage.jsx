@@ -20,7 +20,7 @@ const MyPage = () => {
             {/* Top: Status Summary (Fixed Height) */}
             <div className="bg-[#002B7A] rounded-2xl p-5 text-white flex items-center justify-between shadow-lg shrink-0">
                 <div>
-                    <h2 className="text-xl font-bold mb-0.5">박사장님, 안녕하세요!</h2>
+                    <h2 className="text-xl font-bold mb-0.5">사장님, 안녕하세요! 👋</h2>
                     <p className="text-white/70 text-xs">오늘도 성공적인 하루 보내세요.</p>
                 </div>
                 <div className="flex items-center gap-4 bg-white/10 px-4 py-2 rounded-xl backdrop-blur-sm border border-white/10">
@@ -58,7 +58,7 @@ const MyPage = () => {
                                 </div>
                                 <div>
                                     <p className="font-bold text-sm text-[#191F28]">Instagram</p>
-                                    <p className="text-xs text-gray-500">@bumgye_rodeo</p>
+                                    <p className="text-xs text-gray-500">@baraman_sujebi</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-1.5">
@@ -74,7 +74,7 @@ const MyPage = () => {
                                 </div>
                                 <div>
                                     <p className="font-bold text-sm text-[#191F28]">Naver Place</p>
-                                    <p className="text-xs text-gray-500">범계 로데오점</p>
+                                    <p className="text-xs text-gray-500">바람난 얼큰 수제비 범계점</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-1.5">
@@ -120,14 +120,14 @@ const MyPage = () => {
                         <div className="flex-1 space-y-4 border-r border-gray-100 pr-6">
                             <div>
                                 <p className="text-xs text-gray-500 mb-1">가게 이름 / 업종</p>
-                                <p className="text-lg font-bold text-[#191F28]">범계 로데오점 <span className="text-gray-300">|</span> 이자카야</p>
+                                <p className="text-lg font-bold text-[#191F28]">바람난 얼큰 수제비 범계점 <span className="text-gray-300">|</span> 분식·수제비</p>
                             </div>
                             <div>
                                 <p className="text-xs text-gray-500 mb-1.5">브랜드 톤앤매너 (AI 설정)</p>
                                 <div className="flex gap-2">
-                                    <span className="px-3 py-1 bg-[#E8F3FF] text-[#002B7A] text-xs font-bold rounded-full">친근한</span>
-                                    <span className="px-3 py-1 bg-[#E8F3FF] text-[#002B7A] text-xs font-bold rounded-full">감성적인</span>
-                                    <span className="px-3 py-1 bg-[#E8F3FF] text-[#002B7A] text-xs font-bold rounded-full">트렌디한</span>
+                                    <span className="px-3 py-1 bg-[#E8F3FF] text-[#002B7A] text-xs font-bold rounded-full">얼큰한</span>
+                                    <span className="px-3 py-1 bg-[#E8F3FF] text-[#002B7A] text-xs font-bold rounded-full">정겨운</span>
+                                    <span className="px-3 py-1 bg-[#E8F3FF] text-[#002B7A] text-xs font-bold rounded-full">푸짐한</span>
                                 </div>
                             </div>
                         </div>
@@ -136,7 +136,7 @@ const MyPage = () => {
                         <div className="flex-1">
                             <p className="text-xs text-gray-500 mb-2">주력 메뉴 키워드</p>
                             <div className="flex flex-wrap gap-2">
-                                {['#하이볼맛집', '#숙성회', '#데이트코스', '#분위기깡패', '#안주가맛있는', '#사진맛집'].map((tag, i) => (
+                                {['#수제비맛집', '#매운수제비', '#범계맛집', '#웨이팅맛집', '#칼칼한국물', '#혼밥OK'].map((tag, i) => (
                                     <span key={i} className="text-sm text-gray-600 bg-gray-50 px-2.5 py-1 rounded-lg font-medium">
                                         {tag}
                                     </span>

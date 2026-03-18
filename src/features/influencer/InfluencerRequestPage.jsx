@@ -28,8 +28,23 @@ export default function InfluencerRequestPage() {
     const handleAiGenerate = async () => {
         setIsAiGenerating(true);
         await new Promise(resolve => setTimeout(resolve, 1500));
-        const aiMessage = `안녕하세요, ${influencer.name}님! \n\n${influencer.location}에 위치한 저희 매장은 ${influencer.niche[0]} 전문점으로, ${influencer.name}님의 평소 리뷰 스타일이 저희 매장의 분위기와 너무 잘 어울려 연락드렸습니다.\n\n특히 최근 업로드하신 콘텐츠를 인상 깊게 보았는데요, 이번에 저희 신메뉴 출시에 맞춰 ${formData.type}을 제안드리고 싶습니다.\n\n편하신 시간에 방문해주시면 정성껏 대접해드리고 싶습니다. 긍정적인 검토 부탁드립니다!\n\n감사합니다.`;
-        setFormData(prev => ({ ...prev, message: aiMessage }));
+        
+        // 매코미(inf003) 특정 맞춤 제안서
+        if (influencer.id === 'inf003') {
+            const customMessage = `안녕하세요, ${influencer.name}님!
+평소 땀 한 방울 흘리지 않고 매운 음식을 즐기시는 영상들 정말 인상 깊게 보고 있습니다.
+
+저희는 안양 범계역의 매운맛 성지로 불리는 '바람난 얼큰 수제비'입니다. 저희 매장에는 매운맛 마니아들조차 긴장하게 만드는 '중간맛'과 '매운맛' 단계가 있는데요. 매코미님의 내공이라면 저희의 화끈한 국물을 어떻게 리뷰해 주실지 너무나 기대되어 연락드렸습니다.
+
+이번에 매코미님의 스타일로 저희 수제비의 화끈함을 담은 영상 제작을 제안드리고 싶습니다. 방문해 주시면 최고의 맛과 서비스로 대접하겠습니다.
+
+긍정적인 검토 부탁드립니다! 감사합니다.`;
+            setFormData(prev => ({ ...prev, message: customMessage }));
+        } else {
+            const aiMessage = `안녕하세요, ${influencer.name}님! \n\n${influencer.location}에 위치한 저희 매장은 ${influencer.niche[0]} 전문점으로, ${influencer.name}님의 평소 리뷰 스타일이 저희 매장의 분위기와 너무 잘 어울려 연락드렸습니다.\n\n특히 최근 업로드하신 콘텐츠를 인상 깊게 보았는데요, 이번에 저희 신메뉴 출시에 맞춰 ${formData.type}을 제안드리고 싶습니다.\n\n편하신 시간에 방문해주시면 정성껏 대접해드리고 싶습니다. 긍정적인 검토 부탁드립니다!\n\n감사합니다.`;
+            setFormData(prev => ({ ...prev, message: aiMessage }));
+        }
+        
         setIsAiGenerating(false);
     };
 

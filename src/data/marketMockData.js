@@ -1,100 +1,121 @@
 /**
  * Market Analysis Mock Data
  * 주변 상권 분석 페이지용 Mock 데이터
+ * 기준 가게: 바람난 얼큰 수제비 범계점 (경기도 안양시 동안구)
  */
 
 export const MOCK_STORE = {
     storeId: "store_001",
-    storeName: "범계 로데오점",
-    address: "경기도 안양시 동안구 범계로 ...",
-    lat: 37.3900,
-    lng: 126.9510,
+    storeName: "바람난 얼큰 수제비 범계점",
+    address: "경기도 안양시 동안구 범계로 15 (범계동)",
+    lat: 37.3917,
+    lng: 126.9521,
     primaryCategoryGroupCode: "FD6"
 };
 
 export const MOCK_MARKET_SUMMARY = {
-    center: { lat: 37.3900, lng: 126.9510 },
+    center: { lat: 37.3917, lng: 126.9521 },
     radius: 500,
-    generatedAt: "2026-02-16T07:00:00Z",
+    generatedAt: "2026-03-14T00:00:00Z",
     counts: {
-        FD6: { label: "음식점", total: 132 },
-        CE7: { label: "카페", total: 41 },
-        CS2: { label: "편의점", total: 7 },
-        HP8: { label: "병원", total: 10 },
-        PM9: { label: "약국", total: 6 },
+        FD6: { label: "음식점", total: 148 },
+        CE7: { label: "카페", total: 38 },
+        CS2: { label: "편의점", total: 9 },
+        HP8: { label: "병원", total: 12 },
+        PM9: { label: "약국", total: 7 },
         SW8: { label: "지하철역", total: 1 },
-        SC4: { label: "학교", total: 2 },
-        AC5: { label: "학원", total: 18 }
+        SC4: { label: "학교", total: 1 },
+        AC5: { label: "학원", total: 22 }
     },
     competition: {
         categoryGroupCode: "FD6",
         label: "내 업종(음식점)",
-        total: 132,
-        densityPerKm2: 168.1,
+        total: 148,
+        densityPerKm2: 188.5,
         nearest: [
             {
-                id: "26338954",
-                name: "경쟁가게A",
-                distanceM: 115,
-                lat: 37.3908,
-                lng: 126.9517,
-                address: "경기도 안양시 동안구 ...",
-                phone: "031-123-4567",
-                url: "http://place.map.kakao.com/26338954"
+                id: "c001",
+                name: "수제비스토리 범계점",
+                distanceM: 95,
+                lat: 37.3924,
+                lng: 126.9528,
+                address: "경기도 안양시 동안구 범계로 8",
+                phone: "031-381-1234",
+                url: "http://place.map.kakao.com/c001"
             },
             {
-                id: "99338421",
-                name: "경쟁가게B",
-                distanceM: 190,
-                lat: 37.3897,
-                lng: 126.9502,
-                address: "경기도 안양시 동안구 ...",
-                phone: "031-234-5678",
-                url: "http://place.map.kakao.com/99338421"
+                id: "c002",
+                name: "간장동 페터팸민 범계점",
+                distanceM: 170,
+                lat: 37.3909,
+                lng: 126.9513,
+                address: "경기도 안양시 동안구 범계로 24",
+                phone: "031-382-2345",
+                url: "http://place.map.kakao.com/c002"
             },
             {
-                id: "11223344",
-                name: "경쟁가게C",
-                distanceM: 245,
-                lat: 37.3905,
-                lng: 126.9495,
-                address: "경기도 안양시 동안구 ...",
-                phone: "031-345-6789",
-                url: "http://place.map.kakao.com/11223344"
+                id: "c003",
+                name: "안양 범계 칼국수",
+                distanceM: 230,
+                lat: 37.3903,
+                lng: 126.9507,
+                address: "경기도 안양시 동안구 범계로 47",
+                phone: "031-383-3456",
+                url: "http://place.map.kakao.com/c003"
+            },
+            {
+                id: "c004",
+                name: "신계 매운 낙지 분식",
+                distanceM: 310,
+                lat: 37.3928,
+                lng: 126.9534,
+                address: "경기도 안양시 동안구 범계로 62",
+                phone: "031-384-4567",
+                url: "http://place.map.kakao.com/c004"
+            },
+            {
+                id: "c005",
+                name: "원조 할머니 호박 직접수제비",
+                distanceM: 385,
+                lat: 37.3898,
+                lng: 126.9499,
+                address: "경기도 안양시 동안구 범계로 78",
+                phone: "031-385-5678",
+                url: "http://place.map.kakao.com/c005"
             }
         ]
     },
     anchors: {
-        score: 9,
+        score: 11,
         typeLabel: "역세권형",
         breakdown: [
             { categoryGroupCode: "SW8", label: "지하철역", count: 1, weight: 3 },
-            { categoryGroupCode: "SC4", label: "학교", count: 2, weight: 2 },
-            { categoryGroupCode: "AC5", label: "학원", count: 18, weight: 2 }
+            { categoryGroupCode: "SC4", label: "학교", count: 1, weight: 2 },
+            { categoryGroupCode: "AC5", label: "학원", count: 22, weight: 2 }
         ]
     },
     actions: [
         {
-            title: "하교/학원 타임 공략",
-            why: "학원(18개) 집중 지역으로 학생 유입 가능성 높음",
+            title: "웨이팅 타임 콘텐츠 공략",
+            why: "웨이팅 평균 20분 → 대기 중 습관적 콘텐츠 노출 기회",
             todo: [
-                "16~19시 간식/세트 메뉴 훅 제작",
-                "테이크아웃 동선 안내 강화",
-                "학생 할인 이벤트 고려"
+                "대기표 발급 QR 바로가기 링크 삽입",
+                "오픈런 시간대(11시~14시) 릴스 직접 파악",
+                "팔로워 유도 맺음 \"20분 기다림\" 스토리 제작"
             ],
             cta: {
-                label: "숏폼 훅 생성하기",
+                label: "릴스 훅 생성하기",
                 action: "OPEN_CONTENT_BUILDER",
-                payload: { theme: "after_school" }
+                payload: { theme: "waiting_hook" }
             }
         },
         {
             title: "동종 경쟁 과열 대응",
-            why: "반경 500m 내 음식점 132개로 경쟁 심화",
+            why: "반경 500m 내 음식점 148개 • 분식지 경쟁 심화",
             todo: [
-                "대표 메뉴 1개에 USP 문장 고정",
-                "사진 3장 리라이팅으로 차별화",
-                "가격 앵커 메뉴 설정"
+                "'수제비피가 얼마나 없는지' USP 문구 고정",
+                "매운맛 복제 불가한 고유 피 무게 강조",
+                "네이버 플레이스 대표 키워드 개선"
             ],
             cta: {
                 label: "USP 문구 생성하기",
@@ -103,21 +124,21 @@ export const MOCK_MARKET_SUMMARY = {
             }
         },
         {
-            title: "지도 탐색 유입 강화",
-            why: "근처 카페/음식점 탐색 수요 높음",
+            title: "학원가 타임 공략",
+            why: "학원(22개) 집중 → 16~19시 소화 매출 근거지",
             todo: [
-                "영업시간/휴무 정확화",
-                "대표 메뉴명에 키워드 포함",
-                "가게 사진 최신화"
+                "수제비 싱글 세트 + 음료 콤세트 픽스 구성",
+                "학생 연령 맞춤 릴스 제작",
+                "인스타 스토리 시간대(17~18시) 고정"
             ],
             cta: {
-                label: "체크리스트 보기",
-                action: "OPEN_CHECKLIST",
-                payload: { id: "map_seo" }
+                label: "숏폼 훅 생성하기",
+                action: "OPEN_CONTENT_BUILDER",
+                payload: { theme: "after_school" }
             }
         }
     ],
-    note: "Mock data: 카카오 검색 결과를 가정한 샘플입니다."
+    note: "바람난 얼큰 수제비 범계점 기준 분석 데이터 (2026.03.14)"
 };
 
 export const CATEGORY_CONFIG = [
@@ -137,14 +158,14 @@ export const MOCK_MARKET_SUMMARY_BY_RADIUS = {
         ...MOCK_MARKET_SUMMARY,
         radius: 300,
         counts: {
-            FD6: { label: "음식점", total: 78 },
-            CE7: { label: "카페", total: 24 },
-            CS2: { label: "편의점", total: 4 },
-            HP8: { label: "병원", total: 6 },
-            PM9: { label: "약국", total: 3 },
+            FD6: { label: "음식점", total: 89 },
+            CE7: { label: "카페", total: 22 },
+            CS2: { label: "편의점", total: 5 },
+            HP8: { label: "병원", total: 7 },
+            PM9: { label: "약국", total: 4 },
             SW8: { label: "지하철역", total: 1 },
-            SC4: { label: "학교", total: 1 },
-            AC5: { label: "학원", total: 11 }
+            SC4: { label: "학교", total: 0 },
+            AC5: { label: "학원", total: 13 }
         }
     },
     500: MOCK_MARKET_SUMMARY,
@@ -152,45 +173,45 @@ export const MOCK_MARKET_SUMMARY_BY_RADIUS = {
         ...MOCK_MARKET_SUMMARY,
         radius: 1000,
         counts: {
-            FD6: { label: "음식점", total: 245 },
-            CE7: { label: "카페", total: 89 },
-            CS2: { label: "편의점", total: 15 },
-            HP8: { label: "병원", total: 22 },
-            PM9: { label: "약국", total: 12 },
+            FD6: { label: "음식점", total: 267 },
+            CE7: { label: "카페", total: 94 },
+            CS2: { label: "편의점", total: 18 },
+            HP8: { label: "병원", total: 28 },
+            PM9: { label: "약국", total: 14 },
             SW8: { label: "지하철역", total: 2 },
-            SC4: { label: "학교", total: 4 },
-            AC5: { label: "학원", total: 34 }
+            SC4: { label: "학교", total: 3 },
+            AC5: { label: "학원", total: 41 }
         }
     }
 };
 
 // 카테고리별 장소 Mock 데이터 (마커 표시용)
 export const MOCK_CATEGORY_PLACES = {
-    FD6: [ // 음식점
-        { id: '1', name: '맛있는 김밥', lat: 37.3905, lng: 126.9515, distanceM: 120, address: '경기도 안양시 동안구 범계로 123', phone: '031-123-4567', url: 'http://place.map.kakao.com/1' },
-        { id: '2', name: '행복한 돈까스', lat: 37.3895, lng: 126.9505, distanceM: 180, address: '경기도 안양시 동안구 범계로 124', phone: '031-123-4568', url: 'http://place.map.kakao.com/2' },
-        { id: '3', name: '황금 치킨', lat: 37.3910, lng: 126.9520, distanceM: 250, address: '경기도 안양시 동안구 범계로 125', phone: '031-123-4569', url: 'http://place.map.kakao.com/3' },
-        { id: '4', name: '신선한 초밥', lat: 37.3892, lng: 126.9512, distanceM: 300, address: '경기도 안양시 동안구 범계로 126', phone: '031-123-4570', url: 'http://place.map.kakao.com/4' },
-        { id: '5', name: '든든한 국밥', lat: 37.3908, lng: 126.9508, distanceM: 150, address: '경기도 안양시 동안구 범계로 127', phone: '031-123-4571', url: 'http://place.map.kakao.com/5' }
+    FD6: [ // 음식점 — 범계역 인근 경쟁 분식/면류
+        { id: '1', name: '수제비스토리 범계점', lat: 37.3924, lng: 126.9528, distanceM: 95, address: '경기도 안양시 동안구 범계로 8', phone: '031-381-1234', url: 'http://place.map.kakao.com/1' },
+        { id: '2', name: '간장동 페터팸민 범계점', lat: 37.3909, lng: 126.9513, distanceM: 170, address: '경기도 안양시 동안구 범계로 24', phone: '031-382-2345', url: 'http://place.map.kakao.com/2' },
+        { id: '3', name: '안양 범계 칼국수', lat: 37.3903, lng: 126.9507, distanceM: 230, address: '경기도 안양시 동안구 범계로 47', phone: '031-383-3456', url: 'http://place.map.kakao.com/3' },
+        { id: '4', name: '신계 매운 낙지 분식', lat: 37.3928, lng: 126.9534, distanceM: 310, address: '경기도 안양시 동안구 범계로 62', phone: '031-384-4567', url: 'http://place.map.kakao.com/4' },
+        { id: '5', name: '원조 할머니 호박 직접수제비', lat: 37.3898, lng: 126.9499, distanceM: 385, address: '경기도 안양시 동안구 범계로 78', phone: '031-385-5678', url: 'http://place.map.kakao.com/5' }
     ],
     CE7: [ // 카페
-        { id: '11', name: '스타벅스 범계점', lat: 37.3903, lng: 126.9513, distanceM: 100, address: '경기도 안양시 동안구 범계로 201', phone: '031-234-5678', url: 'http://place.map.kakao.com/11' },
-        { id: '12', name: '투썸플레이스', lat: 37.3898, lng: 126.9518, distanceM: 220, address: '경기도 안양시 동안구 범계로 202', phone: '031-234-5679', url: 'http://place.map.kakao.com/12' },
-        { id: '13', name: '카페베네', lat: 37.3907, lng: 126.9507, distanceM: 180, address: '경기도 안양시 동안구 범계로 203', phone: '031-234-5680', url: 'http://place.map.kakao.com/13' },
-        { id: '14', name: '할리스커피', lat: 37.3893, lng: 126.9515, distanceM: 280, address: '경기도 안양시 동안구 범계로 204', phone: '031-234-5681', url: 'http://place.map.kakao.com/14' }
+        { id: '11', name: '스타벅스 범계역점', lat: 37.3921, lng: 126.9526, distanceM: 85, address: '경기도 안양시 동안구 범계로 11', phone: '031-391-1111', url: 'http://place.map.kakao.com/11' },
+        { id: '12', name: '투썸플레이스 범계점', lat: 37.3914, lng: 126.9516, distanceM: 160, address: '경기도 안양시 동안구 범계로 33', phone: '031-392-2222', url: 'http://place.map.kakao.com/12' },
+        { id: '13', name: '메가MGC커피 범계점', lat: 37.3907, lng: 126.9530, distanceM: 210, address: '경기도 안양시 동안구 범계로 55', phone: '031-393-3333', url: 'http://place.map.kakao.com/13' },
+        { id: '14', name: '할리스커피 범계역점', lat: 37.3900, lng: 126.9518, distanceM: 290, address: '경기도 안양시 동안구 범계로 70', phone: '031-394-4444', url: 'http://place.map.kakao.com/14' }
     ],
     CS2: [ // 편의점
-        { id: '21', name: 'CU 범계점', lat: 37.3901, lng: 126.9511, distanceM: 80, address: '경기도 안양시 동안구 범계로 301', phone: '031-345-6789', url: 'http://place.map.kakao.com/21' },
-        { id: '22', name: 'GS25 범계역점', lat: 37.3896, lng: 126.9509, distanceM: 160, address: '경기도 안양시 동안구 범계로 302', phone: '031-345-6790', url: 'http://place.map.kakao.com/22' },
-        { id: '23', name: '세븐일레븐', lat: 37.3904, lng: 126.9516, distanceM: 140, address: '경기도 안양시 동안구 범계로 303', phone: '031-345-6791', url: 'http://place.map.kakao.com/23' }
+        { id: '21', name: 'CU 범계역점', lat: 37.3919, lng: 126.9524, distanceM: 45, address: '경기도 안양시 동안구 범계로 5', phone: '031-401-1111', url: 'http://place.map.kakao.com/21' },
+        { id: '22', name: 'GS25 범계로점', lat: 37.3912, lng: 126.9510, distanceM: 140, address: '경기도 안양시 동안구 범계로 30', phone: '031-402-2222', url: 'http://place.map.kakao.com/22' },
+        { id: '23', name: '세븐일레븐 범계점', lat: 37.3905, lng: 126.9532, distanceM: 255, address: '경기도 안양시 동안구 범계로 58', phone: '031-403-3333', url: 'http://place.map.kakao.com/23' }
     ],
     HP8: [ // 병원
-        { id: '31', name: '범계내과', lat: 37.3906, lng: 126.9514, distanceM: 130, address: '경기도 안양시 동안구 범계로 401', phone: '031-456-7890', url: 'http://place.map.kakao.com/31' },
-        { id: '32', name: '행복치과', lat: 37.3894, lng: 126.9508, distanceM: 200, address: '경기도 안양시 동안구 범계로 402', phone: '031-456-7891', url: 'http://place.map.kakao.com/32' },
-        { id: '33', name: '건강한의원', lat: 37.3909, lng: 126.9519, distanceM: 260, address: '경기도 안양시 동안구 범계로 403', phone: '031-456-7892', url: 'http://place.map.kakao.com/33' }
+        { id: '31', name: '범계내과의원', lat: 37.3922, lng: 126.9519, distanceM: 110, address: '경기도 안양시 동안구 범계로 12', phone: '031-411-1111', url: 'http://place.map.kakao.com/31' },
+        { id: '32', name: '동안구 행복치과', lat: 37.3910, lng: 126.9527, distanceM: 190, address: '경기도 안양시 동안구 범계로 38', phone: '031-412-2222', url: 'http://place.map.kakao.com/32' },
+        { id: '33', name: '범계 정형외과', lat: 37.3901, lng: 126.9515, distanceM: 270, address: '경기도 안양시 동안구 범계로 59', phone: '031-413-3333', url: 'http://place.map.kakao.com/33' }
     ],
     PM9: [ // 약국
-        { id: '41', name: '범계약국', lat: 37.3902, lng: 126.9512, distanceM: 90, address: '경기도 안양시 동안구 범계로 501', phone: '031-567-8901', url: 'http://place.map.kakao.com/41' },
-        { id: '42', name: '건강약국', lat: 37.3897, lng: 126.9506, distanceM: 170, address: '경기도 안양시 동안구 범계로 502', phone: '031-567-8902', url: 'http://place.map.kakao.com/42' }
+        { id: '41', name: '범계역 약국', lat: 37.3918, lng: 126.9523, distanceM: 30, address: '경기도 안양시 동안구 범계로 3', phone: '031-421-1111', url: 'http://place.map.kakao.com/41' },
+        { id: '42', name: '온누리약국 범계점', lat: 37.3906, lng: 126.9511, distanceM: 200, address: '경기도 안양시 동안구 범계로 45', phone: '031-422-2222', url: 'http://place.map.kakao.com/42' }
     ]
 };

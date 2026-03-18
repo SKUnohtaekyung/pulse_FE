@@ -18,13 +18,14 @@ import KakaoMapContainer from './components/KakaoMapContainer';
 import SummaryPanel from './components/SummaryPanel';
 import SearchBar from './components/SearchBar';
 import { RefreshCw, Loader2 } from 'lucide-react';
-import { MOCK_STORE } from '../../data/marketMockData'; // 가게 좌표는 유지 (추후 API로 교체)
+import { MOCK_STORE, CATEGORY_CONFIG } from '../../data/marketMockData'; // 범례용 CONFIG 추가
 import { fetchRealMarketData } from './kakaoPlacesService';
 
 export default function CommercialAnalysisPage() {
     const [radius, setRadius] = useState(500);
     const [map, setMap] = useState(null);
     const [marketData, setMarketData] = useState(null);
+    const [categoryPlaces, setCategoryPlaces] = useState({});
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isKakaoReady, setIsKakaoReady] = useState(false);
@@ -41,31 +42,31 @@ export default function CommercialAnalysisPage() {
         checkKakao();
     }, []);
 
-    // 실제 상권 데이터 조회
+    // 실제 상권 데이터 대신 MOCK_MARKET_SUMMARY 강제 사용
     const loadMarketData = useCallback(async () => {
-        if (!isKakaoReady) return;
-
         setIsLoading(true);
         setError(null);
 
         try {
-            console.log(`📊 카카오 Places API 조회 중... 반경 ${radius}m`);
-            const data = await fetchRealMarketData(
-                { lat: MOCK_STORE.lat, lng: MOCK_STORE.lng },
-                radius,
-                MOCK_STORE.primaryCategoryGroupCode
-            );
-            setMarketData(data);
-            console.log('✅ 실제 상권 데이터 로드 완료:', data);
+            console.log(`📊 Mock 데이터 로드 중... 반경 ${radius}m`);
+            // 인위적 지연 (로딩 UI 위해)
+            await new Promise(resolve => setTimeout(resolve, 800));
+            // import { MOCK_MARKET_SUMMARY, MOCK_CATEGORY_PLACES } from '../../data/marketMockData';
+            import('../../data/marketMockData').then(module => {
+                 setMarketData(module.MOCK_MARKET_SUMMARY);
+                 // KakaoMapContainer에 넘길 마커용 데이터 추가 세팅
+                 setCategoryPlaces(module.MOCK_CATEGORY_PLACES || {});
+                 console.log('✅ Mock 상권 데이터 로드 완료');
+            });
         } catch (err) {
             console.error('[CommercialAnalysis] 데이터 조회 실패:', err);
             setError(err.message);
         } finally {
             setIsLoading(false);
         }
-    }, [radius, isKakaoReady]);
+    }, [radius]);
 
-    // 반경 변경 또는 카카오 준비 완료 시 재조회
+    // 반경 변경 또는 카카오 준비 완료 시 재조회 (여기서는 radius만 의존성)
     useEffect(() => {
         loadMarketData();
     }, [loadMarketData]);
@@ -149,7 +150,8 @@ export default function CommercialAnalysisPage() {
                         onRadiusChange={handleRadiusChange}
                         storeName={MOCK_STORE.storeName}
                         onMapReady={handleMapReady}
-                        categoryData={categoryData}
+                        categoryData={categoryPlaces}
+                        competitionData={marketData?.competition?.nearest || []}
                     />
                 </div>
 

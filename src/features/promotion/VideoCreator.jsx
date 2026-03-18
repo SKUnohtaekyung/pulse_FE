@@ -508,7 +508,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
 
                     {/* RESULT STATE: Video Player (No Title Overlay, Height Based) */}
                     {step === 'result' && resultData && (
-                        <div className="relative h-full max-h-full w-auto aspect-[9/16] bg-black rounded-[24px] shadow-2xl overflow-hidden ring-4 ring-white animate-in zoom-in-95 duration-500 group object-contain">
+                        <div className="relative h-full max-h-full w-auto aspect-[9/16] bg-black rounded-[24px] shadow-2xl overflow-hidden ring-4 ring-white animate-in zoom-in-95 duration-500 group" style={{maxWidth: 'min(100%, calc(100vh * 9/16 * 0.88))' }}>
                             <video src={resultData.videoUrl} controls autoPlay loop className="w-full h-full object-cover" />
                         </div>
                     )}
@@ -681,7 +681,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                 </label>
 
                                 {/* 인풋 (flex-1 로 남은 공간 채움) */}
-                                <div className="relative w-[280px] shrink-0">
+                                <div className="relative flex-1 min-w-0">
                                     <input
                                         type="text"
                                         value={options.title}

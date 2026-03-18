@@ -21,7 +21,7 @@ export const DEFAULT_CASES = [
         empathy: '불쾌하셨을 고객님의 마음을 충분히 이해합니다',
         apology: '위생 관리에 소홀했던 점 깊이 사과드립니다',
         solution: '즉시 새로운 음식으로 교체해드리겠으며, 위생 관리를 더욱 철저히 하겠습니다',
-        enabled: true
+        enabled: false
     },
     {
         id: 'service',
@@ -30,7 +30,7 @@ export const DEFAULT_CASES = [
         empathy: '불편을 드려 정말 죄송합니다',
         apology: '직원 교육이 부족했던 점 사과드립니다',
         solution: '서비스 개선을 위해 직원 교육을 강화하고, 다음 방문 시 더 나은 경험을 제공하겠습니다',
-        enabled: true
+        enabled: false
     },
     {
         id: 'food-quality',
@@ -39,7 +39,7 @@ export const DEFAULT_CASES = [
         empathy: '기대에 미치지 못해 죄송합니다',
         apology: '품질 관리에 소홀했던 점 사과드립니다',
         solution: '즉시 새로 조리해드리겠으며, 맛과 품질 관리에 더욱 신경 쓰겠습니다',
-        enabled: true
+        enabled: false
     },
     {
         id: 'price-portion',
@@ -48,7 +48,7 @@ export const DEFAULT_CASES = [
         empathy: '고객님의 소중한 의견 감사드립니다',
         apology: '기대에 못 미쳐 아쉽습니다',
         solution: '메뉴 구성과 가격 정책을 지속적으로 개선하도록 노력하겠습니다',
-        enabled: true
+        enabled: false
     }
 ];
 

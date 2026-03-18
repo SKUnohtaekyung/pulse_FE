@@ -6,6 +6,8 @@
  * 연결될 때는 실제 API 응답을 반환합니다.
  */
 
+import mockVideoUrl from '../../assets/mock_video/수제비_영상_제작_요청.mp4';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // ─── localStorage 키 (앱 전체에서 동일한 키를 사용해야 함) ──────────────────
@@ -17,9 +19,9 @@ const AUTH_TOKEN_KEY = 'accessToken'; // 실제 토큰 키 (백엔드 연결 후
 const MOCK_RESPONSE = {
     status: 'success',
     data: {
-        videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-coffee-pouring-into-a-cup-in-slow-motion-4288-large.mp4',
-        videoTitle: '☕️ 시그니처 라떼의 유혹',
-        hashtags: ['#카페', '#시그니처라떼', '#오늘의커피', '#감성카페'],
+        videoUrl: mockVideoUrl,
+        videoTitle: '🔥 범계 수제비 - 얇고 쫄깃한 수제비의 매력',
+        hashtags: ['#범계맛집', '#수제비', '#매운수제비', '#범계수제비', '#맛집추천'],
         generationTime: '5.2s'
     }
 };

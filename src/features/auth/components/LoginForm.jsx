@@ -87,40 +87,6 @@ const LoginForm = ({ onSwitch }) => {
                 <p className="switch-text">아직 PULSE 계정이 없으신가요?</p>
                 <button className="switch-btn" onClick={onSwitch}>회원가입 하러가기</button>
             </div>
-
-            {/* 개발 모드 전용 빠른 진입 버튼 */}
-            {DEV_MODE && (
-                <div style={{ marginTop: '24px', borderTop: '1px dashed rgba(255,255,255,0.2)', paddingTop: '16px' }}>
-                    <button
-                        type="button"
-                        onClick={handleDevQuickLogin}
-                        style={{
-                            width: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            padding: '10px 16px',
-                            background: 'rgba(251, 191, 36, 0.15)',
-                            border: '1px dashed rgba(251, 191, 36, 0.6)',
-                            borderRadius: '8px',
-                            color: '#fbbf24',
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(251, 191, 36, 0.25)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(251, 191, 36, 0.15)'}
-                    >
-                        <Zap size={14} />
-                        개발자 빠른 진입 (DEV ONLY)
-                    </button>
-                    <p style={{ textAlign: 'center', fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginTop: '6px' }}>
-                        이 버튼은 DEV_MODE=true 일 때만 표시됩니다
-                    </p>
-                </div>
-            )}
         </div>
     );
 };

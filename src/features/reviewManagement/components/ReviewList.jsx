@@ -6,7 +6,7 @@
  * ============================================================================
  */
 
-import { Star, Calendar, Camera } from 'lucide-react';
+import { Calendar, Camera } from 'lucide-react';
 
 // ============================================================================
 // REVIEW CARD COMPONENT
@@ -28,18 +28,6 @@ function ReviewCard({ review }) {
                     )}
                 </div>
 
-                {/* Rating */}
-                <div className="flex items-center gap-1">
-                    {[...Array(5)].map((_, i) => (
-                        <Star
-                            key={i}
-                            className={`w-4 h-4 ${i < review.rating
-                                    ? 'fill-yellow-400 text-yellow-400'
-                                    : 'text-neutral-300'
-                                }`}
-                        />
-                    ))}
-                </div>
             </div>
 
             {/* Content */}

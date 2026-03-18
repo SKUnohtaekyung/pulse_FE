@@ -8,9 +8,9 @@ export default function ReviewManagementPage() {
     length: '보통',
     includeThanks: true,
     includeGreatDay: true,
-    useEmojis: false,
+    useEmojis: true,
     photoThanks: true,
-    brandPreset: '',
+    brandPreset: '바람난 얼큰 수제비',
     optionalInstruction: '',
     exceptionCases: DEFAULT_CASES
   });
@@ -18,19 +18,21 @@ export default function ReviewManagementPage() {
   const [savedTemplates, setSavedTemplates] = useState([]);
 
   const mockReviewData = {
-    averageRating: 4.5,
-    totalReviews: 1234,
+    averageRating: 4.3,
+    totalReviews: 312,
     evaluationMetrics: [
-      { name: '음식', rating: 'great', percentage: 92, reason: '음식의 맛과 품질이 매우 훌륭합니다.' },
-      { name: '서비스', rating: 'good', percentage: 85, reason: '친절하고 빠른 서비스를 제공합니다.' },
-      { name: '분위기', rating: 'good', percentage: 88, reason: '쾌적하고 아늑한 분위기입니다.' }
+      { name: '국물맛', rating: 'great', percentage: 94, reason: '칼칼하고 얼큰한 국물이 강한 인상을 남깁니다. 고소하면서도 깊은 풍미라는 언급이 반복됩니다.' },
+      { name: '수제비 식감', rating: 'good', percentage: 76, reason: '쫄깃한 면발에 대한 호평이 많지만, 일부는 두께가 고르지 않다는 의견도 있습니다.' },
+      { name: '양/가성비', rating: 'great', percentage: 91, reason: '양이 넉넉하고 가격 대비 만족도가 높다는 평가가 지배적입니다.' },
+      { name: '응대/서비스', rating: 'good', percentage: 82, reason: '친절하다는 평이 많고, 웨이팅 안내도 잘 이뤄진다는 긍정 반응이 있습니다.' }
     ]
   };
 
+
   const mockReviews = [
-    { id: '1', author: '김철수', rating: 5, date: '2024-02-15', content: '음식이 정말 맛있었어요!', hasPhoto: true },
-    { id: '2', author: '이영희', rating: 4, date: '2024-02-14', content: '분위기도 좋고 서비스도 친절했습니다.', hasPhoto: false },
-    { id: '3', author: '박민수', rating: 5, date: '2024-02-13', content: '가족과 함께 방문했는데 모두 만족했어요.', hasPhoto: true }
+    { id: '1', author: '김철수', date: '2026-02-11', content: '순한맛(하), 약간 매운맛(중) 두가지 시켰어요. 매운거 잘 먹는 편인데 매워서 콧물이 자꾸 나더라구요 ㅋ 남편은 순한맛도 매워했구요. 수제비면이 제가 집에서 반죽한 것 같은 질감이라 약간 불만족이여요 ㅋㅋ', hasPhoto: true },
+    { id: '2', author: '이영희', date: '2026-01-13', content: '스트레스를 확 날릴 수 있는 얼큰 수제비. 역시 깔끔하고 맛있어요. 김치도 맛있고 . 오늘 친구와 갔는데 이친구 단골 되겠어요. 너무너무 맛있대요. 또 와야죠', hasPhoto: true },
+    { id: '3', author: '박민수', date: '2026-01-08', content: '수제비 최애 하는곳~ 칼칼한맛에 중독압니다.', hasPhoto: true }
   ];
 
   const tabDescriptions = {
@@ -76,6 +78,10 @@ export default function ReviewManagementPage() {
           <QuickSettings
             settings={settings}
             onSettingsChange={setSettings}
+            reviews={mockReviews}
+            onSaveTemplate={(template) => {
+              setSavedTemplates(prev => [{ ...template, id: Date.now().toString() }, ...prev]);
+            }}
           />
         )}
 

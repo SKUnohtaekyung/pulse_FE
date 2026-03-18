@@ -15,7 +15,7 @@ import { COLORS } from '../../constants';
 import '../../styles/globals.css';
 
 export default function DashboardLayout({ initialPage, content }) {
-    const [activeMenu, setActiveMenu] = useState(initialPage || 'home');
+    const [activeMenu, setActiveMenu] = useState(initialPage || 'status-v2');
     const [isExpanded, setIsExpanded] = useState(false);
 
     const [navParams, setNavParams] = useState(null);
@@ -40,12 +40,7 @@ export default function DashboardLayout({ initialPage, content }) {
                 className={`flex-1 p-6 h-full flex flex-col main-content ${isExpanded ? 'ml-[276px]' : 'ml-[96px]'}`}
             >
                 <div className="max-w-[1400px] h-full flex flex-col w-full mx-auto">
-                    {activeMenu === 'home' ? (
-                        // DASHBOARD VIEW
-                        <>
-                            <DashboardHome onNavigate={handleNavigate} />
-                        </>
-                    ) : activeMenu === 'status-v2' ? (
+                    {activeMenu === 'status-v2' || activeMenu === 'home' ? (
                         // V2 DASHBOARD VIEW
                         <>
                             <StatusV2Page onNavigate={handleNavigate} />
