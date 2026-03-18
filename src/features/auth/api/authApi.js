@@ -1,6 +1,6 @@
 // [혜린] Auth API 함수들
 
-const API_BASE_URL = 'http://localhost:8080/api';
+const SPRING_API_BASE_URL = import.meta.env.VITE_SPRING_API_BASE_URL || 'http://localhost:8080/api';
 
 /**
  * [혜린] 회원가입 API
@@ -8,7 +8,7 @@ const API_BASE_URL = 'http://localhost:8080/api';
  * @returns {Promise} 회원가입 결과
  */
 export const signup = async (signupData) => {
-  const url = `${API_BASE_URL}/auth/signup`;
+  const url = `${SPRING_API_BASE_URL}/auth/signup`;
   const method = 'POST';
   const headers = {
     'Content-Type': 'application/json',
@@ -48,6 +48,16 @@ export const signup = async (signupData) => {
 
     const data = await response.json();
     console.log('✅ 성공 응답:', data);
+
+    if (data.accessToken) {
+      localStorage.setItem('accessToken', data.accessToken);
+      console.log('🔑 회원가입 토큰 저장 완료');
+    }
+
+    if (data.analysisTaskId) {
+      localStorage.setItem('analysisTaskId', data.analysisTaskId);
+    }
+
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     return data;
   } catch (error) {
@@ -63,7 +73,7 @@ export const signup = async (signupData) => {
  * @returns {Promise} 로그인 결과 (accessToken 포함)
  */
 export const login = async (loginData) => {
-  const url = `${API_BASE_URL}/login`;
+  const url = `${SPRING_API_BASE_URL}/auth/login`;
   const method = 'POST';
   const headers = {
     'Content-Type': 'application/json',
@@ -106,6 +116,7 @@ export const login = async (loginData) => {
     
     // [혜린] 토큰 저장
     if (data.accessToken) {
+      localStorage.removeItem('analysisTaskId');
       localStorage.setItem('accessToken', data.accessToken);
       console.log('🔑 토큰 저장 완료');
     }
@@ -124,6 +135,8 @@ export const login = async (loginData) => {
  */
 export const logout = () => {
   localStorage.removeItem('accessToken');
+  localStorage.removeItem('analysisTaskId');
+  localStorage.removeItem('user');
 };
 
 /**

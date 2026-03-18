@@ -21,6 +21,7 @@ const SignupForm = ({ onSwitch }) => {
         password: '',
         storeName: '',
         category: '',
+        customCategory: '',
         postcode: '',
         address: '',
         detailAddress: '',
@@ -136,7 +137,8 @@ const SignupForm = ({ onSwitch }) => {
             shopInfo: {
                 name: formData.storeName,
                 address: `${formData.address} ${formData.detailAddress}`,
-                category: mapCategoryToEnum(formData.category)
+                category: formData.category === '기타' ? 'ETC' : mapCategoryToEnum(formData.category),
+                customCategory: formData.category === '기타' ? formData.customCategory || null : null
             }
         };
 
@@ -148,12 +150,12 @@ const SignupForm = ({ onSwitch }) => {
     // Callback when user clicks "Start" on success screen
     const handleComplete = () => {
         setIsLoading(false);
-        onSwitch();
+        navigate('/dashboard');
     };
 
     // Callback when user clicks "Retry" on error screen
     const handleRetry = () => {
-        startPolling(false);
+        startPolling();
     };
 
     return (
@@ -258,7 +260,13 @@ const SignupForm = ({ onSwitch }) => {
                                         placeholder="업종 선택"
                                         options={["한식", "중식", "일식", "양식", "카페/디저트", "주점", "기타"]}
                                         value={formData.category}
-                                        onChange={(val) => setFormData(prev => ({ ...prev, category: val }))}
+                                        onChange={({ category, customCategory }) =>
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                category,
+                                                customCategory: customCategory ?? prev.customCategory
+                                            }))
+                                        }
                                     />
                                 </div>
 
@@ -432,9 +440,10 @@ const CustomDropdown = ({ name, placeholder, options, value, onChange }) => {
             setIsCustom(true);
             setIsOpen(false);
             setCustomValue('');
+            onChange({ category: '기타', customCategory: '' });
         } else {
             setIsCustom(false);
-            onChange(opt);
+            onChange({ category: opt, customCategory: '' });
             setIsOpen(false);
         }
     };
@@ -442,7 +451,7 @@ const CustomDropdown = ({ name, placeholder, options, value, onChange }) => {
     const handleCustomInputChange = (e) => {
         const val = e.target.value;
         setCustomValue(val);
-        onChange(val);
+        onChange({ category: '기타', customCategory: val });
     };
 
     return (
@@ -462,7 +471,7 @@ const CustomDropdown = ({ name, placeholder, options, value, onChange }) => {
                         onClick={() => {
                             setIsCustom(false);
                             setCustomValue('');
-                            onChange('');
+                            onChange({ category: '', customCategory: '' });
                         }}
                         style={{
                             position: 'absolute',

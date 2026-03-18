@@ -1,9 +1,8 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+import { isAuthenticated } from '../../features/auth/api/authApi';
 
-// 개발 모드: true로 설정하면 로그인 없이 대시보드 접근 가능
-// 배포 시 반드시 false로 변경
-const DEV_MODE = true;
+const DEV_MODE = import.meta.env.VITE_BYPASS_AUTH === 'true';
 
 /**
  * 인증이 필요한 라우트를 보호하는 컴포넌트
@@ -15,8 +14,7 @@ const ProtectedRoute = ({ children }) => {
         return children;
     }
 
-    const user = localStorage.getItem('user');
-    if (!user) {
+    if (!isAuthenticated()) {
         return <Navigate to="/login" replace />;
     }
 

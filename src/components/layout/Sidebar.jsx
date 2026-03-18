@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { logout } from '../../features/auth/api/authApi';
 import {
     Home,
     BarChart2,
@@ -30,7 +31,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded }) => {
 
     const handleLogout = (e) => {
         e.stopPropagation();
-        // Clear any auth tokens if needed
+        logout();
         navigate('/login');
     };
 

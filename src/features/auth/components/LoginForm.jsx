@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Zap } from 'lucide-react';
+import { login } from '../api/authApi';
 import '../AuthPage.css';
 
-// 개발 편의용 플래그 — ProtectedRoute의 DEV_MODE와 동일하게 맞춰주세요
-const DEV_MODE = true;
+const DEV_MODE = import.meta.env.VITE_ENABLE_DEV_QUICK_LOGIN === 'true';
 
 const LoginForm = ({ onSwitch }) => {
     const navigate = useNavigate();
@@ -17,23 +17,12 @@ const LoginForm = ({ onSwitch }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // MOCK LOGIN FOR DEMO
         try {
-            // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            const mockUser = {
-                id: 1,
-                email: formData.email,
-                name: '김사장',
-                storeName: '펄스 식당'
-            };
-
-            localStorage.setItem('user', JSON.stringify(mockUser));
+            await login(formData);
             navigate('/dashboard');
         } catch (error) {
             console.error('Login Error:', error);
-            alert('로그인 처리 중 오류가 발생했습니다.');
+            alert(error.message || '로그인 처리 중 오류가 발생했습니다.');
         }
     };
 
@@ -45,9 +34,10 @@ const LoginForm = ({ onSwitch }) => {
             name: '김사장 (Dev)',
             storeName: '펄스 식당'
         };
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        navigate('/dashboard');
-    };
+            localStorage.setItem('user', JSON.stringify(mockUser));
+            localStorage.setItem('accessToken', 'dev-bypass-token');
+            navigate('/dashboard');
+        };
 
     return (
         <div className="form-wrapper fade-in">

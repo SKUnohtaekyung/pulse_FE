@@ -4,8 +4,8 @@ import { MapPin, Users, Sparkles, AlertCircle, ChevronRight, Trophy, Clock, Tren
 import JourneyMapSection from './JourneyMapSection';
 import ReelCreationModal from './components/ReelCreationModal';
 
-// FastAPI 서버 주소
-const FASTAPI_URL = 'http://127.0.0.1:8000/api';
+const FASTAPI_URL = import.meta.env.VITE_FASTAPI_BASE_URL || 'http://127.0.0.1:8000/api';
+const USE_MOCK_ANALYSIS = import.meta.env.VITE_USE_MOCK_ANALYSIS === 'true';
 
 // ─── 목업 데이터 (API 연결 실패 시 fallback) ────────────────────────────────
 // API 응답 구조와 동일하게 유지해야 합니다.
@@ -143,21 +143,34 @@ export default function UnifiedInsightPage({ onNavigate }) {
                 setLoading(true);
                 setError(null);
 
-                const response = await fetch(`${FASTAPI_URL}/analysis/latest`);
+                const storedTaskId = localStorage.getItem('analysisTaskId');
+                let response = null;
+
+                if (storedTaskId) {
+                    response = await fetch(`${FASTAPI_URL}/analysis/result/${storedTaskId}`);
+
+                    if (!response.ok && response.status !== 400 && response.status !== 404) {
+                        throw new Error(`분석 결과를 불러오지 못했습니다. (${response.status})`);
+                    }
+                }
+
+                if (!response || !response.ok) {
+                    response = await fetch(`${FASTAPI_URL}/analysis/latest`);
+                }
 
                 if (!response.ok) {
-                    if (response.status === 404) {
-                        // 분석 결과 없음 → 목업 데이터로 대체
-                        console.warn('[InsightPage] 분석 결과 없음(404) → 목업 데이터 사용');
+                    if (USE_MOCK_ANALYSIS) {
+                        console.warn(`[InsightPage] 분석 결과 조회 실패(${response.status}) → 목업 데이터 사용`);
                         setAnalysisData(MOCK_ANALYSIS_DATA);
                         setPersonas(MOCK_ANALYSIS_DATA.personas);
-                    } else {
-                        // 다른 서버 오류 → 목업 데이터로 대체
-                        console.warn(`[InsightPage] 서버 오류(${response.status}) → 목업 데이터 사용`);
-                        setAnalysisData(MOCK_ANALYSIS_DATA);
-                        setPersonas(MOCK_ANALYSIS_DATA.personas);
+                        return;
                     }
-                    return;
+
+                    if (response.status === 404) {
+                        throw new Error('아직 분석 결과가 없습니다. 회원가입 후 리뷰 수집과 분석이 완료되면 표시됩니다.');
+                    }
+
+                    throw new Error(`분석 결과를 불러오지 못했습니다. (${response.status})`);
                 }
 
                 const data = await response.json();
@@ -166,10 +179,13 @@ export default function UnifiedInsightPage({ onNavigate }) {
                 setAnalysisData(data);
                 setPersonas(data.personas || []);
             } catch (err) {
-                // 서버 연결 자체 실패 → 목업 데이터로 대체 (페이지 정상 렌더링 유지)
-                console.warn('[InsightPage] API 연결 실패 → 목업 데이터 사용:', err.message);
-                setAnalysisData(MOCK_ANALYSIS_DATA);
-                setPersonas(MOCK_ANALYSIS_DATA.personas);
+                if (USE_MOCK_ANALYSIS) {
+                    console.warn('[InsightPage] API 연결 실패 → 목업 데이터 사용:', err.message);
+                    setAnalysisData(MOCK_ANALYSIS_DATA);
+                    setPersonas(MOCK_ANALYSIS_DATA.personas);
+                } else {
+                    setError(err.message || '분석 데이터를 불러오지 못했습니다.');
+                }
             } finally {
                 setLoading(false);
             }
@@ -231,7 +247,7 @@ export default function UnifiedInsightPage({ onNavigate }) {
             {!loading && !error && (
                 <>
                     {/* [LEFT PANE] Unified List (Flex 0.35) */}
-                    <div className="flex-[0.35] flex flex-col min-h-0 gap-4">
+                    <div className="flex-[0_0_35%] min-w-0 flex flex-col min-h-0 gap-4">
 
                         {/* 1. Brief Summary Card */}
                         <div className="bg-white rounded-[24px] p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-[#E5E8EB] shrink-0">
@@ -300,7 +316,7 @@ export default function UnifiedInsightPage({ onNavigate }) {
                     </div>
 
                     {/* [RIGHT PANE] Detail View (Flex 0.65) */}
-                    <div className="flex-[0.65] flex flex-col min-h-0">
+                    <div className="flex-[1_1_65%] min-w-0 flex flex-col min-h-0">
                         <AnimatePresence mode="wait">
 
                             {/* Persona Detail */}
