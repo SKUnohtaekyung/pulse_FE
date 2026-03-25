@@ -6,10 +6,10 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip as RechartsTooltip,
-    ResponsiveContainer,
     ReferenceLine
 } from 'recharts';
 import { ChevronRight, Info } from 'lucide-react';
+import useMeasuredElement from '../../../hooks/useMeasuredElement';
 
 const V2TrendChart = ({
     title = '최근 트렌드',
@@ -17,6 +17,8 @@ const V2TrendChart = ({
     xAxisKey = 'name',
     lineDataKey = 'value'
 }) => {
+    const chartSize = useMeasuredElement();
+
     if (!seriesData || seriesData.length === 0) {
         return (
             <div className="bg-white border border-gray-200 rounded-[24px] p-5 flex flex-col items-center justify-center h-[200px]">
@@ -39,9 +41,17 @@ const V2TrendChart = ({
             </div>
 
             {/* Chart Area */}
-            <div className="flex-1 w-full min-h-0 relative z-0">
-                <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={seriesData} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
+            <div
+                ref={chartSize.ref}
+                className="flex-1 w-full min-h-0 relative z-0"
+            >
+                {chartSize.isReady && (
+                    <LineChart
+                        width={chartSize.width}
+                        height={chartSize.height}
+                        data={seriesData}
+                        margin={{ top: 5, right: 10, left: -25, bottom: 0 }}
+                    >
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
                         <XAxis
                             dataKey={xAxisKey}
@@ -81,7 +91,7 @@ const V2TrendChart = ({
                             label={{ position: 'top', value: '릴스 업로드', fill: '#FF5A36', fontSize: 10, fontWeight: 700 }}
                         />
                     </LineChart>
-                </ResponsiveContainer>
+                )}
             </div>
         </div>
     );

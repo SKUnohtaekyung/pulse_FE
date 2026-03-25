@@ -1,6 +1,32 @@
 // [혜린] Auth API 함수들
 
 const SPRING_API_BASE_URL = import.meta.env.VITE_SPRING_API_BASE_URL || 'http://localhost:8080/api';
+const USER_PROFILE_STORAGE_KEY = 'userProfile';
+
+const readCachedProfile = () => {
+  try {
+    const cachedProfile = localStorage.getItem(USER_PROFILE_STORAGE_KEY);
+    if (cachedProfile) {
+      return JSON.parse(cachedProfile);
+    }
+
+    const legacyUser = localStorage.getItem('user');
+    if (!legacyUser) {
+      return null;
+    }
+
+    const parsedLegacyUser = JSON.parse(legacyUser);
+    return {
+      email: parsedLegacyUser.email || '',
+      ownerName: parsedLegacyUser.name || '',
+      shopName: parsedLegacyUser.storeName || '',
+      shopAddress: '',
+    };
+  } catch (error) {
+    console.warn('프로필 캐시를 읽지 못했습니다.', error);
+    return null;
+  }
+};
 
 /**
  * [혜린] 회원가입 API
@@ -50,6 +76,8 @@ export const signup = async (signupData) => {
     console.log('✅ 성공 응답:', data);
 
     if (data.accessToken) {
+      localStorage.removeItem(USER_PROFILE_STORAGE_KEY);
+      localStorage.removeItem('user');
       localStorage.setItem('accessToken', data.accessToken);
       console.log('🔑 회원가입 토큰 저장 완료');
     }
@@ -117,6 +145,8 @@ export const login = async (loginData) => {
     // [혜린] 토큰 저장
     if (data.accessToken) {
       localStorage.removeItem('analysisTaskId');
+      localStorage.removeItem(USER_PROFILE_STORAGE_KEY);
+      localStorage.removeItem('user');
       localStorage.setItem('accessToken', data.accessToken);
       console.log('🔑 토큰 저장 완료');
     }
@@ -137,6 +167,7 @@ export const logout = () => {
   localStorage.removeItem('accessToken');
   localStorage.removeItem('analysisTaskId');
   localStorage.removeItem('user');
+  localStorage.removeItem(USER_PROFILE_STORAGE_KEY);
 };
 
 /**
@@ -153,4 +184,31 @@ export const getToken = () => {
  */
 export const isAuthenticated = () => {
   return !!getToken();
+};
+
+export const fetchCurrentProfile = async () => {
+  const token = getToken();
+  if (!token) {
+    return readCachedProfile();
+  }
+
+  try {
+    const response = await fetch(`${SPRING_API_BASE_URL}/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || '프로필 정보를 불러오지 못했습니다.');
+    }
+
+    const data = await response.json();
+    localStorage.setItem(USER_PROFILE_STORAGE_KEY, JSON.stringify(data));
+    return data;
+  } catch (error) {
+    console.error('프로필 조회 에러:', error);
+    return readCachedProfile();
+  }
 };

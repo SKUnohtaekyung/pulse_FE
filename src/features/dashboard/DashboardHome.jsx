@@ -18,7 +18,6 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip as RechartsTooltip,
-    ResponsiveContainer,
     AreaChart,
     Area
 } from 'recharts';
@@ -29,12 +28,14 @@ import WeatherAnimation from './components/WeatherAnimation';
 import WidgetHeader from './components/WidgetHeader';
 import InfoTooltip from './components/InfoTooltip';
 import SeasonAlert from './components/SeasonAlert';
+import useMeasuredElement from '../../hooks/useMeasuredElement';
 
 const DashboardHome = ({ onNavigate }) => {
     // State
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [weatherType, setWeatherType] = useState('rain');
     const [loadingTip, setLoadingTip] = useState(LOADING_TIPS[0]);
+    const storeChartSize = useMeasuredElement();
 
     const handleRefresh = () => {
         setIsRefreshing(true);
@@ -218,9 +219,17 @@ const DashboardHome = ({ onNavigate }) => {
                         </div>
 
                         {/* Chart Area */}
-                        <div className="flex-1 w-full min-h-[250px] relative z-0">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={CHART_DATA} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                        <div
+                            ref={storeChartSize.ref}
+                            className="flex-1 w-full min-h-[250px] relative z-0"
+                        >
+                            {storeChartSize.isReady && (
+                                <AreaChart
+                                    width={storeChartSize.width}
+                                    height={storeChartSize.height}
+                                    data={CHART_DATA}
+                                    margin={{ top: 5, right: 0, left: -20, bottom: 0 }}
+                                >
                                     <defs>
                                         <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="#002B7A" stopOpacity={0.1} />
@@ -236,7 +245,7 @@ const DashboardHome = ({ onNavigate }) => {
                                     />
                                     <Area type="monotone" dataKey="value" stroke="#002B7A" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
                                 </AreaChart>
-                            </ResponsiveContainer>
+                            )}
                         </div>
                     </div>
 

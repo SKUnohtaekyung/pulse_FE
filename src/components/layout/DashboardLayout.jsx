@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -11,14 +11,33 @@ import PromotionPage from '../../features/promotion/PromotionPage';
 import ReviewManagementPage from '../../features/reviewManagement/ReviewManagementPage';
 import SubscriptionPage from '../../pages/SubscriptionPage';
 import InfluencerMatchingPage from '../../features/influencer/InfluencerMatchingPage';
+import { fetchCurrentProfile } from '../../features/auth/api/authApi';
 import { COLORS } from '../../constants';
 import '../../styles/globals.css';
 
 export default function DashboardLayout({ initialPage, content }) {
     const [activeMenu, setActiveMenu] = useState(initialPage || 'home');
     const [isExpanded, setIsExpanded] = useState(false);
+    const [userProfile, setUserProfile] = useState(null);
 
     const [navParams, setNavParams] = useState(null);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadCurrentProfile = async () => {
+            const profile = await fetchCurrentProfile();
+            if (isMounted && profile) {
+                setUserProfile(profile);
+            }
+        };
+
+        loadCurrentProfile();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const handleNavigate = (menuId, params = null) => {
         setActiveMenu(menuId);
@@ -34,6 +53,7 @@ export default function DashboardLayout({ initialPage, content }) {
                 setActiveMenu={setActiveMenu}
                 isExpanded={isExpanded}
                 setIsExpanded={setIsExpanded}
+                profile={userProfile}
             />
 
             <main
@@ -53,31 +73,31 @@ export default function DashboardLayout({ initialPage, content }) {
                     ) : activeMenu === 'commercial-analysis' ? (
                         // COMMERCIAL ANALYSIS VIEW
                         <>
-                            <Header title="우리 가게 주변 상권을 심층 분석합니다." />
+                            <Header title="우리 가게 주변 상권을 심층 분석합니다." profile={userProfile} />
                             <CommercialAnalysisPage />
                         </>
                     ) : activeMenu === 'insight' ? (
                         // INSIGHT VIEW
                         <>
-                            <Header title="단골 손님과 상권 트렌드를 분석해 드려요." />
+                            <Header title="단골 손님과 상권 트렌드를 분석해 드려요." profile={userProfile} />
                             <UnifiedInsightPage onNavigate={handleNavigate} />
                         </>
                     ) : activeMenu === 'mypage' ? (
                         // MYPAGE VIEW
                         <>
-                            <Header title="가게 정보와 연동 상태를 관리하세요." />
+                            <Header title="가게 정보와 연동 상태를 관리하세요." profile={userProfile} />
                             <MyPage />
                         </>
                     ) : activeMenu === 'promotion' ? (
                         // PROMOTION VIEW
                         <>
-                            <Header title="사장님의 사진으로 홍보 영상을 빠르게 제작해 드려요." />
+                            <Header title="사장님의 사진으로 홍보 영상을 빠르게 제작해 드려요." profile={userProfile} />
                             <PromotionPage initialParams={navParams} onNavigate={handleNavigate} />
                         </>
                     ) : activeMenu === 'review' ? (
                         // REVIEW MANAGEMENT VIEW
                         <div className="flex-1 flex flex-col min-h-0">
-                            <Header title="리뷰를 관리하고 AI로 답변을 작성하세요." />
+                            <Header title="리뷰를 관리하고 AI로 답변을 작성하세요." profile={userProfile} />
                             <ReviewManagementPage />
                         </div>
                     ) : activeMenu === 'subscription' ? (
@@ -88,7 +108,7 @@ export default function DashboardLayout({ initialPage, content }) {
                         // content prop이 있으면(RequestPage 등) 그것을 렌더링, 아니면 메인 페이지
                         content || (
                             <>
-                                <Header title="우리 가게에 딱 맞는 인플루언서를 찾아보세요." />
+                                <Header title="우리 가게에 딱 맞는 인플루언서를 찾아보세요." profile={userProfile} />
                                 <InfluencerMatchingPage initialParams={navParams} />
                             </>
                         )
