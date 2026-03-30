@@ -8,50 +8,46 @@
 Skills는 프로젝트의 특정 역할(Role)을 수행하는 **실행 가능한 매뉴얼**입니다. 각 스킬은:
 - **단일 책임**: 하나의 명확한 역할만 수행
 - **SSOT 참조**: 저장소의 가이드 파일만을 진실로 인정
-- **Context Diet**: 필요한 파일만 로드하여 환각(Hallucination) 방지
+- **Context Hand-over Protocol**: 스킬이 종료될 때마다 후임 스킬을 위해 `.agent/context/active_task.md`를 반드시 남겨 Silo 효과 방지
 - **구조화된 출력**: 검증 가능한 결과물 생성
 
-## 📖 프로젝트 3대 문서 (The Trinity)
+## 📖 프로젝트 4대 문서 (The Core Four)
 
-모든 스킬은 다음 3개의 핵심 문서를 **필요할 때** 참조합니다:
+모든 스킬은 다음 4개의 철저히 분리된 핵심 문서를 참조/수정합니다. 특정 스킬은 특정 문서만 덮어쓸 권리가 있습니다.
 
-| 문서 | 별칭 | 역할 | 답하는 질문 |
-|:---|:---|:---|:---|
-| **`about_pulse.md`** | 프로젝트 헌법 | 기획/의도 | **왜(Why)** 이 기능을 만드는가? |
-| **`design_guide.md`** | 디자인 가이드 | 시각적 기준 | **어떻게 보이는가(How it looks)?** |
-| **`PULSE.md`** | 실행 매뉴얼 | 구현 명세 | **어떻게 만드는가(How to build)?** |
-
-### 사용 원칙
-- **헷갈릴 때**: `about_pulse.md` (헌법)를 열어 *"왜"*를 상기
-- **디자인 결정**: `design_guide.md`의 색상/폰트/레이아웃만 사용 (임의 변경 금지)
-- **구현 방법**: `PULSE.md`의 명확한 지시를 따름
+| 문서 | 별칭 | 담당 스킬 | 역할 | 답하는 질문 |
+|:---|:---|:---|:---|:---|
+| **`about_pulse.md`** | 프로젝트 헌법 | `N/A` (고정) | 기획/의도 | **이 프로젝트의 근본 정체성은 무엇인가?** |
+| **`prd.md`** | 기획 명세서 | `product-manager` | 비즈니스 로직 및 유저스토리 | **왜(Why) 만들며, 유저는 무엇(What)을 원하는가?** |
+| **`PULSE.md`** | 실행/기술 명세 | `planner` | 아키텍처 및 구현 스펙 | **설계된 DB와 컴포넌트를 어떻게(How) 프로그래밍하는가?** |
+| **`design_guide.md`** | 디자인 가이드 | `ux-designer` | 시각적 규칙 | **어떤 컴포넌트 라이브러리와 색상을 사용하는가?** |
 
 ## 🎯 Quick Reference
 
 | 스킬 | 트리거 명령어 | 사용 시점 | 참조 파일 |
 |:---|:---|:---|:---|
-| **planner** | `/plan` | 기능 구현 전 계획 수립 | `about_pulse.md`, `tech.md` |
-| **tdd-architect** | `/tdd` | 테스트 주도 개발 시작 | `CODING_CONVENTIONS.md`, `PULSE.md` |
-| **code-reviewer** | `/review` | 코드 작성 후 품질 검수 | `CODING_CONVENTIONS.md`, `PULSE.md` |
-| **doc-manager** | (자동) | 가이드 수정, CHANGELOG 업데이트 | `antigravity.md`, `CHANGELOG.md` |
-| **ux-designer** | `/design` | UI/UX 설계, 접근성 검토 | `design_guide.md`, `about_pulse.md` |
-| **frontend-dev** | `/implement` | React 컴포넌트 구현 | `tech.md`, `design_guide.md` |
-| **ux-writer** | `/copy` | 마이크로카피, 에러 메시지 작성 | `about_pulse.md`, `design_guide.md` |
-| **performance-engineer** | `/optimize` | 성능 최적화, 번들 분석 | `tech.md` |
-| **video-creator** | `/video` | VEO3 영상 생성 페이로드 작성 | `Video.md`, `PULSE.md`, `about_pulse.md` |
-| **research-assistant** | (자동) | 외부 라이브러리 문서 조회 | `tech.md` + **context7 MCP** |
-| **problem-solver** | `/think` | 복잡한 문제 해결 및 분석 | `about_pulse.md`, `tech.md` + **Sequential Thinking MCP** |
+| **product-manager** | `/pm` | 기능 개발 최초 진입 단계 (PRD 작성 필요시) | `about_pulse.md` -> `prd.md` 작성 |
+| **planner** | `/plan` | 기술 아키텍처 및 태스크 분할 필요시 | `prd.md` -> `PULSE.md` 작성 |
+| **tdd-architect** | `/tdd` | 테스트 주도 개발 시작 | `PULSE.md` |
+| **code-reviewer** | `/review` | 코드 작성 후 품질 검수 | `PULSE.md` |
+| **doc-manager** | (자동) | `CHANGELOG.md` 등 보조 문서 관리 (Core Four 침범 금지) | `CHANGELOG.md` |
+| **ux-designer** | `/design` | UI/UX 설계, 접근성 검토 | `prd.md`, `design_guide.md` |
+| **frontend-dev** | `/implement` | React 컴포넌트 실제 코딩 | `PULSE.md`, `design_guide.md` |
+| **ux-writer** | `/copy` | 마이크로카피, 에러 메시지 작성 | `prd.md`, `design_guide.md` |
+| **performance-engineer** | `/optimize` | 성능 최적화, 번들 분석 | `PULSE.md` |
+| **pr-manager** | `/pr`, `/commit` | 기능 개발 완료 후 PR/커밋 양식 자동 작성 | `active_task.md`, `git diff` |
+
 
 ## 🔄 표준 워크플로우
 
 ```mermaid
 graph TD
-    A[User Request] --> B[planner]
-    B --> C[doc-manager]
-    C --> D{UI 작업?}
+    A[User Request] --> B[product-manager]
+    B -->|Generates prd.md| C[planner]
+    C -->|Generates JSON tasks in PULSE.md| D{UI/디자인 필요?}
     D -->|Yes| E[ux-designer]
     D -->|No| F[tdd-architect]
-    E --> F
+    E -->|Updates design_guide| F
     F --> G[frontend-dev]
     G --> H[ux-writer]
     H --> I[code-reviewer]
@@ -59,75 +55,22 @@ graph TD
     J -->|No| G
     J -->|Yes| K[performance-engineer]
     K --> L[doc-manager]
-    L --> M[Done]
+    L --> M[pr-manager]
+    M --> N[Done]
 ```
 
-## 📖 사용 방법
+## 🚀 Fast-Track 워크플로우 (가벼운 수정)
 
-### 1. 명시적 활성화 (Explicit)
-```
-User: /act planner
-User: 사용자 프로필 기능을 추가하고 싶어요.
-```
+버튼 색상 변경, 오타 수정 등 단순한 작업에도 거창한 PRD와 아키텍처 설계가 필요할까요?
+- **`/tweak`** 또는 **`/hotfix`** 트렌지션을 사용하면 `product-manager`와 `planner` 단계를 건너뛰고 곧바로 `frontend-dev` 또는 `code-reviewer`로 진입할 수 있습니다. 
+- Fast-Track 작업 시 봇은 SSOT 문서 스왑 단계를 통과하여 시간과 토큰 소모를 극적으로 줄입니다.
 
-### 2. 암묵적 활성화 (Implicit)
-```
-User: 이 디자인의 접근성을 검토해줘.
-→ Agent auto-activates: ux-designer
-```
+## 🤝 Context Hand-Over Protocol
 
-### 3. 체인 활성화 (Chained)
-```
-User: /plan → /act planner
-     승인 후 → /tdd → /implement → /review
-```
+AI는 망각의 동물입니다. 파이프라인의 **다음 스킬로 넘어갈 때 이전 스킬이 얻은 문맥(Context)을 소실하지 않도록**, 모든 스킬은 임무 완료 직전 `.agent/context/active_task.md`를 최신화해야 합니다.
 
-## 🚀 Best Practices
-
-### ✅ DO
-- 작업 시작 전 항상 **planner**부터 활성화
-- 코드 수정 시 **doc-manager**로 가이드 파일 선행 업데이트
-- UI 작업 시 **ux-designer** → **frontend-dev** 순서 준수
-- 작업 완료 후 **code-reviewer** 감사 필수
-
-### ❌ DON'T
-- 여러 스킬을 동시에 활성화하지 마세요 (단, planner + tdd-architect는 병렬 가능)
-- doc-manager 없이 가이드 파일 수정 금지
-- code-reviewer를 건너뛰고 배포하지 마세요
-
-## 🛠️ 스킬 상세 설명
-
-### Core Workflow Skills
-- **[planner](./planner/SKILL.md)**: Step 2 - Planning & Architecture
-- **[code-reviewer](./code-reviewer/SKILL.md)**: Step 4 - QA & Security Check
-- **[doc-manager](./doc-manager/SKILL.md)**: Rule 3 - SSOT Updates
-- **[tdd-architect](./tdd-architect/SKILL.md)**: Step 3 - TDD & Coverage
-
-### Design & Implementation Skills
-- **[ux-designer](./ux-designer/SKILL.md)**: HCI & UI/UX Expert
-- **[frontend-dev](./frontend-dev/SKILL.md)**: React & Tailwind Implementation
-
-### Efficiency Multiplier Skills
-- **[ux-writer](./ux-writer/SKILL.md)**: Tone & Manner / Microcopy
-- **[performance-engineer](./performance-engineer/SKILL.md)**: Optimization & Web Vitals
-
-### MCP Integration Skills
-- **[research-assistant](./research-assistant/SKILL.md)**: External Docs Lookup (context7)
-- **[problem-solver](./problem-solver/SKILL.md)**: Complex Problem Solving (Sequential Thinking)
-
-### Domain-Specific Skills
-- **[video-creator](./video-creator/SKILL.md)**: VEO3 Payload Generation & Validation
-
-## 🔧 Maintenance
-
-### 스킬 업데이트
-1. 프로젝트 철학이 변경되면 관련 SKILL.md 업데이트
-2. 새로운 가이드 파일 추가 시 `references` 섹션 업데이트
-3. 워크플로우 변경 시 README.md 다이어그램 갱신
-
-### 버전 관리
-- SKILL.md 파일도 Git으로 버전 관리
-- 중요 변경 시 CHANGELOG.md에 기록
+**작성 예시:**
+> "저는 product-manager로서 유저 스토리를 짰습니다. 다음 순서인 planner님, 이 사항들을 DB 스키마로 번역해 주세요. 주의점: 기존 유저 세션은 건드리지 마세요."
 
 ---
 
