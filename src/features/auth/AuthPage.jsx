@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import ThreeBackground from './ThreeBackground';
 import LoginForm from './components/LoginForm';
 import SignupForm from './components/SignupForm';
+import InfluencerSignupForm from './components/InfluencerSignupForm';
 import RoleSelectionForm from './components/RoleSelectionForm';
 import './AuthPage.css';
 
@@ -29,12 +30,16 @@ const AuthPage = () => {
                         <RoleSelectionForm 
                             onSelectRole={(role) => {
                                 if (role === 'owner') setAuthView('signup-owner');
+                                if (role === 'influencer') setAuthView('signup-influencer');
                             }} 
                             onSwitchToLogin={() => setAuthView('login')} 
                         />
                     )}
                     {authView === 'signup-owner' && (
                         <SignupForm onSwitch={() => setAuthView('login')} />
+                    )}
+                    {authView === 'signup-influencer' && (
+                        <InfluencerSignupForm onSwitch={() => setAuthView('login')} />
                     )}
                 </div>
 

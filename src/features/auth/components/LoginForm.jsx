@@ -27,27 +27,56 @@ const LoginForm = ({ onSwitch }) => {
     };
 
     // 개발자 빠른 진입: mock 유저로 즉시 로그인
-    const handleDevQuickLogin = () => {
-        const mockUser = {
-            id: 1,
-            email: 'dev@pulse.com',
-            name: '김사장 (Dev)',
-            storeName: '펄스 식당'
-        };
+    const handleDevBypassLogin = (role = 'owner') => {
+        if (role === 'owner') {
+            const mockUser = {
+                id: 'owner_999',
+                role: 'owner',
+                name: '김사장 (Dev)',
+                storeName: '펄스 식당'
+            };
             localStorage.setItem('user', JSON.stringify(mockUser));
             localStorage.setItem('accessToken', 'dev-bypass-token');
             navigate('/dashboard');
-        };
+        } else {
+            const mockInfluencer = {
+                id: 'influencer_999',
+                role: 'influencer',
+                name: '테스트 인플루언서'
+            };
+            localStorage.setItem('user', JSON.stringify(mockInfluencer));
+            localStorage.setItem('accessToken', 'dev-bypass-token');
+            navigate('/influencer/dashboard');
+        }
+    };
 
     return (
         <div className="form-wrapper fade-in">
-            <h2 className="form-title">사장님, 환영합니다!</h2>
+            <h2 className="form-title">환영합니다!</h2>
             <p className="form-subtitle">
                 복잡한 마케팅은 펄스에게 맡기고<br />
                 오늘도 맛있는 요리에만 집중하세요.
             </p>
 
             <form onSubmit={handleSubmit}>
+                {DEV_MODE && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+                        <button
+                            type="button"
+                            onClick={() => handleDevBypassLogin('owner')}
+                            style={{ padding: '10px', background: '#f97316', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+                        >
+                            🚀 [DEV] 사장님 자동 로그인
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleDevBypassLogin('influencer')}
+                            style={{ padding: '10px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+                        >
+                            ✨ [DEV] 인플루언서 자동 로그인
+                        </button>
+                    </div>
+                )}
                 <div className="input-group">
                     <input
                         type="email"
@@ -78,42 +107,10 @@ const LoginForm = ({ onSwitch }) => {
                 <button className="switch-btn" onClick={onSwitch}>회원가입 하러가기</button>
             </div>
 
-            {/* 개발 모드 전용 빠른 진입 버튼 */}
-            {DEV_MODE && (
-                <div style={{ marginTop: '24px', borderTop: '1px dashed rgba(255,255,255,0.2)', paddingTop: '16px' }}>
-                    <button
-                        type="button"
-                        onClick={handleDevQuickLogin}
-                        style={{
-                            width: '100%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            padding: '10px 16px',
-                            background: 'rgba(251, 191, 36, 0.15)',
-                            border: '1px dashed rgba(251, 191, 36, 0.6)',
-                            borderRadius: '8px',
-                            color: '#fbbf24',
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s ease',
-                        }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(251, 191, 36, 0.25)'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(251, 191, 36, 0.15)'}
-                    >
-                        <Zap size={14} />
-                        개발자 빠른 진입 (DEV ONLY)
-                    </button>
-                    <p style={{ textAlign: 'center', fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginTop: '6px' }}>
-                        이 버튼은 DEV_MODE=true 일 때만 표시됩니다
-                    </p>
-                </div>
-            )}
         </div>
     );
 };
+
 
 const PasswordInput = ({ name, placeholder, value, onChange }) => {
     const [show, setShow] = useState(false);

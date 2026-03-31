@@ -178,21 +178,23 @@ const SignupForm = ({ onSwitch }) => {
                     transition={{ duration: 0.3 }}
                     className="form-wrapper"
                 >
-                    {step === 1 ? (
-                        <>
-                            <h2 className="form-title">PULSE 시작하기</h2>
-                            <p className="form-subtitle">
-                                마케팅 자동화의 첫 걸음, 계정을 생성해보세요.
-                            </p>
-                        </>
-                    ) : (
-                        <>
-                            <h2 className="form-title">가게 등록</h2>
-                            <p className="form-subtitle">
-                                사장님의 소중한 가게 정보를 알려주세요.
-                            </p>
-                        </>
-                    )}
+                    <div className="mb-6">
+                        <h2 className="form-title">{step === 1 ? 'PULSE 시작하기' : '가게 등록'}</h2>
+                        
+                        <div className="flex items-center gap-2 mb-3 mt-3">
+                            {[1, 2].map((num) => (
+                                <div key={num} className="flex-1 h-1.5 rounded-full overflow-hidden bg-[#F2F4F6]">
+                                    <div className={`h-full rounded-full transition-all duration-500 ${step >= num ? 'bg-[#002B7A]' : 'bg-transparent'}`}></div>
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <p className="form-subtitle" style={{ marginBottom: 0 }}>
+                            {step === 1 
+                                ? '마케팅 자동화의 첫 걸음, 계정을 생성해보세요.' 
+                                : '사장님의 소중한 가게 정보를 알려주세요.'}
+                        </p>
+                    </div>
 
                     <form onSubmit={handleNext}>
                         {step === 1 ? (

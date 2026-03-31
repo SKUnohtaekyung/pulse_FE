@@ -22,7 +22,7 @@ const RoleSelectionForm = ({ onSelectRole, onSwitchToLogin }) => {
                 <button 
                     type="button" 
                     className="back-btn w-full" 
-                    onClick={() => alert('인플루언서 회원가입은 곧 오픈될 예정입니다. 조금만 기다려주세요!')}
+                    onClick={() => onSelectRole('influencer')}
                 >
                     인플루언서
                 </button>
