@@ -27,7 +27,7 @@ export default function InfluencerLayout({ initialPage }) {
             />
 
             <main
-                className={`flex-1 p-6 h-full flex flex-col main-content ${isExpanded ? 'ml-[276px]' : 'ml-[96px]'}`}
+                className={`flex-1 p-6 h-full flex flex-col main-content pt-20 md:pt-6 transition-all duration-300 ${isExpanded ? 'md:ml-[276px] ml-0' : 'md:ml-[96px] ml-0'}`}
             >
                 <div className="max-w-[1400px] h-full flex flex-col w-full mx-auto">
                     {activeMenu === 'inbox' ? (
