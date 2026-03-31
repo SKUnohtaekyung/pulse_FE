@@ -3,11 +3,12 @@ import { Link, useLocation } from 'react-router-dom';
 import ThreeBackground from './ThreeBackground';
 import LoginForm from './components/LoginForm';
 import SignupForm from './components/SignupForm';
+import RoleSelectionForm from './components/RoleSelectionForm';
 import './AuthPage.css';
 
 const AuthPage = () => {
     const location = useLocation();
-    const [isSignUp, setIsSignUp] = useState(location.pathname === '/signup');
+    const [authView, setAuthView] = useState(location.pathname === '/signup' ? 'role-select' : 'login');
 
     return (
         <div className="auth-split-layout">
@@ -21,10 +22,19 @@ const AuthPage = () => {
                 </div>
 
                 <div className="auth-content">
-                    {isSignUp ? (
-                        <SignupForm onSwitch={() => setIsSignUp(false)} />
-                    ) : (
-                        <LoginForm onSwitch={() => setIsSignUp(true)} />
+                    {authView === 'login' && (
+                        <LoginForm onSwitch={() => setAuthView('role-select')} />
+                    )}
+                    {authView === 'role-select' && (
+                        <RoleSelectionForm 
+                            onSelectRole={(role) => {
+                                if (role === 'owner') setAuthView('signup-owner');
+                            }} 
+                            onSwitchToLogin={() => setAuthView('login')} 
+                        />
+                    )}
+                    {authView === 'signup-owner' && (
+                        <SignupForm onSwitch={() => setAuthView('login')} />
                     )}
                 </div>
 

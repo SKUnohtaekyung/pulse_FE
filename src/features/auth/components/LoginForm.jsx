@@ -4,7 +4,7 @@ import { Eye, EyeOff, Zap } from 'lucide-react';
 import { login } from '../api/authApi';
 import '../AuthPage.css';
 
-const DEV_MODE = import.meta.env.VITE_ENABLE_DEV_QUICK_LOGIN === 'true';
+const DEV_MODE = import.meta.env.DEV;
 
 const LoginForm = ({ onSwitch }) => {
     const navigate = useNavigate();

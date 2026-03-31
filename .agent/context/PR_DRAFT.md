@@ -1,28 +1,27 @@
 ## 📝 요약 (Synopsis)
-AI 에이전트 파이프라인(PULSE Skills) 구조를 대대적으로 리팩토링하고, `product-manager`, `pr-manager` 신규 스킬과 컨텍스트 핸드오버 체계를 도입했습니다.
+회원가입 진입 시 '사장님'과 '인플루언서'를 구분하여 선택할 수 있는 라우팅 관문(Role Selection) 화면을 신규 추가했습니다.
 
 ## 🔗 관련 기획 및 이슈 (Related PRD)
-- Issue(s): # (해당 없음 - Skills 시스템 내부 개선)
+- Issue(s): # (요구사항: 회원 유형 분기 처리)
 
 ## 🛠️ 변경 유형 (Change Type)
 - [x] ✨ 기능 추가 (Feature)
-- [ ] 🎨 UI/UX 스타일 및 마크업 수정 (Design)
+- [x] 🎨 UI/UX 스타일 및 마크업 수정 (Design)
 - [ ] 🐛 버그 수정 (Bugfix)
 - [x] ♻️ 리팩토링 및 성능 최적화 (Optimizing)
 - [ ] 🧪 테스트 코드 작성 및 커버리지 보완 (Testing)
 - [x] 📃 문서 업데이트 (Docs)
 
 ## 📦 주요 변경점 (Key Changes)
-**Skills / Pipelines**
-- `.agent/skills/product-manager/SKILL.md`: PM 페르소나 신설 및 PRD, User Story 작성 템플릿 이식
-- `.agent/skills/pr-manager/SKILL.md`: `git diff`를 분석하여 PR 작성 템플릿을 자동으로 포매팅하는 기능 신설
-- `.agent/skills/planner/SKILL.md`: 기획 역할을 제거하고 기술 아키텍처 설계에만 집중하도록 리팩토링
+**UI / Components**
+- `src/features/auth/components/RoleSelectionForm.jsx`: 기존 Form UI(AuthPage.css)와 일관성을 유지한 신규 회원 유형 선택 컴포넌트 추가 (사장님 / 인플루언서 선택 제공)
+- `src/features/auth/components/LoginForm.jsx`: 개발 모드 로그인 우회 버튼(`DEV_MODE`)의 조건을 `.env` 의존성에서 기본 `import.meta.env.DEV` 플래그로 개선하여 편의성 증대
 
-**Docs / Templates**
-- `.github/PULL_REQUEST_TEMPLATE.md`: 프로젝트 표준 Github PR 템플릿 신설
-- `.agent/skills/README.md`: 신규 워크플로우 파이프라인 다이어그램, 4대 핵심 문서 체계, Fast-Track 안내 등록
-- `.agent/context/active_task.md`: 단기 기억 인수인계(Context Hand-over)를 위한 상태 저장 파일 초기화
+**State / Hooks / API**
+- `src/features/auth/AuthPage.jsx`: 불리언(`isSignUp`) 로직을 다중 뷰 상태인 `authView` ('login', 'role-select', 'signup-owner') 트리 구조로 완벽히 리팩토링
 
 ## ✅ 테스트 및 검증 체크리스트 (QA)
-- [x] 로컬 환경 오류 없음 (시스템 내부 프롬프트 리팩토링이므로 영향 없음)
-- [x] 마크다운 문서 및 파이프라인 다이어그램 렌더링 정상 확인
+- [x] 로컬 환경 브라우저 렌더링 정상 작동 확인
+- [x] 콘솔(Console) 에러 및 린트(Lint) 경고 없음
+- [ ] TDD 유닛 테스트 코드 통과
+- [x] `design_guide.md`의 디자인 시스템 룰(색상/폰트 등) 준수 확인
