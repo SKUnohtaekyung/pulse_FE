@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { Upload, X, Zap, Crown, Coffee, Lightbulb, AlertCircle, CheckCircle, TrendingUp, Clock, Hash, Copy, Download, Instagram, RefreshCw, Play, Wand2, Settings, Crop, Edit2, Trash2, ChevronDown, Info, Plus, Star, Sparkles, Lock } from 'lucide-react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Sphere, MeshDistortMaterial } from '@react-three/drei';
@@ -98,14 +98,11 @@ const PERSONA_PROMPTS = [
     }
 ];
 
-export default function VideoCreator({ step, resultData, onReset, images, setImages, options, setOptions, onGenerate, onConfirm, onNavigate, progress = 0, progressMessage = '' }) {
+export default function VideoCreator({ step, resultData, onReset, images, setImages, selectedFile, setSelectedFile, options, setOptions, personas = [], selectedPersona, isAutoPrompt, setIsAutoPrompt, isPromptLoading = false, qualityMode, setQualityMode, onConfirm, onNavigate, progress = 0, progressMessage = '' }) {
     const fileInputRef = useRef(null);
 
     // Local State for UI (화면 제어를 위한 로컬 상태)
-    const [isAutoPrompt, setIsAutoPrompt] = useState(true); // AI 자동 완성 활성화 여부
-    const [qualityMode, setQualityMode] = useState('standard'); // 'standard' | 'pro' (화질 모드)
     const [isQualityMenuOpen, setIsQualityMenuOpen] = useState(false); // 화질 선택 메뉴 토글
-    const [selectedFile, setSelectedFile] = useState(null); // 백엔드 전송용 원본 파일 객체 (Backend Integration)
     // promptText와 videoTitle은 부모 컴포넌트(PromotionPage)에서 관리합니다 (상태 끌어올리기)
 
     const [activeTooltip, setActiveTooltip] = useState(null); // 'persona' | 'desc' | null
@@ -113,19 +110,6 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
     // Loading message steps (progressMessage prop이 없을 때 fallback 메시지)
     const LOADING_LOGS = ['사진을 분석하고 있어요...', '영상을 생성하고 있어요...', '장면을 최적화하고 있어요...', '영상을 렌더링하고 있어요...'];
     const displayMessage = progressMessage || LOADING_LOGS[Math.min(Math.floor(progress / 25), LOADING_LOGS.length - 1)];
-
-    const DEFAULT_PROMPT = "따뜻한 햇살이 비치는 창가에서 김이 모락모락 나는 커피 한 잔의 여유로움";
-
-
-    // Auto-generate prompt (이미지 업로드 시 프롬프트 자동 완성)
-    // 이미지를 올리면 기본 프롬프트를 자동으로 채워줘서 사용자가 막막하지 않게 돕습니다.
-    useEffect(() => {
-        if (images.length > 0 && isAutoPrompt && !options.prompt) {
-            setOptions(prev => ({ ...prev, prompt: DEFAULT_PROMPT }));
-        } else if (images.length === 0 && !options.prompt) {
-            // Keep prompt empty if no images and no pre-filled prompt
-        }
-    }, [images, isAutoPrompt, options.prompt, setOptions]);
 
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files);
@@ -135,12 +119,6 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
             setImages([newImage]);
             setSelectedFile(file); // 백엔드 전송용 Raw File 저장
         }
-    };
-
-    const handleAITitle = () => {
-        // API 응답의 videoTitle이 있으면 사용, 없으면 기본 목업 타이틀
-        const aiTitle = resultData?.videoTitle || '범계 로데오의 숨은 보석, 감성 카페 오픈!';
-        setOptions(prev => ({ ...prev, title: aiTitle }));
     };
 
     // --- Round 9: Text Update & Premium AI UI ---
@@ -167,12 +145,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
         };
         const selectedVibe = vibeMap[options.vibe || 'energetic']; // Default to energetic
 
-        const personaMap = {
-            hangover: "A middle-aged man wiping sweat",
-            worker: "Busy office worker in a suit",
-            couple: "A young stylish couple"
-        };
-        const targetPersona = personaMap[options.personaId] || "A happy customer";
+        const targetPersona = selectedPersona?.nickname || "A happy customer";
 
         const locationDesc = options.prompt || "A warm sunlit Korean restaurant table";
 
@@ -222,6 +195,16 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
         };
     };
 
+    const displayedPersonas = personas.length > 0
+        ? personas
+        : PERSONA_PROMPTS.map((persona, index) => ({
+            ...persona,
+            id: `persona-loading-${index + 1}`,
+            label: '분석 연결 중',
+            icon: '⏳',
+            disabled: true,
+        }));
+
     return (
         <div className="flex-1 h-full flex gap-6 overflow-hidden p-2">
 
@@ -263,7 +246,10 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                             <button onClick={() => fileInputRef.current?.click()} className="p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-black transition-colors" title="변경">
                                                 <Edit2 size={18} />
                                             </button>
-                                            <button onClick={() => setImages([])} className="p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-red-500 hover:text-white transition-colors" title="삭제">
+                                            <button onClick={() => {
+                                                setImages([]);
+                                                setSelectedFile(null);
+                                            }} className="p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-red-500 hover:text-white transition-colors" title="삭제">
                                                 <Trash2 size={18} />
                                             </button>
                                         </div>
@@ -299,15 +285,20 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                 </div>
                             )}
                             <div className="grid grid-cols-3 gap-2">
-                                {PERSONA_PROMPTS.map((persona) => {
-                                    const isSelected = options.personaId === persona.id;
+                                {displayedPersonas.map((persona) => {
+                                    const isSelected = String(options.personaId) === String(persona.id);
                                     return (
                                         <button
                                             key={persona.id}
                                             onClick={() => {
-                                                setOptions({ ...options, prompt: persona.prompt, personaId: persona.id });
-                                                setIsAutoPrompt(false);
+                                                if (persona.disabled) {
+                                                    return;
+                                                }
+
+                                                setOptions({ ...options, personaId: persona.id });
                                             }}
+                                            disabled={persona.disabled}
+                                            data-testid={`promotion-persona-${persona.id}`}
                                             className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all group ${isSelected
                                                 ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500 shadow-sm'
                                                 : 'border-gray-200 bg-gray-50 hover:bg-blue-50 hover:border-blue-200'
@@ -341,12 +332,9 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                         만들고 싶은 영상의 주제나 강조하고 싶은 내용을 자세히 적을수록 퀄리티가 높아집니다.
                                     </div>
                                 )}
-                                <div className="flex items-center gap-2 cursor-pointer" onClick={() => {
+                                <div className="flex items-center gap-2 cursor-pointer" data-testid="promotion-auto-prompt-toggle" onClick={() => {
                                     const nextState = !isAutoPrompt;
                                     setIsAutoPrompt(nextState);
-                                    if (nextState) {
-                                        setOptions(prev => ({ ...prev, prompt: DEFAULT_PROMPT }));
-                                    }
                                 }}>
                                     <span className={`text-[12px] font-medium transition-colors ${isAutoPrompt ? 'text-[#002B7A]' : 'text-gray-400'}`}>AI 자동 완성</span>
                                     <div className={`w-8 h-4 rounded-full p-0.5 transition-colors ${isAutoPrompt ? 'bg-[#002B7A]' : 'bg-gray-200'}`}>
@@ -361,6 +349,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                         setOptions({ ...options, prompt: e.target.value });
                                         if (isAutoPrompt) setIsAutoPrompt(false);
                                     }}
+                                    data-testid="promotion-prompt-textarea"
                                     placeholder="만들고 싶은 영상의 느낌을 자유롭게 적어주세요."
                                     className={`w-full h-full rounded-xl p-3 text-[14px] resize-none transition-all outline-none border leading-relaxed ${isAutoPrompt
                                         ? 'bg-blue-50/50 border-blue-200 text-[#002B7A] focus:bg-white focus:border-[#002B7A] focus:ring-1 focus:ring-[#002B7A]'
@@ -369,7 +358,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                 />
                                 {isAutoPrompt && (
                                     <div className="absolute bottom-2 right-2 mb-1 flex items-center gap-1 text-[12px] text-[#002B7A] font-bold bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-blue-100 group-hover/prompt:opacity-0 transition-opacity pointer-events-none">
-                                        <Wand2 size={12} /> AI가 작성함 (클릭하여 수정)
+                                        <Wand2 size={12} /> {isPromptLoading ? 'AI가 추천 중...' : 'AI가 작성함 (클릭하여 수정)'}
                                     </div>
                                 )}
                             </div>
@@ -429,12 +418,13 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                     console.log("[VEO3 Payload Verification]", JSON.stringify(payload, null, 2));
                                     if (selectedFile) console.log("[Image File Ready]", selectedFile.name, selectedFile.size);
                                     // 콘티(storyboard) 단계 없이 바로 생성 로딩으로 이동
-                                    onConfirm(selectedFile, qualityMode);
+                                    onConfirm();
                                 } catch (error) {
                                     console.error("[Payload Generation Error]", error);
                                     alert("영상 생성 요청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
                                 }
                             }}
+                            data-testid="promotion-generate-button"
                             disabled={images.length === 0 || step === 'loading'}
                             className={`w-full py-3.5 rounded-xl font-bold text-[15px] flex items-center justify-center gap-2 transition-all shadow-lg ${images.length > 0 && step !== 'loading'
                                 ? 'bg-gradient-to-r from-[#FF5A36] to-[#FF8A65] text-white hover:shadow-orange-500/30 hover:scale-[1.02]'
@@ -593,6 +583,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                         <button
                                             key={vibe.id}
                                             onClick={() => setOptions({ ...options, vibe: vibe.id })}
+                                            data-testid={`promotion-style-${vibe.id}`}
                                             className={`relative w-full h-full rounded-2xl overflow-hidden transition-all duration-300 group flex flex-col items-start justify-between p-3.5 text-left border ${isSelected
                                                 ? `ring-2 ring-offset-1 ${theme.ring} ${theme.borderSelected} ${theme.bgSelected}`
                                                 : `${theme.border} ${theme.bg} hover:border-gray-300 hover:shadow-md`

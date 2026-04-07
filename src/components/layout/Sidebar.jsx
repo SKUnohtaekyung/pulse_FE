@@ -47,6 +47,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded, profile
         <>
         <div
             className="hidden md:flex fixed top-4 bottom-4 left-4 z-50 flex-col gap-3"
+            data-testid="sidebar-desktop"
             onMouseEnter={() => setIsExpanded(true)}
             onMouseLeave={() => {
                 setIsExpanded(false);
@@ -72,6 +73,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded, profile
                         <button
                             key={menu.id}
                             onClick={() => setActiveMenu(menu.id)}
+                            data-testid={`sidebar-desktop-menu-${menu.id}`}
                             className={`menu-item w-full ${activeMenu === menu.id ? 'active' : ''}`}
                         >
                             <div className="menu-icon">
@@ -116,6 +118,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded, profile
                         {isExpanded && (
                             <button
                                 onClick={handleLogout}
+                                data-testid="sidebar-desktop-logout"
                                 className="group flex items-center justify-center w-8 h-8 rounded-lg text-white/30 hover:text-white hover:bg-white/10 transition-all"
                             >
                                 <LogOut size={15} strokeWidth={2} />
@@ -166,6 +169,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded, profile
                                 <button 
                                     key={menu.id} 
                                     onClick={() => { setActiveMenu(menu.id); setIsMobileDrawerOpen(false); }}
+                                    data-testid={`sidebar-mobile-menu-${menu.id}`}
                                     className={`text-left py-4 border-b border-gray-100 flex items-center justify-between ${activeMenu === menu.id ? 'text-[#002B7A] font-bold' : 'text-[#191F28] font-medium text-[17px]'}`}
                                 >
                                     {menu.label}
@@ -178,7 +182,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded, profile
                             ))}
                         </div>
                         <div className="p-6 shrink-0 border-t border-gray-100">
-                            <button onClick={(e) => { handleLogout(e); setIsMobileDrawerOpen(false); }} className="flex items-center gap-2 text-gray-500 font-medium py-2">
+                            <button onClick={(e) => { handleLogout(e); setIsMobileDrawerOpen(false); }} data-testid="sidebar-mobile-logout" className="flex items-center gap-2 text-gray-500 font-medium py-2">
                                 <LogOut size={18} /> 로그아웃
                             </button>
                         </div>

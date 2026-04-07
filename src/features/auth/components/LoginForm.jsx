@@ -81,6 +81,7 @@ const LoginForm = ({ onSwitch }) => {
                     <input
                         type="email"
                         name="email"
+                        data-testid="login-email"
                         placeholder="이메일"
                         className="minimal-input"
                         value={formData.email}
@@ -91,13 +92,14 @@ const LoginForm = ({ onSwitch }) => {
                 <div className="input-group">
                     <PasswordInput
                         name="password"
+                        testId="login-password"
                         placeholder="비밀번호"
                         value={formData.password}
                         onChange={handleChange}
                     />
                 </div>
 
-                <button type="submit" className="submit-btn">
+                <button type="submit" className="submit-btn" data-testid="login-submit">
                     로그인
                 </button>
             </form>
@@ -112,13 +114,14 @@ const LoginForm = ({ onSwitch }) => {
 };
 
 
-const PasswordInput = ({ name, placeholder, value, onChange }) => {
+const PasswordInput = ({ name, placeholder, value, onChange, testId }) => {
     const [show, setShow] = useState(false);
     return (
         <div className="password-wrapper-minimal">
             <input
                 type={show ? "text" : "password"}
                 name={name}
+                data-testid={testId}
                 placeholder={placeholder}
                 className="minimal-input"
                 value={value}

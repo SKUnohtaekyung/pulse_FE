@@ -1,77 +1,192 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import VideoCreator from './VideoCreator';
 import GalleryPage from './GalleryPage';
-import { generatePromotionVideo, vibeToStyle, qualityToMode } from './promotionApi';
+import {
+    fetchPromotionPromptRecommendation,
+    generatePromotionVideo,
+    vibeToStyle,
+    qualityToMode,
+} from './promotionApi';
+import { fetchLatestAnalysisData } from '../insight/api/analysisApi';
+import {
+    buildLocalAutoPrompt,
+    buildPromotionTarget,
+    mapPromotionPersona,
+} from './promotionPersonaUtils';
 
-// ─── 모듈 레벨 상수 (컴포넌트 리렌더링과 무관하게 1회만 생성) ──────────────
-
-/** personaId → API target 파라미터 변환 테이블 */
-const PERSONA_LABELS = {
-    hangover: '해장이 필요한 손님, 시원한 국물을 원하는 손님',
-    worker: '빠른 점심이 필요한 직장인',
-    couple: '데이트 맛집을 찾는 커플'
-};
-
-/** 페르소나 미선택 시 기본 타겟 설명 */
 const DEFAULT_TARGET = '우리 가게 손님';
-
-/** 프롬프트 미입력 시 기본 영상 컨셉 */
-const DEFAULT_CONCEPT = '맛있는 우리 가게 음식을 소개하는 영상';
-
-/** 기본 분위기 스타일 */
+const DEFAULT_CONCEPT = '맛있고 매력적인 우리 가게 대표 메뉴를 소개하는 홍보 영상';
 const DEFAULT_VIBE = 'energetic';
-
-/** 기본 화질 모드 */
 const DEFAULT_QUALITY = 'standard';
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 export default function PromotionPage({ initialParams, onNavigate }) {
-    const [viewMode, setViewMode] = useState('split'); // 'split' | 'gallery'
+    const [viewMode, setViewMode] = useState('split');
     const [images, setImages] = useState([]);
-    const [options, setOptions] = useState({ vibe: DEFAULT_VIBE, title: '', prompt: '' });
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [qualityMode, setQualityMode] = useState(DEFAULT_QUALITY);
+    const [options, setOptions] = useState({
+        vibe: DEFAULT_VIBE,
+        title: '',
+        prompt: '',
+        personaId: null,
+    });
+    const [analysisData, setAnalysisData] = useState(null);
+    const [personas, setPersonas] = useState([]);
+    const [analysisReady, setAnalysisReady] = useState(false);
+    const [isAutoPrompt, setIsAutoPrompt] = useState(true);
+    const [isPromptLoading, setIsPromptLoading] = useState(false);
 
-    const [step, setStep] = useState('input'); // 'input' | 'loading' | 'result'
+    const [step, setStep] = useState('input');
     const [resultData, setResultData] = useState(null);
     const [apiError, setApiError] = useState(null);
-    const [progress, setProgress] = useState(0);           // 0~100
+    const [progress, setProgress] = useState(0);
     const [progressMessage, setProgressMessage] = useState('');
 
-    // Handle initial params from navigation (손님 마음 읽기 → 홍보 영상 만들기 컨텍스트 전달)
-    React.useEffect(() => {
-        if (initialParams) {
-            setOptions(prev => ({
-                ...prev,
-                vibe: initialParams.vibe || DEFAULT_VIBE,
-                title: initialParams.title || '',
-                prompt: initialParams.prompt || '',
-                personaId: initialParams.personaId || null
-            }));
+    const autoPromptSequenceRef = useRef(0);
+
+    useEffect(() => {
+        if (!initialParams) {
+            return;
         }
+
+        setOptions((prev) => ({
+            ...prev,
+            vibe: initialParams.vibe || DEFAULT_VIBE,
+            title: initialParams.title || '',
+            prompt: initialParams.prompt || '',
+            personaId: initialParams.personaId ?? null,
+        }));
+        setIsAutoPrompt(!initialParams.prompt);
     }, [initialParams]);
 
-    const handleGenerate = () => {
-        setStep('storyboard');
-    };
+    useEffect(() => {
+        let cancelled = false;
 
-    /**
-     * 스토리보드 확정 → API 호출
-     * 1) step을 'loading'으로 전환 (로딩 애니메이션 시작)
-     * 2) generatePromotionVideo 호출 (API or 목업 fallback)
-     * 3) 응답 데이터로 resultData 세팅 → step을 'result'로 전환
-     *
-     * @param {File|null} selectedFile - VideoCreator에서 전달받은 이미지 File 객체
-     * @param {string} qualityMode     - VideoCreator에서 선택한 화질 모드
-     */
-    const handleConfirmStoryboard = async (selectedFile, qualityMode) => {
+        const loadAnalysis = async () => {
+            try {
+                const data = await fetchLatestAnalysisData();
+                if (cancelled) {
+                    return;
+                }
+
+                setAnalysisData(data);
+                setPersonas((data.personas || []).map(mapPromotionPersona));
+            } catch (error) {
+                if (!cancelled) {
+                    console.warn('[PromotionPage] Failed to load personas from analysis:', error);
+                }
+            } finally {
+                if (!cancelled) {
+                    setAnalysisReady(true);
+                }
+            }
+        };
+
+        loadAnalysis();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    useEffect(() => {
+        if (personas.length === 0) {
+            return;
+        }
+
+        setOptions((prev) => {
+            if (prev.personaId !== null && prev.personaId !== undefined) {
+                return prev;
+            }
+
+            return {
+                ...prev,
+                personaId: personas[0].id,
+            };
+        });
+    }, [personas]);
+
+    const selectedPersona = personas.find((persona) => String(persona.id) === String(options.personaId)) || null;
+
+    useEffect(() => {
+        if (!analysisReady || !isAutoPrompt) {
+            setIsPromptLoading(false);
+            return;
+        }
+
+        let cancelled = false;
+        const requestId = autoPromptSequenceRef.current + 1;
+        autoPromptSequenceRef.current = requestId;
+
+        const fallbackPrompt = buildLocalAutoPrompt({
+            persona: selectedPersona,
+            analysisData,
+            vibe: options.vibe || DEFAULT_VIBE,
+        });
+
+        const recommendPrompt = async () => {
+            setIsPromptLoading(true);
+
+            try {
+                const recommendation = await fetchPromotionPromptRecommendation({
+                    target: buildPromotionTarget(selectedPersona, analysisData) || DEFAULT_TARGET,
+                    storeName: analysisData?.store_name,
+                    storeSummary: analysisData?.store_summary,
+                    personaLabel: selectedPersona?.nickname,
+                    personaSummary: selectedPersona?.summary,
+                    personaTags: selectedPersona?.tags,
+                    actionRecommendation: selectedPersona?.action_recommendation,
+                    style: vibeToStyle(options.vibe || DEFAULT_VIBE),
+                    mode: qualityToMode(qualityMode || DEFAULT_QUALITY),
+                    imageFile: selectedFile,
+                });
+
+                if (cancelled || autoPromptSequenceRef.current !== requestId) {
+                    return;
+                }
+
+                setOptions((prev) => ({
+                    ...prev,
+                    prompt: recommendation?.recommendedPrompt || fallbackPrompt,
+                }));
+            } catch (error) {
+                if (!cancelled && autoPromptSequenceRef.current === requestId) {
+                    console.warn('[PromotionPage] Auto prompt fallback:', error);
+                    setOptions((prev) => ({
+                        ...prev,
+                        prompt: fallbackPrompt,
+                    }));
+                }
+            } finally {
+                if (!cancelled && autoPromptSequenceRef.current === requestId) {
+                    setIsPromptLoading(false);
+                }
+            }
+        };
+
+        const timer = setTimeout(recommendPrompt, 150);
+
+        return () => {
+            cancelled = true;
+            clearTimeout(timer);
+        };
+    }, [
+        analysisData,
+        analysisReady,
+        isAutoPrompt,
+        options.vibe,
+        qualityMode,
+        selectedFile,
+        selectedPersona,
+    ]);
+
+    const handleConfirmStoryboard = async () => {
         setStep('loading');
         setApiError(null);
         setProgress(0);
         setProgressMessage('');
 
-        const target = options.personaId
-            ? (PERSONA_LABELS[options.personaId] ?? DEFAULT_TARGET)
-            : DEFAULT_TARGET;
+        const target = buildPromotionTarget(selectedPersona, analysisData) || DEFAULT_TARGET;
 
         try {
             const data = await generatePromotionVideo({
@@ -80,22 +195,21 @@ export default function PromotionPage({ initialParams, onNavigate }) {
                 mode: qualityToMode(qualityMode || DEFAULT_QUALITY),
                 style: vibeToStyle(options.vibe || DEFAULT_VIBE),
                 imageFile: selectedFile,
-                // 실제 백엔드 진행률 콜백: VideoCreator의 progress bar를 실시간으로 업데이트
                 onProgress: (percent, message) => {
                     setProgress(percent);
                     setProgressMessage(message);
-                }
+                },
             });
 
             setResultData({
                 videoUrl: data.videoUrl,
                 videoTitle: data.videoTitle,
                 hashtags: data.hashtags || [],
-                generationTime: data.generationTime
+                generationTime: data.generationTime,
             });
 
             if (data.videoTitle) {
-                setOptions(prev => ({ ...prev, title: data.videoTitle }));
+                setOptions((prev) => ({ ...prev, title: data.videoTitle }));
             }
 
             setStep('result');
@@ -109,6 +223,7 @@ export default function PromotionPage({ initialParams, onNavigate }) {
     const handleReset = () => {
         setStep('input');
         setImages([]);
+        setSelectedFile(null);
         setResultData(null);
         setApiError(null);
         setProgress(0);
@@ -121,23 +236,29 @@ export default function PromotionPage({ initialParams, onNavigate }) {
 
     return (
         <div className="flex h-full gap-4 animate-in fade-in duration-500 min-h-0">
-            {/* 에러 토스트 (API 연결 실패 시 - 거의 발생하지 않음) */}
             {apiError && (
                 <div className="absolute top-4 right-4 z-50 bg-red-500 text-white text-sm px-4 py-2 rounded-xl shadow-lg">
                     {apiError}
                 </div>
             )}
 
-            {/* Main Creator Area (Full Width) */}
             <VideoCreator
                 step={step}
                 resultData={resultData}
                 onReset={handleReset}
                 images={images}
                 setImages={setImages}
+                selectedFile={selectedFile}
+                setSelectedFile={setSelectedFile}
                 options={options}
                 setOptions={setOptions}
-                onGenerate={handleGenerate}
+                personas={personas}
+                selectedPersona={selectedPersona}
+                isAutoPrompt={isAutoPrompt}
+                setIsAutoPrompt={setIsAutoPrompt}
+                isPromptLoading={isPromptLoading}
+                qualityMode={qualityMode}
+                setQualityMode={setQualityMode}
                 onConfirm={handleConfirmStoryboard}
                 onNavigate={onNavigate}
                 progress={progress}

@@ -207,12 +207,6 @@ export default function UnifiedInsightPage({ onNavigate }) {
         : null;
 
     // Mapping for Promotion Page (ID 기반 동적 매핑)
-    const PERSONA_MAPPING = {};
-    personas.forEach((p, idx) => {
-        const keys = ['hangover', 'worker', 'couple', 'family', 'student'];
-        PERSONA_MAPPING[p.id] = keys[idx] || `persona_${p.id}`;
-    });
-
     return (
         <div className="flex flex-1 overflow-hidden bg-[#F5F7FA] p-5 gap-5 font-sans h-full min-h-0 text-[#191F28]">
 
@@ -351,7 +345,7 @@ export default function UnifiedInsightPage({ onNavigate }) {
                                             <button
                                                 onClick={() => {
                                                     onNavigate('promotion', {
-                                                        personaId: PERSONA_MAPPING[selectedPersona?.id],
+                                                        personaId: selectedPersona?.id,
                                                         title: `[${selectedPersona?.nickname}] 맞춤 홍보 영상`
                                                     });
                                                 }}

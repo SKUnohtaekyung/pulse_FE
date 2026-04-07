@@ -11,6 +11,19 @@ const V2KpiTile = ({
     state = 'default', // 'default' | 'loading' | 'empty' | 'error'
     baseTime = '방금 전'
 }) => {
+    const count = useMotionValue(0);
+    const numericValue = typeof currentValue === 'string' ? parseFloat(currentValue.replace(/,/g, '')) || 0 : Number(currentValue) || 0;
+    const rounded = useTransform(count, (latest) => Math.round(latest).toLocaleString());
+
+    useEffect(() => {
+        if (state === 'default' && numericValue > 0) {
+            const controls = animate(count, numericValue, { duration: 1.5, ease: "easeOut" });
+            return controls.stop;
+        }
+
+        count.set(numericValue);
+    }, [numericValue, state, count]);
+
     if (state === 'loading') {
         return (
             <div className="flex flex-col gap-1 w-32 animate-pulse">
@@ -58,19 +71,6 @@ const V2KpiTile = ({
             </div>
         );
     };
-
-    const count = useMotionValue(0);
-    const numericValue = typeof currentValue === 'string' ? parseFloat(currentValue.replace(/,/g, '')) || 0 : Number(currentValue) || 0;
-    const rounded = useTransform(count, (latest) => Math.round(latest).toLocaleString());
-
-    useEffect(() => {
-        if (state === 'default' && numericValue > 0) {
-            const controls = animate(count, numericValue, { duration: 1.5, ease: "easeOut" });
-            return controls.stop;
-        } else {
-            count.set(numericValue);
-        }
-    }, [numericValue, state, count]);
 
     return (
         <div className="flex flex-col items-start gap-1 group relative cursor-default">

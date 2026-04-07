@@ -41,16 +41,19 @@ export default function DashboardLayout({ initialPage, content }) {
 
     const handleNavigate = (menuId, params = null) => {
         setActiveMenu(menuId);
-        if (params) {
-            setNavParams(params);
-        }
+        setNavParams(params);
+    };
+
+    const handleSidebarNavigate = (menuId) => {
+        setActiveMenu(menuId);
+        setNavParams(null);
     };
 
     return (
-        <div className="flex h-screen font-pretendard overflow-hidden" style={{ backgroundColor: COLORS.bgPage }}>
+        <div className="flex h-screen font-pretendard overflow-hidden" style={{ backgroundColor: COLORS.bgPage }} data-testid="dashboard-layout">
             <Sidebar
                 activeMenu={activeMenu}
-                setActiveMenu={setActiveMenu}
+                setActiveMenu={handleSidebarNavigate}
                 isExpanded={isExpanded}
                 setIsExpanded={setIsExpanded}
                 profile={userProfile}

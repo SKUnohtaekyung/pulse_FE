@@ -236,11 +236,12 @@ export default function ReviewManagementPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 gap-0">
+    <div className="flex-1 flex flex-col min-h-0 gap-0" data-testid="review-management-page">
       <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 shrink-0">
         <div className="flex border-b border-neutral-200">
           <button
             onClick={() => setActiveTab('review-management')}
+            data-testid="review-tab-review-management"
             className={`flex-1 px-6 py-4 font-bold transition-colors relative ${activeTab === 'review-management' ? 'text-[#002B7A]' : 'text-neutral-500 hover:text-neutral-700'}`}
           >
             리뷰관리
@@ -248,6 +249,7 @@ export default function ReviewManagementPage() {
           </button>
           <button
             onClick={() => setActiveTab('quick-settings')}
+            data-testid="review-tab-quick-settings"
             className={`flex-1 px-6 py-4 font-bold transition-colors relative ${activeTab === 'quick-settings' ? 'text-[#002B7A]' : 'text-neutral-500 hover:text-neutral-700'}`}
           >
             빠른 설정
@@ -255,6 +257,7 @@ export default function ReviewManagementPage() {
           </button>
           <button
             onClick={() => setActiveTab('saved-templates')}
+            data-testid="review-tab-saved-templates"
             className={`flex-1 px-6 py-4 font-bold transition-colors relative ${activeTab === 'saved-templates' ? 'text-[#002B7A]' : 'text-neutral-500 hover:text-neutral-700'}`}
           >
             저장된 템플릿
