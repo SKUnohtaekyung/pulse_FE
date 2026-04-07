@@ -267,10 +267,11 @@ export default function InfluencerSignupForm({ onSwitch }) {
                         <div className="flex flex-col gap-4 mt-2">
                             <div className="input-group">
                                 <label className="text-[13px] font-bold text-[#333D4B] mb-1.5 flex items-center gap-1">
-                                    <Instagram size={14} className="text-[#E1306C]" /> 인스타그램 링크
+                                    <Instagram size={14} className="text-[#E1306C]" /> 인스타그램 링크 <span className="text-[#FF5A36]">*</span>
                                 </label>
                                 <input 
                                     type="url" 
+                                    required
                                     value={formData.instagramUrl}
                                     onChange={(e) => setFormData({...formData, instagramUrl: e.target.value})}
                                     placeholder="https://instagram.com/your_id"
@@ -280,7 +281,7 @@ export default function InfluencerSignupForm({ onSwitch }) {
                             
                             <div className="input-group">
                                 <label className="text-[13px] font-bold text-[#333D4B] mb-1.5 flex items-center gap-1">
-                                    <Youtube size={14} className="text-[#FF0000]" /> 유튜브 채널 링크
+                                    <Youtube size={14} className="text-[#FF0000]" /> 유튜브 채널 링크 <span className="text-[12px] text-[#8B95A1] font-normal ml-1">(선택)</span>
                                 </label>
                                 <input 
                                     type="url" 

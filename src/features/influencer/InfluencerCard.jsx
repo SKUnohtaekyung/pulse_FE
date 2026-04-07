@@ -81,12 +81,12 @@ export default function InfluencerCard({ influencer, onViewDetail }) {
                     <div className={`absolute right-0 top-[calc(100%+8px)] w-[240px] bg-white text-[#191F28] border border-[#E5E8EB] shadow-xl rounded-xl p-4 z-[100] transition-all duration-200 pointer-events-none text-left font-normal ${showTooltip ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'}`}>
                         <h4 className="text-[13px] font-bold mb-3 text-[#002B7A] flex items-center gap-1.5 border-b border-[#F2F4F6] pb-2">
                             <Star size={14} className="text-[#002B7A]" />
-                            AI 매칭 분석 요약
+                            AI 매장 적합도 분석
                         </h4>
                         <div className="flex flex-col gap-3">
                             <div>
                                 <div className="flex justify-between items-center mb-1.5">
-                                    <span className="text-[12px] font-bold text-[#333D4B]">상세 키워드 유사도</span>
+                                    <span className="text-[12px] font-bold text-[#333D4B]">우리 매장 적합률</span>
                                     <span className="text-[12px] font-bold text-[#002B7A]">{tagMatchPercent}%</span>
                                 </div>
                                 <div className="w-full h-1.5 bg-[#F2F4F6] rounded-full overflow-hidden">

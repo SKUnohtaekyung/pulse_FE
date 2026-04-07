@@ -407,7 +407,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
 
                             {/* Duration */}
                             <button className="px-3 py-2.5 bg-gray-50 rounded-xl border border-gray-200 text-[13px] font-bold text-[#191F28] flex items-center justify-between cursor-default">
-                                10초 영상 <Clock size={14} className="text-[#002B7A]" />
+                                8초 영상 <Clock size={14} className="text-[#002B7A]" />
                             </button>
                         </div>
 
