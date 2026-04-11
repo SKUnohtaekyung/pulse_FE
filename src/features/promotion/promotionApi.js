@@ -33,6 +33,33 @@ const QUALITY_TO_MODE = {
     pro: 'pro'
 };
 
+function normalizeVideoUrl(videoUrl) {
+    if (!videoUrl || !API_BASE_URL) {
+        return videoUrl;
+    }
+
+    if (/^https?:\/\//i.test(videoUrl)) {
+        return videoUrl;
+    }
+
+    try {
+        return new URL(videoUrl, `${API_BASE_URL}/`).toString();
+    } catch {
+        return videoUrl;
+    }
+}
+
+function normalizePromotionResult(data) {
+    if (!data) {
+        return data;
+    }
+
+    return {
+        ...data,
+        videoUrl: normalizeVideoUrl(data.videoUrl),
+    };
+}
+
 async function readResponseText(response) {
     try {
         return await response.text();
@@ -134,7 +161,7 @@ export async function generatePromotionVideo({ target, concept, mode, style, ima
     }
 
     notify(100, '완성되었어요');
-    return startJson.data;
+    return normalizePromotionResult(startJson.data);
 }
 
 async function _pollStatus(taskId, token, onProgress) {
@@ -158,7 +185,7 @@ async function _pollStatus(taskId, token, onProgress) {
         onProgress(progress ?? 0, message ?? '처리 중..');
 
         if (status === 'complete' && data) {
-            return data;
+            return normalizePromotionResult(data);
         }
 
         if (status === 'error') {

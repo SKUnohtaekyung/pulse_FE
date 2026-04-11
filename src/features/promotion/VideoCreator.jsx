@@ -499,7 +499,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                     {/* RESULT STATE: Video Player (No Title Overlay, Height Based) */}
                     {step === 'result' && resultData && (
                         <div className="relative h-full max-h-full w-auto aspect-[9/16] bg-black rounded-[24px] shadow-2xl overflow-hidden ring-4 ring-white animate-in zoom-in-95 duration-500 group object-contain">
-                            <video src={resultData.videoUrl} controls autoPlay loop className="w-full h-full object-cover" />
+                            <video key={resultData.videoUrl} src={resultData.videoUrl} controls autoPlay loop muted playsInline preload="metadata" className="w-full h-full object-cover" />
                         </div>
                     )}
                 </div>
