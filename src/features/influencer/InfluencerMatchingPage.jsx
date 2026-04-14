@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { INFLUENCER_DATA, CATEGORIES, filterInfluencersByCategory } from '../../data/mockInfluencers';
 import FilterBar from './FilterBar';
 import InfluencerList from './InfluencerList';
 import UpgradePrompt from './UpgradePrompt';
 import InfluencerDetailModal from './InfluencerDetailModal';
-import SentRequestsDrawer from './SentRequestsDrawer';
 import { Send, MessageSquare } from 'lucide-react';
 
 export default function InfluencerMatchingPage({ initialParams }) {
+    const navigate = useNavigate();
     const CURRENT_USER_PLAN = "Pro";
     const [selectedCategory, setSelectedCategory] = useState("전체");
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedInfluencer, setSelectedInfluencer] = useState(null);
-    const [isSentRequestsDrawerOpen, setIsSentRequestsDrawerOpen] = useState(false);
 
     if (CURRENT_USER_PLAN !== "Pro") return <UpgradePrompt />;
 
@@ -26,7 +26,7 @@ export default function InfluencerMatchingPage({ initialParams }) {
         .sort((a, b) => b.matchScore - a.matchScore);
 
     return (
-        <div className="flex flex-col h-full bg-[#F5F7FA] overflow-y-auto custom-scrollbar">
+        <div className="flex flex-col h-full bg-[#F5F7FA] overflow-hidden">
 
             {/* Main Layout: Left Sidebar + Right Feed 
                 Padding Logic: 
@@ -34,10 +34,10 @@ export default function InfluencerMatchingPage({ initialParams }) {
                 - Header.jsx has pl-2 (8px). Total indent = 32px.
                 - We use pl-2 here to match Header's text alignment exactly ("범" alignment).
             */}
-            <div className="w-full pl-2 pr-6 pb-20 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="flex-1 w-full pl-2 pr-6 pb-6 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start min-h-0">
 
                 {/* [LEFT] Sticky Sidebar (Span 3) */}
-                <div className="hidden lg:flex lg:col-span-3 flex-col gap-5 sticky top-2 z-10">
+                <div className="hidden lg:flex lg:col-span-3 flex-col gap-5 h-full overflow-hidden relative">
 
                     {/* Search & Filter Section */}
                     <div className="flex flex-col gap-3">
@@ -122,7 +122,7 @@ export default function InfluencerMatchingPage({ initialParams }) {
                 </div>
 
                 {/* [RIGHT] Feed Area (Span 9) */}
-                <div className="lg:col-span-9 flex flex-col gap-6 pt-2">
+                <div className="col-span-1 lg:col-span-9 flex flex-col gap-6 pt-2 h-full overflow-y-auto custom-scrollbar pb-20 pr-2">
 
                     {/* Feed Header (No Count) */}
                     <div className="flex items-end justify-between border-b border-[#E5E8EB] pb-5">
@@ -160,29 +160,9 @@ export default function InfluencerMatchingPage({ initialParams }) {
                 <InfluencerDetailModal
                     influencer={selectedInfluencer}
                     onClose={() => setSelectedInfluencer(null)}
-                    onRequest={() => {/* TODO: Open Request Modal */ }}
+                    onRequest={() => navigate(`/influencer-matching/request/${selectedInfluencer.id}`)}
                 />
             )}
-
-            {/* Sent Requests Drawer */}
-            <SentRequestsDrawer
-                isOpen={isSentRequestsDrawerOpen}
-                onClose={() => setIsSentRequestsDrawerOpen(false)}
-            />
-
-            {/* Floating Action Button for Inbox */}
-            <button
-                onClick={() => setIsSentRequestsDrawerOpen(true)}
-                className="fixed bottom-8 right-8 w-[52px] h-[52px] bg-[#191F28] text-white rounded-full shadow-lg hover:shadow-xl hover:bg-[#333D4B] hover:scale-105 transition-all duration-300 flex items-center justify-center z-30 group"
-                aria-label="제안 보관함 열기"
-            >
-                <div className="relative">
-                    <MessageSquare size={22} className="group-hover:opacity-0 transition-opacity absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-                    <Send size={22} className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-                    {/* Optional Notification Pip */}
-                    <div className="absolute -top-1 -right-1.5 w-2.5 h-2.5 bg-[#FF5A36] rounded-full border-2 border-[#191F28] group-hover:border-[#333D4B] transition-colors"></div>
-                </div>
-            </button>
         </div>
     );
 }

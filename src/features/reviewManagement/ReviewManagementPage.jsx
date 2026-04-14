@@ -1,59 +1,265 @@
-import { useState } from 'react';
-import { AIAssistant, QuickSettings, SavedTemplatesTab, ReviewSummary, ReviewList, DEFAULT_CASES } from './components';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { QuickSettings, SavedTemplatesTab, ReviewSummary, ReviewList, DEFAULT_CASES } from './components';
+import {
+  createReviewTemplate,
+  deleteReviewTemplate,
+  fetchReviewManagementContext,
+  generateReviewReplies,
+  saveReviewManagementSettings,
+  updateReviewTemplate,
+} from './api/reviewManagementApi';
+
+const DEFAULT_SETTINGS = {
+  tone: '친근함',
+  length: '보통',
+  includeThanks: true,
+  includeGreatDay: true,
+  useEmojis: false,
+  photoThanks: true,
+  brandPreset: '',
+  brandPresets: [],
+  optionalInstruction: '',
+  exceptionCases: DEFAULT_CASES,
+};
+
+const DEFAULT_SUMMARY = {
+  averageRating: 0,
+  totalReviews: 0,
+  evaluationMetrics: [],
+};
 
 export default function ReviewManagementPage() {
   const [activeTab, setActiveTab] = useState('review-management');
-  const [settings, setSettings] = useState({
-    tone: '친근함',
-    length: '보통',
-    includeThanks: true,
-    includeGreatDay: true,
-    useEmojis: true,
-    photoThanks: true,
-    brandPreset: '바람난 얼큰 수제비',
-    optionalInstruction: '',
-    exceptionCases: DEFAULT_CASES
-  });
-  
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [savedTemplates, setSavedTemplates] = useState([]);
+  const [reviewData, setReviewData] = useState(DEFAULT_SUMMARY);
+  const [reviews, setReviews] = useState([]);
+  const [selectedReviewIds, setSelectedReviewIds] = useState([]);
+  const [replyCount, setReplyCount] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
-  const mockReviewData = {
-    averageRating: 4.3,
-    totalReviews: 312,
-    evaluationMetrics: [
-      { name: '국물맛', rating: 'great', percentage: 94, reason: '칼칼하고 얼큰한 국물이 강한 인상을 남깁니다. 고소하면서도 깊은 풍미라는 언급이 반복됩니다.' },
-      { name: '수제비 식감', rating: 'good', percentage: 76, reason: '쫄깃한 면발에 대한 호평이 많지만, 일부는 두께가 고르지 않다는 의견도 있습니다.' },
-      { name: '양/가성비', rating: 'great', percentage: 91, reason: '양이 넉넉하고 가격 대비 만족도가 높다는 평가가 지배적입니다.' },
-      { name: '응대/서비스', rating: 'good', percentage: 82, reason: '친절하다는 평이 많고, 웨이팅 안내도 잘 이뤄진다는 긍정 반응이 있습니다.' }
-    ]
+  const hasLoadedContextRef = useRef(false);
+  const saveTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    const loadContext = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchReviewManagementContext();
+        const loadedReviews = data.reviews || [];
+
+        setReviewData(data.summary || DEFAULT_SUMMARY);
+        setReviews(loadedReviews);
+        setSettings({
+          ...DEFAULT_SETTINGS,
+          ...(data.settings || {}),
+          exceptionCases: data.settings?.exceptionCases?.length ? data.settings.exceptionCases : DEFAULT_CASES,
+          brandPresets: data.settings?.brandPresets || [],
+        });
+        setSavedTemplates(data.templates || []);
+        setSelectedReviewIds(loadedReviews[0]?.id ? [loadedReviews[0].id] : []);
+        hasLoadedContextRef.current = true;
+      } catch (fetchError) {
+        setError(fetchError.message || '리뷰 관리 데이터를 불러오지 못했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadContext();
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        window.clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    setSelectedReviewIds((prev) => {
+      const validIds = prev.filter((id) => reviews.some((review) => review.id === id));
+      if (replyCount === 1) {
+        if (validIds[0]) {
+          return [validIds[0]];
+        }
+        return reviews[0]?.id ? [reviews[0].id] : [];
+      }
+      return validIds.slice(0, replyCount);
+    });
+  }, [reviews, replyCount]);
+
+  useEffect(() => {
+    if (!hasLoadedContextRef.current) {
+      return;
+    }
+
+    if (saveTimeoutRef.current) {
+      window.clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = window.setTimeout(async () => {
+      try {
+        setIsSavingSettings(true);
+        await saveReviewManagementSettings(settings);
+      } catch (saveError) {
+        console.error('[ReviewManagementPage] settings save failed:', saveError);
+      } finally {
+        setIsSavingSettings(false);
+      }
+    }, 500);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        window.clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [settings]);
+
+  const selectedReviews = useMemo(() => {
+    const selectedIdSet = new Set(selectedReviewIds);
+    return reviews.filter((review) => selectedIdSet.has(review.id));
+  }, [reviews, selectedReviewIds]);
+
+  const tabDescriptions = useMemo(
+    () => ({
+      'review-management': '실제 수집된 네이버/카카오 리뷰를 확인하고 답변 대상을 선택하세요.',
+      'quick-settings': '선택한 리뷰를 기준으로 답변 톤과 예외 케이스를 조정하세요.',
+      'saved-templates': '저장한 답변 템플릿을 관리하고 재사용하세요.',
+    }),
+    [],
+  );
+
+  const handleReviewClick = (reviewId) => {
+    setSelectedReviewIds((prev) => {
+      if (replyCount === 1) {
+        return [reviewId];
+      }
+
+      if (prev.includes(reviewId)) {
+        return prev.filter((id) => id !== reviewId);
+      }
+
+      const next = [...prev, reviewId];
+      return next.slice(-replyCount);
+    });
   };
 
+  const handleCreateTemplate = async (template) => {
+    const created = await createReviewTemplate(template);
+    setSavedTemplates((prev) => [created, ...prev]);
+    return created;
+  };
 
-  const mockReviews = [
-    { id: '1', author: '김철수', date: '2026-02-11', content: '순한맛(하), 약간 매운맛(중) 두가지 시켰어요. 매운거 잘 먹는 편인데 매워서 콧물이 자꾸 나더라구요 ㅋ 남편은 순한맛도 매워했구요. 수제비면이 제가 집에서 반죽한 것 같은 질감이라 약간 불만족이여요 ㅋㅋ', hasPhoto: true },
-    { id: '2', author: '이영희', date: '2026-01-13', content: '스트레스를 확 날릴 수 있는 얼큰 수제비. 역시 깔끔하고 맛있어요. 김치도 맛있고 . 오늘 친구와 갔는데 이친구 단골 되겠어요. 너무너무 맛있대요. 또 와야죠', hasPhoto: true },
-    { id: '3', author: '박민수', date: '2026-01-08', content: '수제비 최애 하는곳~ 칼칼한맛에 중독압니다.', hasPhoto: true }
-  ];
+  const handleUpdateTemplate = async (templateId, template) => {
+    const updated = await updateReviewTemplate(templateId, template);
+    setSavedTemplates((prev) => prev.map((item) => (item.id === templateId ? updated : item)));
+    return updated;
+  };
 
-  const tabDescriptions = {
-    'review-management': '리뷰를 선택하고 AI가 생성한 답변을 확인하세요.',
-    'quick-settings': '답변 생성에 사용할 설정을 빠르게 조정하세요.',
-    'saved-templates': '저장된 템플릿을 관리하고 재사용하세요.'
+  const handleDeleteTemplate = async (templateId) => {
+    await deleteReviewTemplate(templateId);
+    setSavedTemplates((prev) => prev.filter((item) => item.id !== templateId));
+  };
+
+  const handleGenerateReplies = async (reviewsToGenerate, currentSettings) =>
+    generateReviewReplies({
+      reviews: reviewsToGenerate,
+      settings: currentSettings,
+    });
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-sm text-neutral-500">리뷰 관리 데이터를 불러오는 중입니다...</div>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-neutral-200 text-center text-neutral-600">
+          {error}
+        </div>
+      );
+    }
+
+    if (activeTab === 'review-management') {
+      return (
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <ReviewSummary
+              averageRating={reviewData.averageRating}
+              totalReviews={reviewData.totalReviews}
+              evaluationMetrics={reviewData.evaluationMetrics}
+            />
+          </div>
+          <div>
+            <ReviewList
+              reviews={reviews}
+              selectedReviewIds={selectedReviewIds}
+              onReviewClick={handleReviewClick}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    if (activeTab === 'quick-settings') {
+      return (
+        <QuickSettings
+          settings={settings}
+          onSettingsChange={setSettings}
+          recentReviews={reviews}
+          selectedReviews={selectedReviews}
+          selectedReviewIds={selectedReviewIds}
+          onAddTemplate={handleCreateTemplate}
+          onGenerateReplies={handleGenerateReplies}
+          onRegenerateReply={(review, currentSettings) => handleGenerateReplies([review], currentSettings)}
+          isSavingSettings={isSavingSettings}
+          replyCount={replyCount}
+          onReplyCountChange={setReplyCount}
+        />
+      );
+    }
+
+    return (
+      <SavedTemplatesTab
+        templates={savedTemplates}
+        onDelete={handleDeleteTemplate}
+        onUpdate={handleUpdateTemplate}
+      />
+    );
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 gap-0">
+    <div className="flex-1 flex flex-col min-h-0 gap-0" data-testid="review-management-page">
       <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 shrink-0">
         <div className="flex border-b border-neutral-200">
-          <button onClick={() => setActiveTab('review-management')} className={`flex-1 px-6 py-4 font-bold transition-colors relative ${activeTab === 'review-management' ? 'text-[#002B7A]' : 'text-neutral-500 hover:text-neutral-700'}`}>
+          <button
+            onClick={() => setActiveTab('review-management')}
+            data-testid="review-tab-review-management"
+            className={`flex-1 px-6 py-4 font-bold transition-colors relative ${activeTab === 'review-management' ? 'text-[#002B7A]' : 'text-neutral-500 hover:text-neutral-700'}`}
+          >
             리뷰관리
             {activeTab === 'review-management' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#002B7A]" />}
           </button>
-          <button onClick={() => setActiveTab('quick-settings')} className={`flex-1 px-6 py-4 font-bold transition-colors relative ${activeTab === 'quick-settings' ? 'text-[#002B7A]' : 'text-neutral-500 hover:text-neutral-700'}`}>
+          <button
+            onClick={() => setActiveTab('quick-settings')}
+            data-testid="review-tab-quick-settings"
+            className={`flex-1 px-6 py-4 font-bold transition-colors relative ${activeTab === 'quick-settings' ? 'text-[#002B7A]' : 'text-neutral-500 hover:text-neutral-700'}`}
+          >
             빠른 설정
             {activeTab === 'quick-settings' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#002B7A]" />}
           </button>
-          <button onClick={() => setActiveTab('saved-templates')} className={`flex-1 px-6 py-4 font-bold transition-colors relative ${activeTab === 'saved-templates' ? 'text-[#002B7A]' : 'text-neutral-500 hover:text-neutral-700'}`}>
+          <button
+            onClick={() => setActiveTab('saved-templates')}
+            data-testid="review-tab-saved-templates"
+            className={`flex-1 px-6 py-4 font-bold transition-colors relative ${activeTab === 'saved-templates' ? 'text-[#002B7A]' : 'text-neutral-500 hover:text-neutral-700'}`}
+          >
             저장된 템플릿
             {activeTab === 'saved-templates' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#002B7A]" />}
           </button>
@@ -61,32 +267,7 @@ export default function ReviewManagementPage() {
         <div className="px-6 py-3 bg-neutral-50 text-sm text-neutral-600">{tabDescriptions[activeTab]}</div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto pt-6 pb-10 custom-scrollbar">
-
-        {activeTab === 'review-management' && (
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <ReviewSummary averageRating={mockReviewData.averageRating} totalReviews={mockReviewData.totalReviews} evaluationMetrics={mockReviewData.evaluationMetrics} />
-            </div>
-            <div>
-              <ReviewList reviews={mockReviews} />
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'quick-settings' && (
-          <QuickSettings
-            settings={settings}
-            onSettingsChange={setSettings}
-            reviews={mockReviews}
-            onSaveTemplate={(template) => {
-              setSavedTemplates(prev => [{ ...template, id: Date.now().toString() }, ...prev]);
-            }}
-          />
-        )}
-
-        {activeTab === 'saved-templates' && <SavedTemplatesTab templates={savedTemplates} onDelete={(id) => setSavedTemplates(prev => prev.filter(t => t.id !== id))} />}
-      </div>
+      <div className="flex-1 min-h-0 overflow-y-auto pt-6 pb-10 custom-scrollbar">{renderContent()}</div>
     </div>
   );
 }

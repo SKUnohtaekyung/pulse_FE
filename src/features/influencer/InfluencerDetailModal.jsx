@@ -48,7 +48,7 @@ export default function InfluencerDetailModal({ influencer, onClose, onRequest }
                 </button>
 
                 {/* [LEFT] Profile Sidebar (Gradient Background) */}
-                <div className="md:w-[320px] bg-[#F9FAFB] border-r border-[#F2F4F6] flex flex-col overflow-y-auto shrink-0">
+                <div className="md:w-[320px] bg-[#F9FAFB] border-r border-[#F2F4F6] flex flex-col overflow-hidden shrink-0">
                     {/* Profile Header */}
                     <div className="p-8 flex flex-col items-center text-center border-b border-[#F2F4F6] bg-white">
                         <div className="relative mb-4">
@@ -143,7 +143,7 @@ export default function InfluencerDetailModal({ influencer, onClose, onRequest }
                 </div>
 
                 {/* [RIGHT] Main Content Area */}
-                <div className="flex-1 overflow-y-auto bg-white flex flex-col">
+                <div className="flex-1 overflow-y-auto custom-scrollbar bg-white flex flex-col">
                     <div className="p-8 pb-32">
                         {/* 1. AI Analysis Card */}
                         <div className="mb-8">
@@ -153,8 +153,8 @@ export default function InfluencerDetailModal({ influencer, onClose, onRequest }
                             </h3>
                             <div className="bg-[#F9FAFB] rounded-[20px] p-6 border border-[#F2F4F6]">
                                 <div className="flex gap-3">
-                                    <div className="mt-1 w-8 h-8 bg-[#E8F3FF] rounded-full flex items-center justify-center text-[#002B7A] shrink-0">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" /></svg>
+                                    <div className="mt-1 w-8 h-8 bg-[#E8F3FF] rounded-full flex items-center justify-center text-[#002B7A] shrink-0 font-bold">
+                                        ★
                                     </div>
                                     <div>
                                         <h4 className="text-[15px] font-bold text-[#191F28] mb-1">사장님 가게와 <span className="text-[#002B7A]">98% 일치</span>하는 스타일입니다</h4>
@@ -166,39 +166,51 @@ export default function InfluencerDetailModal({ influencer, onClose, onRequest }
                             </div>
                         </div>
 
-                        {/* 2. Portfolio Grid */}
+                        {/* 2. Channel Links */}
                         <div className="mb-8">
-                            <h3 className="text-[18px] font-bold text-[#191F28] mb-3 flex items-center gap-2">
-                                <span className="w-1.5 h-6 bg-[#FF5A36] rounded-full"></span>
-                                주요 포트폴리오
+                            <h3 className="text-[18px] font-bold text-[#191F28] mb-4 flex items-center gap-2">
+                                <span className="w-1.5 h-6 bg-[#FF5A36CC] rounded-full"></span>
+                                채널 바로가기
                             </h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                {influencer.portfolio?.map((item, index) => (
-                                    <div key={index} className="group cursor-pointer">
-                                        <div className="relative aspect-video rounded-xl overflow-hidden bg-gray-100 border border-[#E5E8EB] mb-2.5">
-                                            <img
-                                                src={item.thumbnail}
-                                                alt={item.title}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                            />
-                                            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                                <div className="bg-white/90 p-2 rounded-full shadow-md">
-                                                    <ExternalLink size={16} className="text-[#191F28]" />
-                                                </div>
+                            <div className="flex flex-col gap-3">
+                                {influencer.instagramUrl && (
+                                    <a
+                                        href={influencer.instagramUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-full h-[56px] bg-[#F9FAFB] border border-[#E5E8EB] hover:border-[#002B7A] rounded-xl flex items-center justify-between px-5 transition-all group"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF] flex items-center justify-center text-white font-bold text-[14px]">
+                                                ig
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[15px] font-bold text-[#191F28] group-hover:text-[#002B7A] transition-colors">Instagram 프로필 가기</span>
+                                                <span className="text-[12px] text-[#4E5968] font-medium">팔로워 {(influencer.instagramFollowers || 0).toLocaleString()}명</span>
                                             </div>
                                         </div>
-                                        <h4 className="text-[15px] font-bold text-[#191F28] leading-snug line-clamp-1 group-hover:text-[#002B7A] transition-colors">
-                                            {item.title}
-                                        </h4>
-                                        <div className="flex items-center gap-3 mt-1 text-[13px] text-[#8B95A1]">
-                                            <span className="flex items-center gap-1">
-                                                <Users size={12} /> {(item.views / 1000).toFixed(1)}K Views
-                                            </span>
-                                            <span className="w-0.5 h-3 bg-[#E5E8EB]"></span>
-                                            <span>2일 전</span>
+                                        <ExternalLink size={18} className="text-[#8B95A1] group-hover:text-[#002B7A]" />
+                                    </a>
+                                )}
+                                {influencer.youtubeUrl && (
+                                    <a
+                                        href={influencer.youtubeUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="w-full h-[56px] bg-[#F9FAFB] border border-[#E5E8EB] hover:border-[#FF0000] rounded-xl flex items-center justify-between px-5 transition-all group"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-[#FF0000] flex items-center justify-center text-white font-bold text-[14px]">
+                                                ▶
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[15px] font-bold text-[#191F28] group-hover:text-[#FF0000] transition-colors">YouTube 채널 가기</span>
+                                                <span className="text-[12px] text-[#4E5968] font-medium">구독자 {(influencer.youtubeSubscribers || 0).toLocaleString()}명</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                        <ExternalLink size={18} className="text-[#8B95A1] group-hover:text-[#FF0000]" />
+                                    </a>
+                                )}
                             </div>
                         </div>
 
@@ -222,7 +234,7 @@ export default function InfluencerDetailModal({ influencer, onClose, onRequest }
                         </div>
                         <button
                             onClick={onRequest}
-                            className="flex items-center gap-2 px-8 py-3.5 bg-[#191F28] text-white text-[16px] font-bold rounded-xl hover:bg-[#333D4B] transition-all shadow-lg shadow-gray-200 active:scale-95"
+                            className="flex items-center gap-2 px-8 py-3.5 bg-[#002B7A] text-white text-[16px] font-bold rounded-xl hover:bg-[#002B7AE6] transition-all shadow-md active:scale-95"
                         >
                             제안 보내기 <ArrowRight size={18} />
                         </button>

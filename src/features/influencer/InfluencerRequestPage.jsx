@@ -5,9 +5,8 @@ import { ArrowLeft, Sparkles, Send, Info } from 'lucide-react';
 import { INFLUENCER_DATA } from '../../data/mockInfluencers';
 
 /**
- * InfluencerRequestPage
- * 인플루언서에게 협업 제안을 보내는 전용 페이지
- * "No Scroll" & "No Header" & "Match Bottom" Layout
+ * InfluencerRequestPage (v2.0)
+ * 인플루언서에게 이메일로 발송되는 프리미엄 제안 폼
  */
 export default function InfluencerRequestPage() {
     const { id } = useParams();
@@ -16,9 +15,11 @@ export default function InfluencerRequestPage() {
 
     const [formData, setFormData] = useState({
         type: '제품 협찬',
+        budget: '', // 제안 금액 (원)
+        provideFood: false, // 음식 제공 여부
         date: '',
-        message: '',
-        contact: ''
+        contact: '',
+        message: ''
     });
 
     const [isAiGenerating, setIsAiGenerating] = useState(false);
@@ -28,66 +29,46 @@ export default function InfluencerRequestPage() {
     const handleAiGenerate = async () => {
         setIsAiGenerating(true);
         await new Promise(resolve => setTimeout(resolve, 1500));
+        const foodText = formData.provideFood ? "방문 시 정성껏 준비한 음식도 함께 제공해 드릴 예정입니다." : "";
+        const budgetText = formData.budget ? `\n\n📌 제안 금액: ${Number(formData.budget).toLocaleString()}원` : "";
         
-        // 매코미(inf003) 특정 맞춤 제안서
-        if (influencer.id === 'inf003') {
-            const customMessage = `안녕하세요, ${influencer.name}님!
-평소 땀 한 방울 흘리지 않고 매운 음식을 즐기시는 영상들 정말 인상 깊게 보고 있습니다.
-
-저희는 안양 범계역의 매운맛 성지로 불리는 '바람난 얼큰 수제비'입니다. 저희 매장에는 매운맛 마니아들조차 긴장하게 만드는 '중간맛'과 '매운맛' 단계가 있는데요. 매코미님의 내공이라면 저희의 화끈한 국물을 어떻게 리뷰해 주실지 너무나 기대되어 연락드렸습니다.
-
-이번에 매코미님의 스타일로 저희 수제비의 화끈함을 담은 영상 제작을 제안드리고 싶습니다. 방문해 주시면 최고의 맛과 서비스로 대접하겠습니다.
-
-긍정적인 검토 부탁드립니다! 감사합니다.`;
-            setFormData(prev => ({ ...prev, message: customMessage }));
-        } else {
-            const aiMessage = `안녕하세요, ${influencer.name}님! \n\n${influencer.location}에 위치한 저희 매장은 ${influencer.niche[0]} 전문점으로, ${influencer.name}님의 평소 리뷰 스타일이 저희 매장의 분위기와 너무 잘 어울려 연락드렸습니다.\n\n특히 최근 업로드하신 콘텐츠를 인상 깊게 보았는데요, 이번에 저희 신메뉴 출시에 맞춰 ${formData.type}을 제안드리고 싶습니다.\n\n편하신 시간에 방문해주시면 정성껏 대접해드리고 싶습니다. 긍정적인 검토 부탁드립니다!\n\n감사합니다.`;
-            setFormData(prev => ({ ...prev, message: aiMessage }));
-        }
-        
+        const aiMessage = `안녕하세요, ${influencer.name}님! \n\n${influencer.location}에 위치한 저희 매장은 ${influencer.niche[0]} 전문점으로, ${influencer.name}님의 평소 리뷰 스타일이 저희 매장의 분위기와 너무 잘 어울려 연락드렸습니다.\n\n이번에 저희 신메뉴 출시에 맞춰 ${formData.type}을 제안드리고 싶습니다. ${foodText}${budgetText}\n\n긍정적인 검토 부탁드리며, 수락 시 이메일에 첨부된 버튼을 눌러주시면 감사하겠습니다.\n\n감사합니다.`;
+        setFormData(prev => ({ ...prev, message: aiMessage }));
         setIsAiGenerating(false);
+    };
+
+    const handleBudgetChange = (e) => {
+        const rawValue = e.target.value.replace(/[^0-9]/g, '');
+        setFormData({ ...formData, budget: rawValue });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
-        // [NEW] 보낸 제안 메시지 로컬 스토리지에 저장
-        const newRequest = {
-            id: Date.now().toString(),
-            influencerId: influencer.id,
-            influencerName: influencer.name,
-            influencerImage: influencer.profileImage,
-            type: formData.type,
-            message: formData.message,
-            contact: formData.contact,
-            sentAt: new Date().toISOString()
-        };
+        // 백엔드 이메일 발송 API 연동 시뮬레이션
+        console.log("📧 이메일 발송 API 호출", {
+            to: "influencer@example.com",
+            proposalDetails: formData
+        });
 
-        try {
-            const existingRequests = JSON.parse(localStorage.getItem('sentInfluencerRequests') || '[]');
-            localStorage.setItem('sentInfluencerRequests', JSON.stringify([newRequest, ...existingRequests]));
-        } catch (error) {
-            console.error('Failed to save request to localStorage', error);
-        }
-
-        alert(`✅ ${influencer.name}님에게 제안서가 전송되었습니다!`);
+        alert(`✅ ${influencer.name}님의 이메일로 제안서가 전송되었습니다!\n(수락 시 알림이 전송됩니다)`);
         navigate('/influencer-matching');
     };
 
     if (!influencer) return <div>인플루언서를 찾을 수 없습니다.</div>;
 
+    const isSubmitDisabled = isSubmitting || !formData.message || !formData.contact || !formData.budget;
+
     return (
         <div className="flex bg-[#F5F7FA] h-full gap-4 p-4 font-sans overflow-hidden">
-
-            {/* [Left] Request Form (Flex 0.65) - No Scroll, Full Height */}
+            {/* [Left] Request Form */}
             <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="flex-[0.65] bg-white rounded-[24px] p-6 shadow-sm border border-[#E5E8EB] flex flex-col h-full relative"
+                className="flex-[0.65] bg-white rounded-2xl p-8 shadow-sm border border-[#E5E8EB] flex flex-col h-full relative overflow-y-auto custom-scrollbar"
             >
-                {/* Minimal Back Button (No Header) */}
                 <button
                     onClick={() => navigate(-1)}
                     className="absolute top-4 left-4 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
@@ -95,11 +76,14 @@ export default function InfluencerRequestPage() {
                     <ArrowLeft size={20} className="text-[#8B95A1]" />
                 </button>
 
-                <form onSubmit={handleSubmit} className="flex flex-col h-full gap-5 pt-8">
+                <h2 className="text-[24px] font-bold text-[#191F28] mb-6 pt-2 text-center">
+                    협업 제안서 작성
+                </h2>
 
+                <form onSubmit={handleSubmit} className="flex flex-col gap-6">
                     {/* 1. Collaboration Type */}
                     <div>
-                        <label className="block text-[14px] font-bold text-[#333D4B] mb-2">협업 방식</label>
+                        <label className="block text-[15px] font-bold text-[#333D4B] mb-2">협업 방식 <span className="text-[#FF5A36]">*</span></label>
                         <div className="flex gap-2">
                             {['제품 협찬', '방문 리뷰', '영상 제작', '기타'].map((type) => (
                                 <button
@@ -107,9 +91,9 @@ export default function InfluencerRequestPage() {
                                     type="button"
                                     onClick={() => setFormData({ ...formData, type })}
                                     className={`
-                                        flex-1 py-2.5 rounded-xl border font-bold transition-all text-[14px]
+                                        flex-1 py-3 rounded-xl border font-bold transition-all text-[14px]
                                         ${formData.type === type
-                                            ? 'border-[#002B7A] bg-[#E8F3FF] text-[#002B7A]'
+                                            ? 'border-[#002B7A] bg-[#E8F3FF] text-[#002B7A] shadow-sm'
                                             : 'border-transparent bg-[#F9FAFB] text-[#8B95A1] hover:bg-[#F2F4F6]'
                                         }
                                     `}
@@ -120,53 +104,98 @@ export default function InfluencerRequestPage() {
                         </div>
                     </div>
 
-                    {/* 2. Schedule & Contact */}
+                    {/* 2. Budget & Food (NEW) */}
+                    <div className="flex flex-col gap-4 border-t border-b border-[#F2F4F6] py-5">
+                        {/* Budget */}
+                        <div>
+                            <label className="block text-[15px] font-bold text-[#333D4B] mb-2">제안 금액 <span className="text-[#FF5A36]">*</span></label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={formData.budget ? Number(formData.budget).toLocaleString() : ''}
+                                    onChange={handleBudgetChange}
+                                    placeholder="금액을 입력해주세요"
+                                    className="w-full px-4 py-3.5 bg-white border border-[#E5E8EB] rounded-xl focus:border-[#002B7A] focus:ring-1 focus:ring-[#002B7A] transition-all text-[16px] font-bold text-right pr-10"
+                                />
+                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4E5968] font-bold">원</span>
+                            </div>
+                            <div className="flex gap-2 mt-2">
+                                {[50000, 100000, 300000, 500000].map(amount => (
+                                    <button
+                                        key={amount}
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, budget: amount.toString() })}
+                                        className="px-3 py-1.5 bg-[#F5F7FA] text-[#505967] rounded-lg text-[13px] font-bold hover:bg-[#E8F3FF] hover:text-[#002B7A] transition-colors"
+                                    >
+                                        +{(amount/10000)}만
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Food Toggle */}
+                        <div className="flex items-center justify-between bg-[#F9FAFB] p-4 rounded-xl">
+                            <div>
+                                <h4 className="text-[15px] font-bold text-[#333D4B] mb-0.5">음식 무료 제공 (방문 시)</h4>
+                                <p className="text-[13px] text-[#8B95A1]">인플루언서의 식사 경험을 위해 무료로 제공할지 선택합니다.</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setFormData({ ...formData, provideFood: !formData.provideFood })}
+                                className={`w-12 h-7 rounded-full relative transition-colors duration-300 ${formData.provideFood ? 'bg-[#002B7A]' : 'bg-[#D1D6DB]'}`}
+                            >
+                                <div className={`absolute top-1 left-1 bg-white w-5 h-5 rounded-full shadow-sm transition-transform duration-300 ${formData.provideFood ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* 3. Schedule & Contact */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-[14px] font-bold text-[#333D4B] mb-2">희망 일정</label>
+                            <label className="block text-[15px] font-bold text-[#333D4B] mb-2">희망 일정</label>
                             <input
                                 type="date"
                                 value={formData.date}
                                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                className="w-full px-4 py-3 bg-[#F9FAFB] border border-transparent rounded-xl focus:bg-white focus:border-[#002B7A] focus:outline-none transition-all text-[14px]"
+                                className="w-full px-4 py-3.5 bg-white border border-[#E5E8EB] rounded-xl focus:border-[#002B7A] focus:ring-1 focus:ring-[#002B7A] transition-all text-[14px]"
                             />
                         </div>
                         <div>
-                            <label className="block text-[14px] font-bold text-[#333D4B] mb-2">연락처</label>
+                            <label className="block text-[15px] font-bold text-[#333D4B] mb-2">연락처 <span className="text-[#FF5A36]">*</span></label>
                             <input
                                 type="text"
                                 placeholder="010-0000-0000"
                                 value={formData.contact}
                                 onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
-                                className="w-full px-4 py-3 bg-[#F9FAFB] border border-transparent rounded-xl focus:bg-white focus:border-[#002B7A] focus:outline-none transition-all text-[14px]"
+                                className="w-full px-4 py-3.5 bg-white border border-[#E5E8EB] rounded-xl focus:border-[#002B7A] focus:ring-1 focus:ring-[#002B7A] transition-all text-[15px]"
                             />
                         </div>
                     </div>
 
-                    {/* 3. Message (Auto Fill Remaining Height) */}
-                    <div className="flex-grow flex flex-col min-h-0">
+                    {/* 4. Message */}
+                    <div className="flex flex-col flex-grow">
                         <div className="flex justify-between items-center mb-2">
-                            <label className="text-[14px] font-bold text-[#333D4B]">제안 메세지</label>
+                            <label className="text-[15px] font-bold text-[#333D4B]">제안 메시지 <span className="text-[#FF5A36]">*</span></label>
                             <button
                                 type="button"
                                 onClick={handleAiGenerate}
                                 disabled={isAiGenerating}
-                                className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] text-white text-[12px] font-bold rounded-lg shadow-sm hover:opacity-90 transition-all"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] text-white text-[12px] font-bold rounded-lg shadow-sm hover:opacity-90 transition-all"
                             >
                                 <Sparkles size={12} />
-                                {isAiGenerating ? '작성 중...' : 'AI 자동 작성'}
+                                {isAiGenerating ? 'AI 분석 작성 중...' : '매칭 AI로 자동 작성'}
                             </button>
                         </div>
-                        <div className="relative flex-grow">
+                        <div className="relative">
                             <textarea
                                 value={formData.message}
                                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                                 placeholder="인플루언서에게 보낼 제안 내용을 작성해주세요."
                                 maxLength={500}
-                                className="w-full h-full p-4 bg-[#F9FAFB] border border-transparent rounded-xl text-[14px] leading-relaxed resize-none focus:bg-white focus:border-[#002B7A] focus:outline-none transition-all"
+                                className="w-full h-[180px] p-4 bg-white border border-[#E5E8EB] rounded-xl text-[15px] leading-relaxed resize-none focus:border-[#002B7A] focus:ring-1 focus:ring-[#002B7A] transition-all"
                             />
-                            <div className="absolute bottom-3 right-3 text-[11px] text-[#8B95A1] bg-white/80 px-2 py-0.5 rounded-md backdrop-blur-sm shadow-sm">
-                                {formData.message.length} / 500자
+                            <div className="absolute bottom-3 right-3 text-[12px] text-[#8B95A1] bg-white/80 px-2 py-0.5 rounded-md backdrop-blur-sm shadow-sm font-medium">
+                                {formData.message.length} / 500
                             </div>
                         </div>
                     </div>
@@ -174,102 +203,80 @@ export default function InfluencerRequestPage() {
                     {/* Submit Button */}
                     <button
                         type="submit"
-                        disabled={isSubmitting || !formData.message || !formData.contact}
+                        disabled={isSubmitDisabled}
                         className={`
-                            py-3.5 rounded-xl font-bold text-[15px] text-white shadow-lg transition-all flex items-center justify-center gap-2
-                            ${isSubmitting || !formData.message || !formData.contact
+                            py-4 rounded-xl font-bold text-[16px] text-white shadow-md transition-all flex items-center justify-center gap-2 mt-2
+                            ${isSubmitDisabled
                                 ? 'bg-[#E5E8EB] text-[#B0B8C1] cursor-not-allowed shadow-none'
-                                : 'bg-[#FF5A36] hover:bg-[#E0492A] hover:shadow-orange-200 hover:-translate-y-0.5'
+                                : 'bg-[#002B7A] hover:bg-[#002B7AE6] hover:shadow-lg hover:-translate-y-0.5 active:scale-95'
                             }
                         `}
                     >
-                        {isSubmitting ? '전송 중...' : '제안서 보내기'}
-                        <Send size={16} />
+                        {isSubmitting ? '안전하게 전송 중...' : '이메일로 제안서 발송하기'}
+                        <Send size={18} />
                     </button>
                 </form>
             </motion.div>
 
-            {/* [Right] Influencer Summary (Flex 0.35) - Full Height & Matched Bottom */}
+            {/* [Right] Influencer Summary (Flex 0.35) */}
             <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="flex-[0.35] flex flex-col gap-4 h-full"
+                className="flex-[0.35] flex flex-col gap-4 h-full overflow-y-auto custom-scrollbar pb-4 pr-1"
             >
-                {/* Profile Summary */}
-                <div className="bg-white rounded-[24px] p-6 shadow-sm border border-[#E5E8EB] flex flex-col items-center text-center">
-                    <div className="w-20 h-20 rounded-[24px] overflow-hidden mb-3 shadow-md">
-                        <img src={influencer.profileImage} alt={influencer.name} className="w-full h-full object-cover" />
+                {/* Simplified Card to match V2 */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E5E8EB] flex flex-col items-center text-center shrink-0">
+                    <div className="w-[100px] h-[100px] rounded-full p-[2px] bg-gradient-to-tr from-[#002B7A] to-[#4070F4] mb-3 shrink-0">
+                        <img src={influencer.profileImage} alt={influencer.name} className="w-full h-full rounded-full object-cover border-[3px] border-white" />
                     </div>
-                    <div className="flex items-center gap-2 mb-0.5">
-                        <h2 className="text-[20px] font-bold text-[#191F28]">{influencer.name}</h2>
-                        <div className="relative group flex items-center">
-                            <span className="px-2 py-0.5 bg-[#FFF4E6] text-[#FF5A36] text-[11px] font-bold rounded-full flex items-center gap-1">
-                                {influencer.matchScore}% 일치
-                                <div className="p-1.5 -m-1.5 cursor-help opacity-70 hover:opacity-100 transition-opacity">
-                                    <Info size={14} />
-                                </div>
-                            </span>
-                            {/* Tooltip */}
-                            <div className="absolute left-1/2 -translate-x-1/2 bottom-[calc(100%+8px)] w-[240px] bg-white text-[#191F28] border border-[#F2F4F6] shadow-lg rounded-xl p-3 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none text-left">
-                                <h4 className="text-[13px] font-bold mb-1.5 text-[#002B7A]">매칭 분석 이유</h4>
-                                <ul className="flex flex-col gap-1.5">
-                                    {influencer.matchReasons?.map((reason, idx) => (
-                                        <li key={idx} className="text-[13px] text-[#4B5563] leading-relaxed break-keep flex items-start gap-1.5">
-                                            <span className="mt-[6px] shrink-0 text-[#FF5A36] text-[8px]">●</span>
-                                            <span>{reason}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                                {/* Arrow */}
-                                <div className="absolute left-1/2 -translate-x-1/2 top-full w-3 h-3 bg-white border-b border-r border-[#F2F4F6] transform rotate-45 -mt-[6.5px]"></div>
-                            </div>
+                
+                    <h2 className="text-[22px] font-bold text-[#191F28] mb-1">{influencer.name}</h2>
+                    <span className="px-3 py-1 bg-[#FFF4E6] text-[#FF5A36] text-[12px] font-bold rounded-full mb-3 border border-[#FF5A361A]">
+                        현재 상점과 {influencer.matchScore}% 일치
+                    </span>
+                    
+                    <div className="w-full bg-[#F5F7FA] rounded-xl p-4 flex justify-around border border-[#E5E8EB]">
+                        <div className="flex flex-col items-center">
+                            <span className="text-[12px] text-[#8B95A1] font-medium mb-0.5">인스타 팔로워</span>
+                            <span className="text-[15px] font-bold text-[#191F28]">{(influencer.instagramFollowers / 1000).toFixed(0)}K</span>
                         </div>
-                    </div>
-                    <p className="text-[#8B95A1] text-[13px] mb-4 line-clamp-2 max-w-[200px]">
-                        {influencer.bio}
-                    </p>
-
-                    <div className="w-full bg-[#F9FAFB] rounded-xl p-3 flex justify-around">
-                        <div>
-                            <div className="text-[11px] text-[#8B95A1] mb-0.5">팔로워</div>
-                            <div className="text-[14px] font-bold text-[#333D4B]">{(influencer.followers / 1000).toFixed(0)}K</div>
-                        </div>
-                        <div>
-                            <div className="text-[11px] text-[#8B95A1] mb-0.5">평점</div>
-                            <div className="text-[14px] font-bold text-[#333D4B]">{influencer.rating}</div>
+                        <div className="w-[1px] bg-[#D1D6DB]"></div>
+                        <div className="flex flex-col items-center">
+                            <span className="text-[12px] text-[#8B95A1] font-medium mb-0.5">평균 조회수</span>
+                            <span className="text-[15px] font-bold text-[#191F28]">{(influencer.avgViews / 1000).toFixed(0)}K</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Process Guide (Fills remaining height) */}
-                <div className="bg-white rounded-[24px] p-6 border border-[#E5E8EB] flex-grow flex flex-col justify-center">
-                    <h3 className="text-[15px] font-bold text-[#191F28] mb-5 flex items-center gap-2">
+                {/* Process Guide */}
+                <div className="bg-[#F9FAFB] rounded-[24px] p-7 flex-grow flex flex-col justify-center text-left relative border border-[#E5E8EB] shrink-0 min-h-[300px]">
+                    <h3 className="text-[16px] font-bold text-[#191F28] mb-6 flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#002B7A]"></span>
-                        매칭 진행 절차
+                        제안 이후 절차
                     </h3>
-                    <div className="flex flex-col gap-5 relative">
+                    <div className="flex flex-col gap-6 relative z-10">
                         {/* Connecting Line */}
                         <div className="absolute left-[13px] top-3 bottom-3 w-[2px] bg-[#F2F4F6] -z-10"></div>
 
-                        <div className="flex gap-3 items-start">
+                        <div className="flex gap-4 items-start">
                             <div className="w-7 h-7 rounded-full bg-[#E8F3FF] text-[#002B7A] flex items-center justify-center font-bold text-[13px] shrink-0 border-2 border-white shadow-sm">1</div>
                             <div>
-                                <strong className="block text-[13px] text-[#333D4B] mb-0.5">제안서 발송</strong>
-                                <p className="text-[12px] text-[#8B95A1] leading-snug">제안 내용이<br />인플루언서에게 전달됩니다.</p>
+                                <strong className="block text-[14px] text-[#333D4B] mb-1">이메일 발송</strong>
+                                <p className="text-[13px] text-[#8B95A1] leading-snug">제안서가 인플루언서의<br />전문 이메일로 즉시 발송됩니다.</p>
                             </div>
                         </div>
-                        <div className="flex gap-3 items-start">
+                        <div className="flex gap-4 items-start">
                             <div className="w-7 h-7 rounded-full bg-[#FFF4E6] text-[#FF5A36] flex items-center justify-center font-bold text-[13px] shrink-0 border-2 border-white shadow-sm">2</div>
                             <div>
-                                <strong className="block text-[13px] text-[#333D4B] mb-0.5">검토 및 수락</strong>
-                                <p className="text-[12px] text-[#8B95A1] leading-snug">참여 의사를 확인하고<br />수락 여부를 결정합니다.</p>
+                                <strong className="block text-[14px] text-[#333D4B] mb-1">인플루언서 수락</strong>
+                                <p className="text-[13px] text-[#8B95A1] leading-snug">이메일 내 링크를 통해<br />제안을 검토하고 수락합니다.</p>
                             </div>
                         </div>
-                        <div className="flex gap-3 items-start">
+                        <div className="flex gap-4 items-start">
                             <div className="w-7 h-7 rounded-full bg-[#F2F4F6] text-[#505967] flex items-center justify-center font-bold text-[13px] shrink-0 border-2 border-white shadow-sm">3</div>
                             <div>
-                                <strong className="block text-[13px] text-[#333D4B] mb-0.5">1:1 채팅 시작</strong>
-                                <p className="text-[12px] text-[#8B95A1] leading-snug">매칭 성사 시<br />세부 일정을 조율합니다.</p>
+                                <strong className="block text-[14px] text-[#333D4B] mb-1">협업 시작</strong>
+                                <p className="text-[13px] text-[#8B95A1] leading-snug">연락처를 통해 세부 일정을<br />조율하고 마케팅을 시작합니다.</p>
                             </div>
                         </div>
                     </div>
