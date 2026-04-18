@@ -24,7 +24,7 @@ const HeroSection = () => {
                         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                     >
                         <h1 className="text-[48px] md:text-[80px] font-bold leading-[1.2] mb-6 tracking-tight text-[#191F28] break-keep">
-                            복잡한 마케팅은<br />
+                            고객분석부터 영상제작까지<br />
                             <span className="text-[#002B7A]">PULSE</span>에게 맡기세요.
                         </h1>
                     </motion.div>
@@ -35,8 +35,8 @@ const HeroSection = () => {
                         transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
                         className="text-[18px] md:text-[20px] mb-10 font-medium text-[#4B5563] leading-relaxed break-keep"
                     >
-                        오늘도 맛있는 요리에만 집중하실 수 있도록,<br className="hidden md:block" />
-                        데이터 분석부터 홍보 영상 제작까지 <span className="text-[#002B7A]">PULSE</span>가 다 해드릴게요.
+                        사장님은 맛있는 요리에만 집중하실 수 있도록<br className="hidden md:block" />
+                        고객분석부터 홍보 영상 제작까지 <span className="text-[#002B7A]">PULSE</span>가 해드릴게요.
                     </motion.p>
 
                     <motion.div
