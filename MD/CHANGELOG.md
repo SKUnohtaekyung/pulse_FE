@@ -229,3 +229,19 @@
 *   **Layout Issues:** 프로필 카드 및 여정 지도의 콘텐츠 잘림 현상 해결.
 *   **Z-Index Conflicts:** 헤더와 여정 지도 간의 겹침 문제 해결.
 *   **Code Cleanup:** 불필요한 버튼 및 미사용 CSS 클래스 제거.
+
+## 2026-05-12
+
+### 🧹 Codex Skill Source Cleanup
+*   **Canonical Skill Path:** `.agents/skills/`를 PULSE 프로젝트의 유일한 Codex skill 정본으로 명시.
+*   **Legacy Cleanup:** `.agent/skills/` 중복 skill 사본 제거 준비 및 관련 운영 문서 참조 정리.
+*   **Product Manager Skill:** framework 참조 경로를 삭제 후에도 유효한 상대 경로(`frameworks/`)로 수정.
+*   **Skill Frontmatter:** Codex validator 기준에 맞춰 core skill의 `name`과 YAML frontmatter를 표준화.
+
+## 2026-05-13
+
+### 🧠 Codex Skill Portfolio Optimization
+*   **Skill Compression:** 반복적으로 로드될 가능성이 높은 core skill 10개를 짧은 실행 지침 중심으로 축소.
+*   **Product Validation Merge:** 실험 설계, KPI/계측, 성장 루프 skill을 `pulse-product-validation` 하나로 통합.
+*   **Deprecated Skill Removal:** `pulse-experiment-designer`, `pulse-metrics-instrumentation`, `pulse-growth-loop-strategist` 디렉터리를 제거.
+*   **Routing Docs:** `.agents/skills/README.md`와 `PLANS.md`의 skill 사용 기준을 통합 구조에 맞게 갱신.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pulse Visual QA"
+  short_description: "PULSE 화면을 브라우저에서 검증하고 시각, 상호작용, 접근성, 반응형 문제를 찾습니다."
+  default_prompt: "변경된 PULSE 화면을 데스크톱과 모바일 기준으로 시각 QA하고, 콘솔/레이아웃/상호작용/접근성 리스크를 정리해 주세요."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pulse Acceptance Scenarios"
+  short_description: "PULSE 요구사항을 Given/When/Then 인수조건과 QA 시나리오로 바꿉니다."
+  default_prompt: "이 PULSE 기능 요구사항을 구현/QA가 바로 검증할 수 있는 인수조건과 엣지 케이스로 정리해 주세요."

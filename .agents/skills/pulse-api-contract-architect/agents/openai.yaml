@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pulse API Contract Architect"
+  short_description: "PULSE 프론트엔드와 백엔드/외부 API 간 계약을 설계합니다."
+  default_prompt: "이 PULSE 기능에 필요한 API/모듈 계약을 요청/응답/오류/상태 기준으로 먼저 정의해 주세요."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pulse Market Researcher"
+  short_description: "시장, 경쟁, 페르소나, 고객 여정을 PULSE 맥락으로 분석합니다."
+  default_prompt: "PULSE의 특정 기능이나 발표 주제에 대해 시장/경쟁/고객 여정을 분석하고, 근거와 추론을 구분해 정리해 주세요."

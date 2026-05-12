@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pulse Product Validation"
+  short_description: "PULSE 가설, 실험, 지표, 성장 루프를 한 번에 검증합니다."
+  default_prompt: "이 PULSE 기능의 핵심 가설, 실험 설계, 성공 지표, 성장 루프 리스크를 한 장으로 정리해 주세요."
