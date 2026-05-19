@@ -30,21 +30,29 @@ export default function CompetitionCard({ competition, onPlaceClick }) {
             {/* 가까운 경쟁 리스트 */}
             <div className="space-y-2">
                 <p className="text-[14px] font-medium text-gray-700 mb-2">가까운 가게</p>
-                {competition.nearest.map((place, i) => (
-                    <div
-                        key={place.id}
-                        onClick={() => onPlaceClick && onPlaceClick(place)}
-                        className="flex justify-between items-center p-3 hover:bg-[#F5F7FA] rounded-lg cursor-pointer transition-colors group"
-                    >
-                        <div className="flex-1">
-                            <p className="text-[15px] font-medium text-[#191F28] group-hover:text-[#002B7A] transition-colors">
-                                {place.name}
-                            </p>
-                            <p className="text-[13px] text-gray-500 mt-0.5">{place.distanceM}m</p>
-                        </div>
-                        <ExternalLink size={16} className="text-gray-400 group-hover:text-[#002B7A] transition-colors" />
+                {competition.nearest.length === 0 ? (
+                    <div className="p-4 bg-[#F5F7FA] rounded-lg text-center">
+                        <p className="text-[13px] text-gray-600">
+                            반경 내 같은 업종이 조회되지 않았습니다.
+                        </p>
                     </div>
-                ))}
+                ) : (
+                    competition.nearest.map((place) => (
+                        <div
+                            key={place.id}
+                            onClick={() => onPlaceClick && onPlaceClick(place)}
+                            className="flex justify-between items-center p-3 hover:bg-[#F5F7FA] rounded-lg cursor-pointer transition-colors group"
+                        >
+                            <div className="flex-1">
+                                <p className="text-[15px] font-medium text-[#191F28] group-hover:text-[#002B7A] transition-colors">
+                                    {place.name}
+                                </p>
+                                <p className="text-[13px] text-gray-500 mt-0.5">{place.distanceM}m</p>
+                            </div>
+                            <ExternalLink size={16} className="text-gray-400 group-hover:text-[#002B7A] transition-colors" />
+                        </div>
+                    ))
+                )}
             </div>
         </div>
     );

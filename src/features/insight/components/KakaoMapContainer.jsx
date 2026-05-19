@@ -1,11 +1,10 @@
 /**
  * KakaoMapContainer Component
- * 지도 컨테이너 + 카테고리 토글 + 반경 선택 UI
+ * 지도 컨테이너 + 반경 선택 UI
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useKakaoMap } from '../hooks/useKakaoMap';
-import CategoryToggle from './CategoryToggle';
 import CurrentLocationButton from './CurrentLocationButton';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 
@@ -14,22 +13,15 @@ export default function KakaoMapContainer({
     radius,
     onRadiusChange,
     storeName,
-    onMapReady,
-    categoryData, // { FD6: [...places], CE7: [...places], ... }
-    onCategoryToggle
+    onMapReady
 }) {
     const {
         mapRef,
         map,
         isLoading,
         error,
-        addStoreMarker,
-        updateCategoryMarkers,
-        removeCategoryMarkers,
-        showInfoWindow
+        addStoreMarker
     } = useKakaoMap(center, radius);
-
-    const [selectedCategories, setSelectedCategories] = useState([]);
 
     // 지도 준비 완료 시 가게 마커 추가
     useEffect(() => {
@@ -56,54 +48,6 @@ export default function KakaoMapContainer({
         }
     };
 
-    // 카테고리 토글 핸들러
-    const handleCategoryToggle = (categoryCode) => {
-        setSelectedCategories(prev => {
-            const isSelected = prev.includes(categoryCode);
-            const newSelection = isSelected
-                ? prev.filter(c => c !== categoryCode)
-                : [...prev, categoryCode];
-
-            // 부모 컴포넌트에 알림
-            onCategoryToggle && onCategoryToggle(newSelection);
-
-            return newSelection;
-        });
-    };
-
-    // 선택된 카테고리 마커 업데이트
-    useEffect(() => {
-        if (!map || !categoryData) return;
-
-        const CATEGORY_COLORS = {
-            FD6: '#FF5A36',
-            CE7: '#8B4513',
-            CS2: '#00A86B',
-            HP8: '#FF1744',
-            PM9: '#00BCD4'
-        };
-
-        // 선택된 카테고리 마커 표시
-        selectedCategories.forEach(categoryCode => {
-            const places = categoryData[categoryCode] || [];
-            const color = CATEGORY_COLORS[categoryCode];
-
-            updateCategoryMarkers(
-                categoryCode,
-                places,
-                color,
-                (place, marker) => showInfoWindow(place, marker)
-            );
-        });
-
-        // 선택 해제된 카테고리 마커 제거
-        Object.keys(categoryData).forEach(categoryCode => {
-            if (!selectedCategories.includes(categoryCode)) {
-                removeCategoryMarkers(categoryCode);
-            }
-        });
-    }, [map, selectedCategories, categoryData]);
-
     const handleRetry = () => {
         window.location.reload();
     };
@@ -116,14 +60,6 @@ export default function KakaoMapContainer({
                 className="w-full h-full rounded-l-[24px] bg-[#F5F7FA]"
             />
 
-
-            {/* 카테고리 토글 (지도 좌측 상단) */}
-            {!isLoading && !error && (
-                <CategoryToggle
-                    selectedCategories={selectedCategories}
-                    onToggle={handleCategoryToggle}
-                />
-            )}
 
             {/* 반경 선택 UI (지도 위 오버레이) */}
             {!isLoading && !error && (

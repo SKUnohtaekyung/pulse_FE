@@ -47,19 +47,27 @@ export default function AnchorCard({ anchors }) {
             {/* Breakdown */}
             <div className="space-y-2.5">
                 <p className="text-[14px] font-medium text-gray-700 mb-2">점수 구성</p>
-                {anchors.breakdown.map((item, i) => (
-                    <div key={i} className="flex justify-between items-center p-2.5 bg-[#F5F7FA] rounded-lg">
-                        <span className="text-[14px] font-medium text-[#191F28]">{item.label}</span>
-                        <div className="flex items-center gap-2">
-                            <span className="text-[13px] text-gray-600">
-                                {item.count}개 × {item.weight}
-                            </span>
-                            <span className="text-[15px] font-bold text-[#002B7A] min-w-[24px] text-right">
-                                {item.count * item.weight}
-                            </span>
-                        </div>
+                {anchors.breakdown.length === 0 ? (
+                    <div className="p-4 bg-[#F5F7FA] rounded-lg text-center">
+                        <p className="text-[13px] text-gray-600">
+                            반경 내 주요 유입 요인이 조회되지 않았습니다.
+                        </p>
                     </div>
-                ))}
+                ) : (
+                    anchors.breakdown.map((item, i) => (
+                        <div key={i} className="flex justify-between items-center p-2.5 bg-[#F5F7FA] rounded-lg">
+                            <span className="text-[14px] font-medium text-[#191F28]">{item.label}</span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[13px] text-gray-600">
+                                    {item.count}개 × {item.weight}
+                                </span>
+                                <span className="text-[15px] font-bold text-[#002B7A] min-w-[24px] text-right">
+                                    {item.count * item.weight}
+                                </span>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
         </div>
     );

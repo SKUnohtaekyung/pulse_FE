@@ -17,13 +17,49 @@ import React, { useState, useEffect, useCallback } from 'react';
 import KakaoMapContainer from './components/KakaoMapContainer';
 import SummaryPanel from './components/SummaryPanel';
 import SearchBar from './components/SearchBar';
-import { RefreshCw, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, RefreshCw, Search } from 'lucide-react';
 import { MOCK_STORE } from '../../data/marketMockData'; // 가게 좌표는 유지 (추후 API로 교체)
 import { fetchRealMarketData } from './kakaoPlacesService';
+
+function normalizeMarketError(error) {
+    return {
+        code: error?.code || 'unknown',
+        title: error?.title || '상권 데이터를 불러오지 못했습니다',
+        message: error?.message || '잠시 후 다시 시도해 주세요.',
+        actionLabel: error?.actionLabel || '다시 시도',
+    };
+}
+
+function EmptyReportPanel({ emptyState, onRadiusChange }) {
+    return (
+        <div className="h-full bg-[#F5F7FA] px-6 py-6">
+            <div className="h-full bg-white border border-[#E5E8EB] rounded-xl flex flex-col items-center justify-center text-center px-8">
+                <div className="w-14 h-14 rounded-full bg-[#002B7A1A] flex items-center justify-center mb-4">
+                    <Search size={24} className="text-[#002B7A]" />
+                </div>
+                <h3 className="text-[18px] font-bold text-[#191F28] mb-2">
+                    {emptyState?.title || '조회된 상권 데이터가 없습니다'}
+                </h3>
+                <p className="text-[14px] text-gray-600 leading-relaxed max-w-sm">
+                    {emptyState?.message || '반경을 넓히거나 다른 장소를 검색해 주세요.'}
+                </p>
+                {emptyState?.suggestedRadius && (
+                    <button
+                        onClick={() => onRadiusChange(emptyState.suggestedRadius)}
+                        className="mt-5 px-4 py-2.5 bg-[#002B7A] text-white rounded-lg text-[14px] font-bold hover:bg-[#001F5C] transition-colors"
+                    >
+                        {emptyState.actionLabel || '반경 넓히기'}
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+}
 
 export default function CommercialAnalysisPage() {
     const [radius, setRadius] = useState(500);
     const [map, setMap] = useState(null);
+    const [analysisTarget, setAnalysisTarget] = useState(MOCK_STORE);
     const [marketData, setMarketData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -51,19 +87,20 @@ export default function CommercialAnalysisPage() {
         try {
             console.log(`📊 카카오 Places API 조회 중... 반경 ${radius}m`);
             const data = await fetchRealMarketData(
-                { lat: MOCK_STORE.lat, lng: MOCK_STORE.lng },
+                { lat: analysisTarget.lat, lng: analysisTarget.lng },
                 radius,
-                MOCK_STORE.primaryCategoryGroupCode
+                analysisTarget.primaryCategoryGroupCode
             );
             setMarketData(data);
             console.log('✅ 실제 상권 데이터 로드 완료:', data);
         } catch (err) {
             console.error('[CommercialAnalysis] 데이터 조회 실패:', err);
-            setError(err.message);
+            setMarketData(null);
+            setError(normalizeMarketError(err));
         } finally {
             setIsLoading(false);
         }
-    }, [radius, isKakaoReady]);
+    }, [radius, isKakaoReady, analysisTarget]);
 
     // 반경 변경 또는 카카오 준비 완료 시 재조회
     useEffect(() => {
@@ -92,8 +129,19 @@ export default function CommercialAnalysisPage() {
 
     // 검색 이동
     const handleSearch = (place) => {
+        const nextTarget = {
+            storeId: place.id || `place-${place.y}-${place.x}`,
+            storeName: place.place_name || '선택한 장소',
+            address: place.road_address_name || place.address_name || '',
+            lat: parseFloat(place.y),
+            lng: parseFloat(place.x),
+            primaryCategoryGroupCode: analysisTarget.primaryCategoryGroupCode || 'FD6',
+        };
+
+        setAnalysisTarget(nextTarget);
+
         if (map && window.kakao) {
-            map.panTo(new window.kakao.maps.LatLng(parseFloat(place.y), parseFloat(place.x)));
+            map.panTo(new window.kakao.maps.LatLng(nextTarget.lat, nextTarget.lng));
         }
     };
 
@@ -102,8 +150,17 @@ export default function CommercialAnalysisPage() {
         loadMarketData();
     };
 
-    // 카테고리 데이터 (지도 마커용)
-    const categoryData = marketData?._categoryPlaces || {};
+    const handleErrorAction = () => {
+        if (error?.code === 'invalid_radius') {
+            setRadius(500);
+            return;
+        }
+
+        loadMarketData();
+    };
+
+    const center = { lat: analysisTarget.lat, lng: analysisTarget.lng };
+    const isEmptyReport = marketData?.reportState === 'empty';
 
     return (
         <div className="w-full h-full flex flex-col gap-0 bg-white rounded-[24px] overflow-hidden border border-[#E5E8EB] shadow-sm relative">
@@ -121,12 +178,18 @@ export default function CommercialAnalysisPage() {
             {/* 오류 상태 */}
             {!isLoading && error && (
                 <div className="absolute inset-0 bg-white flex flex-col items-center justify-center z-50 rounded-[24px] p-8">
-                    <p className="text-red-500 font-bold mb-4">⚠️ {error}</p>
+                    <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+                        <AlertCircle size={32} className="text-red-500" />
+                    </div>
+                    <h3 className="text-[18px] font-bold text-[#191F28] mb-2">{error.title}</h3>
+                    <p className="text-[14px] text-gray-600 text-center max-w-md mb-5 leading-relaxed">
+                        {error.message}
+                    </p>
                     <button
-                        onClick={handleRefresh}
+                        onClick={handleErrorAction}
                         className="px-4 py-2 bg-[#002B7A] text-white rounded-lg text-sm font-bold hover:bg-[#001F5C]"
                     >
-                        다시 시도
+                        {error.actionLabel}
                     </button>
                 </div>
             )}
@@ -138,18 +201,17 @@ export default function CommercialAnalysisPage() {
                     {/* 검색 바 */}
                     <div className="absolute top-4 left-4 z-20 w-[400px]">
                         <SearchBar
-                            center={{ lat: MOCK_STORE.lat, lng: MOCK_STORE.lng }}
+                            center={center}
                             onSearch={handleSearch}
                         />
                     </div>
 
                     <KakaoMapContainer
-                        center={{ lat: MOCK_STORE.lat, lng: MOCK_STORE.lng }}
+                        center={center}
                         radius={radius}
                         onRadiusChange={handleRadiusChange}
-                        storeName={MOCK_STORE.storeName}
+                        storeName={analysisTarget.storeName}
                         onMapReady={handleMapReady}
-                        categoryData={categoryData}
                     />
                 </div>
 
@@ -166,6 +228,9 @@ export default function CommercialAnalysisPage() {
                                     }) + ' 기준 (실시간)'
                                     : '조회 중...'}
                             </p>
+                            <p className="text-[12px] text-gray-500 mt-1">
+                                {analysisTarget.storeName} 기준
+                            </p>
                         </div>
                         <button
                             onClick={handleRefresh}
@@ -180,7 +245,13 @@ export default function CommercialAnalysisPage() {
 
                     {/* 패널 콘텐츠 */}
                     <div className="flex-1 min-h-0">
-                        {marketData && !isLoading && (
+                        {marketData && !isLoading && isEmptyReport && (
+                            <EmptyReportPanel
+                                emptyState={marketData.emptyState}
+                                onRadiusChange={handleRadiusChange}
+                            />
+                        )}
+                        {marketData && !isLoading && !isEmptyReport && (
                             <SummaryPanel
                                 data={marketData}
                                 onPlaceClick={handlePlaceClick}

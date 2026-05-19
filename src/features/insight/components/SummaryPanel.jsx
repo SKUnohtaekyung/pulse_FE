@@ -9,7 +9,7 @@ import SnapshotCard from './SnapshotCard';
 import CompetitionCard from './CompetitionCard';
 import AnchorCard from './AnchorCard';
 import ActionCard from './ActionCard';
-import { RefreshCw } from 'lucide-react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 export default function SummaryPanel({ data, onPlaceClick, onRefresh, showHeader = true }) {
     return (
@@ -46,6 +46,28 @@ export default function SummaryPanel({ data, onPlaceClick, onRefresh, showHeader
 
             {/* 카드 리스트 - 개선된 간격 */}
             <div className="px-6 pb-6 space-y-5">
+                {data.warnings?.map((warning, index) => (
+                    <div
+                        key={`${warning.type}-${index}`}
+                        className="bg-amber-50 border border-amber-200 rounded-xl p-4"
+                    >
+                        <div className="flex items-start gap-3">
+                            <AlertTriangle size={18} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                            <div>
+                                <p className="text-[14px] font-bold text-amber-900">{warning.title}</p>
+                                <p className="text-[13px] text-amber-800 mt-1 leading-relaxed">
+                                    {warning.message}
+                                </p>
+                                {warning.failedCategories?.length > 0 && (
+                                    <p className="text-[12px] text-amber-700 mt-2">
+                                        조회 실패: {warning.failedCategories.map(({ label }) => label).join(', ')}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+
                 {/* 상권 스냅샷 */}
                 <SnapshotCard counts={data.counts} radius={data.radius} />
 

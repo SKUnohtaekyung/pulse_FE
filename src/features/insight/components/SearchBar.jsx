@@ -5,6 +5,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, X, Loader2 } from 'lucide-react';
+import { searchPlacesByKeyword } from '../../../api/kakaoLocal';
 
 export default function SearchBar({ center, onSearch }) {
     const [query, setQuery] = useState('');
@@ -25,24 +26,7 @@ export default function SearchBar({ center, onSearch }) {
 
         setIsSearching(true);
         try {
-            const params = new URLSearchParams({
-                query: searchQuery,
-                x: center.lng.toString(),
-                y: center.lat.toString(),
-                size: '5',
-                sort: 'distance'
-            });
-
-            const response = await fetch(
-                `https://dapi.kakao.com/v2/local/search/keyword.json?${params}`,
-                {
-                    headers: {
-                        Authorization: `KakaoAK ${import.meta.env.VITE_KAKAO_REST_API_KEY}`
-                    }
-                }
-            );
-
-            const data = await response.json();
+            const data = await searchPlacesByKeyword(center.lat, center.lng, 20000, searchQuery);
             setResults(data.documents || []);
             setShowResults(true);
             setSelectedIndex(-1);

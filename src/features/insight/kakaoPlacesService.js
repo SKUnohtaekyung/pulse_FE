@@ -26,28 +26,137 @@ const ANCHOR_WEIGHTS = {
     HP8: { weight: 1, label: '병원' },
 };
 
+const REPORT_STATE = {
+    READY: 'ready',
+    EMPTY: 'empty',
+};
+
+const isDev = import.meta.env.DEV;
+
+function logMarket(level, event, payload = {}, devOnly = false) {
+    if (devOnly && !isDev) return;
+
+    console[level](event, {
+        ...payload,
+        timestamp: new Date().toISOString(),
+    });
+}
+
+function getKakaoStatusName(status) {
+    const statuses = window.kakao?.maps?.services?.Status || {};
+    const match = Object.entries(statuses).find(([, value]) => value === status);
+    return match?.[0] || String(status || 'UNKNOWN');
+}
+
+function createMarketError({ code, title, message, actionLabel = '다시 시도', details = {} }) {
+    const error = new Error(message);
+    error.code = code;
+    error.title = title;
+    error.actionLabel = actionLabel;
+    error.details = details;
+    return error;
+}
+
+function validateCenter(center) {
+    const lat = Number(center?.lat);
+    const lng = Number(center?.lng);
+    const isValidLat = Number.isFinite(lat) && lat >= -90 && lat <= 90;
+    const isValidLng = Number.isFinite(lng) && lng >= -180 && lng <= 180;
+
+    if (!isValidLat || !isValidLng) {
+        logMarket('error', '[CommercialAnalysis] invalid_center', { rawCenter: center }, false);
+        throw createMarketError({
+            code: 'invalid_center',
+            title: '분석할 위치를 확인할 수 없습니다',
+            message: '장소를 다시 검색하거나 저장된 가게 위치를 확인해 주세요.',
+            actionLabel: '장소 다시 검색',
+            details: { rawCenter: center },
+        });
+    }
+
+    return { lat, lng };
+}
+
+function validateRadius(radiusM) {
+    const radius = Number(radiusM);
+    const allowed = [300, 500, 1000];
+
+    if (!allowed.includes(radius)) {
+        throw createMarketError({
+            code: 'invalid_radius',
+            title: '분석 반경을 다시 선택해 주세요',
+            message: '지원하지 않는 반경입니다. 300m, 500m, 1km 중 하나를 선택해 주세요.',
+            actionLabel: '500m로 재설정',
+            details: { radiusM },
+        });
+    }
+
+    return radius;
+}
+
 /**
  * 하나의 카테고리 코드로 반경 내 장소를 모두 조회 (페이지네이션 포함)
  * @param {object} ps   - kakao.maps.services.Places 인스턴스
- * @param {string} code - 카테고리 코드 (예: 'FD6')
+ * @param {{ code: string, label: string }} category
  * @param {{ lat: number, lng: number }} center
  * @param {number} radiusM - 검색 반경 (미터)
- * @returns {Promise<Array>} 장소 목록
+ * @returns {Promise<object>} 카테고리 조회 결과
  */
-function searchCategoryAll(ps, code, center, radiusM) {
+function searchCategoryAll(ps, category, center, radiusM) {
     return new Promise((resolve) => {
+        const { code, label } = category;
         const allPlaces = [];
         let currentPage = 1;
+        let pageCount = 0;
 
         const fetchPage = () => {
             ps.categorySearch(
                 code,
                 (data, status, pagination) => {
-                    if (status !== window.kakao.maps.services.Status.OK) {
-                        resolve(allPlaces); // 결과 없거나 오류 → 빈 배열
+                    const statusName = getKakaoStatusName(status);
+
+                    if (status === window.kakao.maps.services.Status.ZERO_RESULT) {
+                        logMarket('info', '[KakaoPlaces] category:zero_result', {
+                            code,
+                            label,
+                            center,
+                            radius: radiusM,
+                        }, true);
+
+                        resolve({
+                            code,
+                            label,
+                            status: 'ZERO_RESULT',
+                            places: allPlaces,
+                            pageCount,
+                        });
                         return;
                     }
 
+                    if (status !== window.kakao.maps.services.Status.OK) {
+                        const resultStatus = allPlaces.length > 0 ? 'PARTIAL_ERROR' : 'ERROR';
+                        logMarket(resultStatus === 'ERROR' ? 'error' : 'warn', '[KakaoPlaces] category:failed', {
+                            code,
+                            label,
+                            status: statusName,
+                            center,
+                            radius: radiusM,
+                            collectedCount: allPlaces.length,
+                            page: currentPage,
+                        }, resultStatus !== 'ERROR');
+
+                        resolve({
+                            code,
+                            label,
+                            status: resultStatus,
+                            rawStatus: statusName,
+                            places: allPlaces,
+                            pageCount,
+                        });
+                        return;
+                    }
+
+                    pageCount++;
                     allPlaces.push(...data);
 
                     // 다음 페이지가 있고 최대 3페이지까지만 (과도한 요청 방지)
@@ -55,7 +164,21 @@ function searchCategoryAll(ps, code, center, radiusM) {
                         currentPage++;
                         fetchPage();
                     } else {
-                        resolve(allPlaces);
+                        logMarket('info', '[KakaoPlaces] category:ok', {
+                            code,
+                            label,
+                            count: allPlaces.length,
+                            pageCount,
+                            radius: radiusM,
+                        }, true);
+
+                        resolve({
+                            code,
+                            label,
+                            status: 'OK',
+                            places: allPlaces,
+                            pageCount,
+                        });
                     }
                 },
                 {
@@ -82,23 +205,112 @@ function searchCategoryAll(ps, code, center, radiusM) {
  */
 export async function fetchRealMarketData(center, radiusM, primaryCategory = 'FD6') {
     if (!window.kakao?.maps?.services) {
-        throw new Error('카카오 지도 API가 아직 로드되지 않았습니다.');
+        logMarket('error', '[KakaoMap] sdk:failed', {
+            hasKakao: Boolean(window.kakao),
+            hasMaps: Boolean(window.kakao?.maps),
+            hasServices: Boolean(window.kakao?.maps?.services),
+        }, false);
+
+        throw createMarketError({
+            code: 'sdk_unavailable',
+            title: '지도 서비스를 불러오지 못했습니다',
+            message: '지도 서비스가 준비되지 않아 상권 분석을 시작할 수 없습니다.',
+            details: {
+                hasKakao: Boolean(window.kakao),
+                hasMaps: Boolean(window.kakao?.maps),
+                hasServices: Boolean(window.kakao?.maps?.services),
+            },
+        });
     }
 
+    const validCenter = validateCenter(center);
+    const validRadius = validateRadius(radiusM);
     const ps = new window.kakao.maps.services.Places();
+
+    logMarket('info', '[CommercialAnalysis] market lookup:start', {
+        center: validCenter,
+        radius: validRadius,
+        primaryCategory,
+        categoryCodes: CATEGORY_CONFIGS.map(({ code }) => code),
+    }, true);
 
     // 모든 카테고리 병렬 조회
     const results = await Promise.all(
-        CATEGORY_CONFIGS.map(({ code }) => searchCategoryAll(ps, code, center, radiusM))
+        CATEGORY_CONFIGS.map((category) => searchCategoryAll(ps, category, validCenter, validRadius))
     );
+
+    const failedResults = results.filter(({ status }) => status === 'ERROR' || status === 'PARTIAL_ERROR');
+    const failedCategories = failedResults.map(({ code }) => code);
+    const primaryResult = results.find(({ code }) => code === primaryCategory);
+    const primaryFailed = primaryResult?.status === 'ERROR' || primaryResult?.status === 'PARTIAL_ERROR';
+    const allFailed = failedResults.length === results.length;
+    const allEmpty = results.every(({ status, places }) =>
+        (status === 'OK' || status === 'ZERO_RESULT') && places.length === 0
+    );
+    const statusesByCategory = Object.fromEntries(
+        results.map(({ code, status, rawStatus }) => [code, rawStatus || status])
+    );
+
+    if (allFailed) {
+        logMarket('error', '[KakaoPlaces] lookup:failed', {
+            statusesByCategory,
+            center: validCenter,
+            radius: validRadius,
+            sdkReady: true,
+        }, false);
+
+        if (failedResults.every(({ rawStatus }) => rawStatus === 'ERROR')) {
+            logMarket('warn', '[KakaoPlaces] quota: suspected', {
+                status: 'ERROR',
+                message: '모든 카테고리 조회가 ERROR로 실패했습니다. 앱 키, 도메인 등록, 사용량 제한을 함께 확인해 주세요.',
+                failedCategories,
+            }, false);
+        }
+
+        throw createMarketError({
+            code: 'market_lookup_failed',
+            title: '상권 데이터를 불러오지 못했습니다',
+            message: '잠시 후 다시 시도해 주세요. 문제가 계속되면 지도 서비스 설정이나 사용량 제한을 확인해야 합니다.',
+            details: { statusesByCategory, failedCategories, center: validCenter, radius: validRadius },
+        });
+    }
+
+    if (primaryFailed) {
+        logMarket('error', '[KakaoPlaces] primary_category:failed', {
+            primaryCategory,
+            status: primaryResult?.rawStatus || primaryResult?.status,
+            center: validCenter,
+            radius: validRadius,
+        }, false);
+
+        throw createMarketError({
+            code: 'primary_category_failed',
+            title: '같은 업종 분석을 불러오지 못했습니다',
+            message: '경쟁 업소 데이터를 확인할 수 없어 리포트를 완성하지 못했습니다.',
+            details: { primaryCategory, statusesByCategory, center: validCenter, radius: validRadius },
+        });
+    }
+
+    if (failedResults.length > 0) {
+        logMarket('warn', '[KakaoPlaces] category:partial_failure', {
+            failedCategories,
+            successfulCategories: results.filter(({ status }) => status === 'OK' || status === 'ZERO_RESULT').map(({ code }) => code),
+            center: validCenter,
+            radius: validRadius,
+        }, false);
+    }
 
     // 카테고리별 결과 매핑
     const categoryPlaces = {};
     const counts = {};
 
-    CATEGORY_CONFIGS.forEach(({ code, label }, i) => {
-        const places = results[i];
-        counts[code] = { label, total: places.length };
+    results.forEach(({ code, label, places, status, rawStatus }) => {
+        counts[code] = {
+            label,
+            total: places.length,
+            status,
+            unavailable: status === 'ERROR' || status === 'PARTIAL_ERROR',
+        };
 
         // 지도 마커용 장소 목록 (상위 10개)
         categoryPlaces[code] = places.slice(0, 10).map(p => ({
@@ -111,7 +323,44 @@ export async function fetchRealMarketData(center, radiusM, primaryCategory = 'FD
             phone: p.phone,
             url: p.place_url,
         }));
+
+        if (status === 'PARTIAL_ERROR') {
+            counts[code].note = rawStatus || 'PARTIAL_ERROR';
+        }
     });
+
+    if (allEmpty) {
+        return {
+            reportState: REPORT_STATE.EMPTY,
+            emptyState: {
+                title: '조회된 상권 데이터가 없습니다',
+                message: '선택한 위치와 반경에서 장소 정보가 발견되지 않았습니다. 반경을 넓히거나 다른 장소를 검색해 주세요.',
+                actionLabel: validRadius === 1000 ? '장소 다시 검색' : '반경 1km로 보기',
+                suggestedRadius: validRadius === 1000 ? null : 1000,
+            },
+            center: validCenter,
+            radius: validRadius,
+            generatedAt: new Date().toISOString(),
+            counts,
+            competition: {
+                categoryGroupCode: primaryCategory,
+                label: `내 업종(${counts[primaryCategory]?.label || '음식점'})`,
+                total: 0,
+                densityPerKm2: 0,
+                nearest: [],
+            },
+            anchors: {
+                score: 0,
+                typeLabel: '데이터 없음',
+                breakdown: [],
+            },
+            actions: [],
+            warnings: [],
+            note: '선택한 위치와 반경에서 조회된 장소가 없습니다.',
+            _categoryPlaces: categoryPlaces,
+            diagnostics: { statusesByCategory, failedCategories },
+        };
+    }
 
     // 경쟁 업소 (내 업종 상위 5개, 거리 오름차순)
     const competitorPlaces = categoryPlaces[primaryCategory] || [];
@@ -140,11 +389,19 @@ export async function fetchRealMarketData(center, radiusM, primaryCategory = 'FD
         '일반상권형';
 
     // km² 밀도 계산 (원 면적 = π * r²)
-    const areKm2 = Math.PI * Math.pow(radiusM / 1000, 2);
+    const areKm2 = Math.PI * Math.pow(validRadius / 1000, 2);
     const densityPerKm2 = Math.round((counts[primaryCategory]?.total || 0) / areKm2 * 10) / 10;
+    const warnings = failedResults.length > 0
+        ? [{
+            type: 'partial_failure',
+            title: '일부 데이터가 반영되지 않았습니다',
+            message: '주요 경쟁 분석은 표시되지만, 주변 시설 일부는 조회되지 않았습니다.',
+            failedCategories: failedResults.map(({ code, label }) => ({ code, label })),
+        }]
+        : [];
 
-    // --- 동적 액션 생성 로직 (MVP용, 추후 백엔드 연동) ---
-    // 백엔드에서 actions 데이터가 내려오면 우선 적용하도록 설계할 수 있습니다.
+    // --- 동적 액션 생성 로직 (MVP용) ---
+    // 백엔드 AI 행동제안 계약도 항상 2개입니다. 프론트 fallback도 같은 개수를 유지합니다.
     const dynamicActions = [];
 
     // 1. 경쟁 강도 기반 액션
@@ -195,17 +452,10 @@ export async function fetchRealMarketData(center, radiusM, primaryCategory = 'FD
         });
     }
 
-    // 3. 지도 탐색 유입 기반 액션
-    dynamicActions.push({
-        title: "지도 앱 탐색 유입 강화",
-        why: "길을 걷다가 주변 랜드마크 검색 후 우연히 유입될 확률이 매우 높습니다 🗺️",
-        todo: ["지도 앱(카카오맵, 네이버지도)에 영업시간 및 휴무일 최신화 확인하기", "메뉴 설명에 손님들이 검색할 만한 핵심 카테고리 추가하기"],
-        cta: { label: "지도로 숏폼 노출 설정", action: "OPEN_CONTENT_BUILDER", payload: { theme: "map_seo" } }
-    });
-
     return {
-        center,
-        radius: radiusM,
+        reportState: REPORT_STATE.READY,
+        center: validCenter,
+        radius: validRadius,
         generatedAt: new Date().toISOString(),
         counts,
         competition: {
@@ -220,8 +470,10 @@ export async function fetchRealMarketData(center, radiusM, primaryCategory = 'FD
             typeLabel: anchorType,
             breakdown: anchorBreakdown,
         },
-        actions: dynamicActions,
-        note: null,
+        actions: dynamicActions.slice(0, 2),
+        warnings,
+        note: warnings.length > 0 ? '일부 주변 시설 데이터는 조회 실패로 집계에서 제외되었습니다.' : null,
         _categoryPlaces: categoryPlaces, // 지도 마커용
+        diagnostics: { statusesByCategory, failedCategories },
     };
 }
