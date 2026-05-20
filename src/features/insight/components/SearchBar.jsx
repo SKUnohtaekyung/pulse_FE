@@ -5,7 +5,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, X, Loader2 } from 'lucide-react';
-import { searchPlacesByKeyword } from '../../../api/kakaoLocal';
+import { searchPlacesByKeyword } from '../api/kakaoLocal';
 
 export default function SearchBar({ center, onSearch }) {
     const [query, setQuery] = useState('');
