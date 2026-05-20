@@ -100,3 +100,66 @@ export async function fetchAiMarketingActions(payload) {
         return fallbackActions.slice(0, 2); // 2개만 반환
     }
 }
+
+/**
+ * 내 가게 정보(위치 및 업종)를 백엔드에서 조회하는 함수
+ * 
+ * [카카오 카테고리 매핑 안내]
+ * 업종 코드는 한국 공통 코드가 아니라 카카오맵 고유의 그룹 코드(FD6, CE7 등)입니다.
+ * 따라서 백엔드에서는 DB에 있는 업종 텍스트(예: '한식', '중식', '베이커리')를 그대로 내려주기만 하면 되고,
+ * 프론트엔드의 이 함수에서 해당 텍스트를 읽고 알아서 카카오 코드(FD6, CE7)로 찰떡같이 변환(매핑)합니다.
+ * 
+ * @returns {Promise<Object>} - { lat, lng, primaryCategoryGroupCode, storeName }
+ */
+export async function fetchMyStoreInfo() {
+    // 백엔드 프로필/가게 정보 조회 엔드포인트 가정
+    const endpoint = `${API_BASE_URL}/api/v1/users/me/store`;
+
+    try {
+        const response = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                // 'Authorization': `Bearer ${localStorage.getItem('token')}` // 향후 추가
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`가게 정보 API 응답 에러 (Status: ${response.status})`);
+        }
+
+        const result = await response.json();
+        
+        // 예시: 백엔드 응답이 { lat: 37.4979, lng: 127.0276, category: 'RESTAURANT', name: '바람난 수제비' } 인 경우
+        const store = result.data;
+
+        // [외식업 특화 매핑 로직] 카페/베이커리 종류면 CE7, 그 외 한식/중식 등 모든 외식업은 FD6으로 통일
+        const categoryString = (store.category || '').toUpperCase();
+        const isCafe = categoryString.includes('CAFE') || 
+                       categoryString.includes('카페') || 
+                       categoryString.includes('베이커리') || 
+                       categoryString.includes('COFFEE');
+
+        const kakaoCategoryCode = isCafe ? 'CE7' : 'FD6';
+
+        return {
+            lat: parseFloat(store.lat),
+            lng: parseFloat(store.lng),
+            primaryCategoryGroupCode: kakaoCategoryCode,
+            storeName: store.name
+        };
+
+    } catch (error) {
+        console.warn('[mapInsightApi] 백엔드 가게 정보 조회 실패. 임시(Fallback) 좌표를 반환합니다.', error);
+        
+        // ----------------------------------------------------
+        // [Fallback] 백엔드 미지원 시 화면 테스트용 기본 좌표 반환
+        // ----------------------------------------------------
+        return {
+            lat: 37.4979,     // 강남역 부근 임시 위도
+            lng: 127.0276,    // 강남역 부근 임시 경도
+            primaryCategoryGroupCode: 'FD6',
+            storeName: '바람난 얼큰 수제비 (테스트)'
+        };
+    }
+}
