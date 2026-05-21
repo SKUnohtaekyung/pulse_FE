@@ -20,7 +20,8 @@ This repo currently has limited automated test structure. Prefer pragmatic verif
    - route smoke test
    - browser/manual QA
 4. Write Given/When/Then cases before code where useful.
-5. Map each case to commands or files.
+5. For acceptance-level scenarios, read `references/pulse-acceptance-scenarios.md`.
+6. Map each case to commands or files.
 
 ## PULSE Critical Areas
 - Auth/profile and route protection.

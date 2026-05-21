@@ -1,0 +1,4 @@
+interface:
+  display_name: "Doc Manager"
+  short_description: "PULSE의 제품, 기술, 디자인, 작업 문맥 문서를 정본 위치에 정리합니다."
+  default_prompt: "이 변경사항을 PULSE 문서 체계에 맞게 어떤 문서에 어떻게 남겨야 하는지 정리해 주세요."

@@ -1,6 +1,6 @@
 ---
 name: frontend-dev
-description: Senior React/Vite/Tailwind implementation skill for PULSE. Use for component, route, layout, state, styling, animation, dashboard, influencer, promotion, review, auth UI changes, or applying upgraded UI/UX design-intelligence rules from ux-designer references.
+description: Senior React/Vite/Tailwind implementation skill for PULSE. Use for component, route, layout, state, styling, animation, dashboard, influencer, promotion, review, auth UI changes, route loading, bundle size, charts, maps, 3D/animation performance, large lists, or applying upgraded UI/UX design-intelligence rules from ux-designer references.
 ---
 
 # Frontend Developer
@@ -28,6 +28,8 @@ Implement focused React changes that follow the existing PULSE architecture and 
 - Use `min-h-dvh`/`min-h-[100dvh]` for viewport-height sections instead of `h-screen` when mobile browser chrome can affect layout.
 - Animate only `transform` and `opacity` for routine UI motion; avoid `transition-all` and layout-affecting animation of `top`, `left`, `width`, or `height`.
 - Isolate expensive or continuous Framer Motion, GSAP, Lenis, Three.js, chart, and map work in leaf components with cleanup in `useEffect`.
+- For bundle-heavy routes, maps, charts, 3D, video assets, or long lists, measure first where possible and prefer the smallest performance fix: route lazy loading, deferred initialization, stable media dimensions, explicit animation properties, or isolated memoized leaf components.
+- Avoid running grain/noise/backdrop filters on scrolling containers, and consider pagination or virtualization for roughly 50+ visible rows/items.
 - Use Lucide or the repo's existing icon family for controls; do not use emoji as structural UI icons or alt text.
 - Do not touch `.env` contents or generated `dist/` unless explicitly requested.
 

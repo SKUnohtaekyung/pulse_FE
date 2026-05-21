@@ -22,12 +22,13 @@ Use this file for complex, ambiguous, multi-file, or long-running Codex work. Sk
 
 ## PULSE Defaults
 
-- Product or market strategy: start with `product-manager`, then the narrow PULSE product skill.
+- Product, market, validation, metrics, growth, or pricing strategy: use `product-manager` and load only the relevant `frameworks/` or `references/` file.
 - UI implementation: use `ux-designer` before broad layout changes, `frontend-dev` for implementation, and `pulse-visual-qa` for browser verification.
 - API or data contract changes: use `pulse-api-contract-architect` before implementation.
 - Auth, env, external API, upload, or AI prompt boundaries: use `pulse-security-hardening`.
-- Metrics, experiments, growth, pricing, or marketplace validation: use `pulse-product-validation`.
-- Acceptance criteria and QA scenarios: use `pulse-acceptance-scenarios`.
+- Metrics, experiments, growth, pricing, marketplace validation, or market research: use `product-manager` and load its relevant `references/` file.
+- Acceptance criteria and QA scenarios: use `tdd-architect` and load `references/pulse-acceptance-scenarios.md`.
+- For ambiguous, multi-step, debugging, architecture, trade-off, or assumption-heavy work, use this file to structure the plan. If Sequential Thinking MCP is callable, use it to check the reasoning order; if it is unavailable, state the fallback and continue with explicit assumptions and verification.
 
 ## Stop Conditions
 

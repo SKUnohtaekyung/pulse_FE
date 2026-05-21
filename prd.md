@@ -3,7 +3,7 @@
 > **작성일**: 2026-03-31
 > **버전**: 2.1 (인플루언서 대시보드 추가 편재)
 > **원본 요청**: 양면 시장 구축을 위한 인플루언서 스페이스 기획
-> **SSOT 참조**: `about_pulse.md` (Project Vision/Objective)
+> **SSOT 참조**: `MD/about_pulse.md` (Project Vision/Objective)
 
 ---
 

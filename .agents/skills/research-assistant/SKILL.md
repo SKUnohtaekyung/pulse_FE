@@ -10,9 +10,11 @@ Prevent hallucinated library/API guidance by checking official documentation bef
 
 ## Source Priority
 1. Context7 MCP for supported libraries and frameworks.
-2. Official vendor docs.
-3. Project docs and `package.json` for installed versions.
-4. General web search only when official docs are insufficient and browsing is appropriate.
+2. Project `package.json` and `MD/tech.md` to confirm installed versions and integration context.
+3. Official vendor docs for API/library behavior.
+4. PULSE project docs for local integration notes after official behavior is confirmed.
+5. General web search only when official docs are insufficient and browsing is appropriate.
+6. If Context7 is unavailable in the current session, state that fallback and use local version checks plus official vendor docs.
 
 ## Workflow
 1. Identify the library, API, or framework.

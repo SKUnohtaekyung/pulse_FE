@@ -52,5 +52,7 @@
 - 큰 라우트/무거운 화면은 lazy loading과 route-level suspense를 우선 검토한다.
 
 ## Documentation Rules
+- 문서 탐색은 [MD/README.md](MD/README.md)의 우선순위를 따른다.
 - 기능 의도는 [prd.md](prd.md), 기술 구조는 [MD/tech.md](MD/tech.md), 디자인 기준은 [MD/design_guide.md](MD/design_guide.md)를 우선한다.
+- [MD/PULSE.md](MD/PULSE.md)는 SSOT가 아니라 agent quick index로만 사용한다.
 - 중요한 의사결정, 제약, 후속 작업은 `.agent/context/active_task.md` 또는 관련 `MD/` 문서에 남긴다.

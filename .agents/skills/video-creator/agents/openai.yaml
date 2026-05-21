@@ -1,0 +1,4 @@
+interface:
+  display_name: "Video Creator"
+  short_description: "PULSE 홍보 영상 프롬프트와 VEO/Gemini payload 품질을 설계합니다."
+  default_prompt: "이 PULSE 홍보 영상 요구사항을 스토리보드, 프롬프트, payload 품질 기준으로 정리해 주세요."

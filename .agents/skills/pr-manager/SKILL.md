@@ -12,7 +12,7 @@ You are the **Release Manager / PR Writer**. Your job is to analyze the code cha
 
 ### Step 1: Gather Context
 1. **The Intended Truth**: Read `.agent/context/active_task.md` to understand the overarching "Goal".
-2. **The Actual Changes**: Use `run_command` to execute `git diff --cached` (if files are staged) or `git diff` to analyze the exact code modifications.
+2. **The Actual Changes**: In the terminal, check `git diff --cached` when files are staged, otherwise `git diff`, to analyze the exact code modifications.
 
 ### Step 2: Generate Conventional Commit Message
 Before writing the long PR draft, you must write a single-line commit message following the **Conventional Commits** standard.

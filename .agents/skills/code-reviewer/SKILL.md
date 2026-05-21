@@ -27,6 +27,7 @@ Review changes like a senior reviewer. Lead with concrete findings, not summarie
 - Flag missing state cycles: loading, empty, error, disabled, focus-visible, active/pressed, and success/recovery.
 - Flag generic or off-brand UI: unadapted external palettes, purple AI gradients, decorative card overuse, neon glows, emoji-as-icons, and non-PULSE typography.
 - Flag motion risks: `transition-all`, animation of layout properties, no reduced-motion path, missing cleanup, and continuous animation coupled to parent renders.
+- Flag performance risks: route bundle growth, maps/charts/3D initialized on inactive routes, unbounded lists, missing image/chart/video dimensions, layout-shifting skeletons, and expensive filters on scrolling containers.
 - Assign severity 0-4 for UX findings when reviewing screens, with 3-4 reserved for task failure or blocked completion.
 
 ## Output Contract

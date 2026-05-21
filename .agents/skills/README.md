@@ -1,50 +1,52 @@
 # PULSE Codex Skills
 
-This directory is the canonical Codex project skill surface for PULSE. Add and edit project skills here only.
+`.agents/skills/` is the canonical Codex project skill surface for PULSE. Add and edit project skills here only.
 
-`.agent/context` may still hold workflow handoff notes, but `.agent/skills` is intentionally not used to avoid duplicate skill sources.
+`.agent/context/` holds current task handoff state. `.agent/skills/` is intentionally not used.
 
-The active project skill set is intentionally compact: 13 core workflow skills and 6 PULSE-specific skills.
+## Active Skill Set
+
+The active set is intentionally kept to 13 skills to improve automatic selection quality.
+
+### Core Workflow
+
+- `product-manager`: PRD, user value, market research, validation, metrics, growth, and pricing references.
+- `planner`: technical decomposition from PRD to implementation plan.
+- `ux-designer`: UI/UX, accessibility, responsive behavior, visual polish, and Korean copy references.
+- `frontend-dev`: React/Vite/Tailwind implementation and performance-aware frontend changes.
+- `tdd-architect`: behavior design, acceptance criteria, tests, and QA scenarios.
+- `code-reviewer`: risk-focused review for correctness, security, UX, performance, and verification.
+- `doc-manager`: durable project documentation updates.
+- `pr-manager`: Korean commit messages and PR drafts from real git diff.
+- `research-assistant`: Context7 or official-docs research with local fallback.
+- `video-creator`: promotion video prompt and payload design.
+
+### PULSE-Specific Specialists
+
+- `pulse-api-contract-architect`: frontend/backend/external API and component contract design.
+- `pulse-security-hardening`: auth, env, external API, upload, user input, and AI prompt boundary review.
+- `pulse-visual-qa`: browser visual QA, interaction verification, responsive checks, and console/network inspection.
+
+## Merged Skill Mapping
+
+- `pulse-market-researcher` -> `product-manager/references/pulse-market-research.md`
+- `pulse-product-validation` -> `product-manager/references/pulse-product-validation.md`
+- `pulse-acceptance-scenarios` -> `tdd-architect/references/pulse-acceptance-scenarios.md`
+- `ux-writer` -> `ux-designer/references/pulse-copy-rules.md`
+- `performance-engineer` -> `frontend-dev` implementation rules and `code-reviewer` performance checks
+- `problem-solver` -> `PLANS.md` complex-work planning and Sequential Thinking fallback rule
+
+Archived skill directories live under `MD/archive/skills/` and are not active discovery sources.
 
 ## Imported UI/UX Skill Upgrade
 
-The PULSE UI skill surface now incorporates analysis from five external skills while keeping `.agents/skills/` as the canonical project source:
+The PULSE UI skill surface incorporates analysis from external design skills while keeping `.agents/skills/` as the canonical project source.
 
 - UI UX PRO MAX: vendored search data and scripts at `ux-designer/vendor/ui-ux-pro-max/`.
-- Frontend Design: distinctive, non-generic frontend direction, adapted to PULSE brand constraints.
-- Taste: design variance, motion intensity, visual density, anti-generic UI patterns, and performance guardrails.
-- Web Design Guidelines: React/web interface review checks for accessibility, forms, state, animation, images, performance, and i18n.
-- UX Heuristics: Krug/Nielsen-style usability scoring, trunk test, severity ratings, and task-based audit flow.
+- Frontend Design, Taste, Web Design Guidelines, and UX Heuristics are synthesized in `ux-designer/references/pulse-design-intelligence.md`.
 
-The synthesized PULSE-specific rules live in `ux-designer/references/pulse-design-intelligence.md`. Existing implementation, review, QA, and performance skills reference that file instead of duplicating the full guidance.
-
-## Core Workflow Skills
-
-- `product-manager`: PRD and user value.
-- `planner`: technical decomposition.
-- `ux-designer`: UI/UX and accessibility design review.
-- `frontend-dev`: React/Tailwind implementation.
-- `ux-writer`: Korean-first microcopy.
-- `tdd-architect`: test-first behavior design.
-- `code-reviewer`: quality/security review.
-- `performance-engineer`: bundle/runtime performance.
-- `doc-manager`: durable project documentation.
-- `pr-manager`: commit and PR drafting.
-- `problem-solver`: Sequential Thinking workflow.
-- `research-assistant`: Context7-based external docs research.
-- `video-creator`: video-generation payload thinking.
-
-## PULSE-Specific Added Skills
-
-These were adapted from the structure and ideas in community skill repos, then rewritten for this project:
-
-- `pulse-market-researcher`: from `phuryn/pm-skills` market research and journey mapping patterns.
-- `pulse-product-validation`: combines assumption testing, experiment design, North Star/KPI thinking, growth loops, GTM, pricing, value proposition, and marketplace liquidity patterns from `phuryn/pm-skills` and `product-on-purpose/pm-skills`.
-- `pulse-acceptance-scenarios`: from acceptance criteria and edge-case patterns in `product-on-purpose/pm-skills`.
-- `pulse-visual-qa`: from browser verification patterns in `addyosmani/agent-skills` and Playwright workflow ideas.
-- `pulse-security-hardening`: from security hardening patterns in `addyosmani/agent-skills` and OpenAI curated security skills.
-- `pulse-api-contract-architect`: from API/interface contract patterns in `addyosmani/agent-skills`.
+Use external or vendored design recommendations as advisory only. Translate them into PULSE tokens from `MD/design_guide.md`, `tailwind.config.js`, and `src/constants/index.js`.
 
 ## Usage Rule
 
-Prefer the narrowest skill that fits the current task. For broad product work, use `product-manager` first, then `pulse-product-validation` only when the work needs assumptions, experiments, metrics, growth, pricing, or marketplace validation.
+Prefer the narrowest active skill that fits. For broad product work, start with `product-manager`; for implementation, move through `planner`, `frontend-dev`, `pulse-visual-qa`, and `code-reviewer` as needed.

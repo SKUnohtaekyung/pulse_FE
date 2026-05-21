@@ -1,0 +1,4 @@
+interface:
+  display_name: "TDD Architect"
+  short_description: "PULSE 기능을 테스트 가능한 행동, 인수조건, QA 시나리오로 정리합니다."
+  default_prompt: "이 PULSE 기능을 Given/When/Then 인수조건과 검증 명령, 수동 QA 시나리오로 정리해 주세요."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Planner"
+  short_description: "PRD를 PULSE 기술 작업 계획과 handoff로 바꿉니다."
+  default_prompt: "이 PRD를 PULSE의 라우트, 컴포넌트, API 계약, 검증 기준이 포함된 구현 계획으로 분해해 주세요."

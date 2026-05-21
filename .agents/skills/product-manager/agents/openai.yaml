@@ -1,0 +1,4 @@
+interface:
+  display_name: "Product Manager"
+  short_description: "PULSE 기능 아이디어를 PRD, 사용자 가치, 시장/검증 관점으로 정리합니다."
+  default_prompt: "이 PULSE 기능 아이디어를 PRD와 사용자 가치, 핵심 가정, 다음 실행 handoff로 정리해 주세요."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Research Assistant"
+  short_description: "라이브러리와 API 동작을 Context7, 공식 문서, 로컬 버전 기준으로 확인합니다."
+  default_prompt: "이 라이브러리/API 동작을 현재 PULSE 버전과 공식 문서 기준으로 확인해 주세요."

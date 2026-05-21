@@ -1,6 +1,15 @@
 ﻿# PULSE Project Changelog (변경 이력)
 > 이 파일은 PULSE 프로젝트의 개발 진행 상황, 주요 업데이트 내역, 그리고 버그 수정 사항을 기록합니다.
 
+## 2026-05-19
+
+### 🧹 Agent Context and Skill Portfolio Cleanup
+*   **Context Handoff Cleanup:** `.agent/context/` 최상위 현재 파일을 `active_task.md`, `current_plan.md`, `current_pr_draft.md`, `README.md`로 정리하고 과거 산출물은 `archive/`로 이동.
+*   **Active Skill Reduction:** `.agents/skills/` active skill을 19개에서 13개로 축소하고, 병합된 skill은 `MD/archive/skills/`로 이동.
+*   **Reference Preservation:** 시장 리서치, 제품 검증, 인수조건, UX 카피, 성능 점검 지식을 유지 skill의 `references/` 또는 체크리스트에 흡수.
+*   **Documentation Map:** `MD/README.md`를 추가하고 `MD/PULSE.md`를 SSOT가 아닌 Agent Quick Index로 재정의.
+*   **MCP Fallbacks:** Sequential Thinking MCP와 Context7 MCP가 없을 때의 로컬 문서 기반 fallback 규칙을 `PLANS.md`와 `research-assistant`에 명시.
+
 ## 2026-02-16
 
 ###  New Features (새로운 기능)
@@ -25,16 +34,16 @@
 ## 2026-02-08
 
 ### 🤖 Agent Skills System Migration (에이전트 스킬 시스템 마이그레이션)
-*   **Modular Skills Architecture:** 프로젝트 전체를 `.agent/skills/` 디렉토리 기반의 모듈식 스킬 시스템으로 전환.
+*   **Modular Skills Architecture:** 프로젝트 전체를 `.agents/skills/` 디렉토리 기반의 모듈식 스킬 시스템으로 전환.
 *   **10개 전문 스킬 구축:**
     *   **Core Workflow (4):** planner, code-reviewer, doc-manager, tdd-architect
     *   **Design & Development (2):** ux-designer, frontend-dev
     *   **Efficiency Multipliers (2):** ux-writer, performance-engineer
     *   **MCP Integration (2):** research-assistant (context7), problem-solver (Sequential Thinking)
 *   **The Trinity Documentation:** 모든 스킬이 3대 핵심 문서를 참조하도록 설계:
-    *   `about_pulse.md` (프로젝트 헌법 - Why)
-    *   `design_guide.md` (디자인 가이드 - How it looks)
-    *   `PULSE.md` (실행 매뉴얼 - How to build)
+    *   `MD/about_pulse.md` (프로젝트 헌법 - Why)
+    *   `MD/design_guide.md` (디자인 가이드 - How it looks)
+    *   `MD/PULSE.md` (Agent Quick Index - How to find)
 *   **Legacy Files Cleanup:** 구형 에이전트 시스템 파일 제거 및 참조 정리.
     *   **Deprecated:** `SYSTEM_PROMPTS.md`, `MASTER_PROMPT_GUIDE.md`, `ROLE_DEFINITIONS.md`, `Agent.md`
 
@@ -118,7 +127,7 @@
     *   **Auto Scroll:** 메시지 수신 시 자동으로 하단 스크롤 이동.
 
 ### 📘 Documentation & Cleanup (문서 및 정리)
-*   **Design Guide Update:** `design_guide.md`에 'Global Header Standard' 및 'AI Chatbot Interface' 섹션 추가.
+*   **Design Guide Update:** `MD/design_guide.md`에 'Global Header Standard' 및 'AI Chatbot Interface' 섹션 추가.
 *   **Code Cleanup:** `UnifiedInsightPage` 및 `DashboardLayout`에 남아있던 구형 챗봇 코드 및 미사용 파일(`*_plan.md`) 전체 삭제.
 
 ## 2025-12-04

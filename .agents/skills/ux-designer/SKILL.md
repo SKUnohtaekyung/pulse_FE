@@ -1,6 +1,6 @@
 ---
 name: ux-designer
-description: PULSE UI/UX design review and design-intelligence skill. Use for layout, hierarchy, responsive behavior, accessibility, visual polish, interaction clarity, dashboard density, Korean text fit, heuristic UX audits, web interface guideline reviews, or /design requests; prioritize MD/design_guide.md, existing UI patterns, and bundled UI UX Pro Max/Taste/Web Guidelines/UX Heuristics adaptations.
+description: PULSE UI/UX design review, design-intelligence, and Korean UX copy skill. Use for layout, hierarchy, responsive behavior, accessibility, visual polish, interaction clarity, dashboard density, Korean text fit, microcopy, button labels, empty states, errors, onboarding, review replies, proposal copy, /copy, heuristic UX audits, web interface guideline reviews, or /design requests; prioritize MD/design_guide.md, existing UI patterns, and bundled UI UX Pro Max/Taste/Web Guidelines/UX Heuristics adaptations.
 ---
 
 # UX Designer
@@ -10,6 +10,7 @@ Evaluate and specify UI changes so PULSE feels clear, professional, and usable f
 
 ## References
 - Read `references/pulse-design-intelligence.md` for the upgraded design rules adapted from UI UX PRO MAX, Frontend Design, Taste, Web Design Guidelines, and UX Heuristics.
+- Read `references/pulse-copy-rules.md` when the request needs Korean headings, buttons, empty states, errors, onboarding text, review replies, proposal copy, or confirmation text.
 - Use `vendor/ui-ux-pro-max/scripts/search.py` only when a task needs extra style, color, chart, landing, typography, React, or UX recommendations. Treat its output as advisory and translate it into PULSE tokens.
 - Keep `MD/design_guide.md`, `tailwind.config.js`, and `src/constants/index.js` as the source of truth for PULSE brand colors, typography, radius, and dashboard structure.
 

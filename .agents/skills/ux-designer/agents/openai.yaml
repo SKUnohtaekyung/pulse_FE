@@ -1,0 +1,4 @@
+interface:
+  display_name: "UX Designer"
+  short_description: "PULSE 화면의 정보구조, 접근성, 반응형, 한국어 카피 적합성을 설계/리뷰합니다."
+  default_prompt: "이 PULSE 화면을 UX, 접근성, 반응형, 카피 길이 기준으로 리뷰하고 수정 방향을 제안해 주세요."

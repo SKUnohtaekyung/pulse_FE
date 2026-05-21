@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Reviewer"
+  short_description: "PULSE 변경사항을 correctness, 보안, UX, 성능, 검증 누락 기준으로 리뷰합니다."
+  default_prompt: "현재 PULSE 변경사항을 위험도 높은 finding부터 코드 리뷰해 주세요."

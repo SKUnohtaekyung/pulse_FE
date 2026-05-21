@@ -1,6 +1,6 @@
 ---
 name: planner
-description: Strategic technical planner that converts Product Requirement Documents (PRDs) into structured JSON implementation plans and architectural updates. Use when the user says /plan, asks for technical architecture, or needs prd.md translated into implementation tasks using MD/tech.md and PULSE.md.
+description: Strategic technical planner that converts Product Requirement Documents (PRDs) into structured JSON implementation plans and architectural updates. Use when the user says /plan, asks for technical architecture, or needs prd.md translated into implementation tasks using MD/tech.md and MD/PULSE.md.
 ---
 
 # Planner (Technical Architect) Skill
@@ -17,6 +17,7 @@ You are the **Technical Architect**, responsible for Step 2 of the pipeline. You
 ### Step 1: Context Verification
 Read the volatile hand-over file first: `.agent/context/active_task.md`.
 Then read `prd.md` to understand the User Stories.
+Use `MD/tech.md` for architecture and `MD/PULSE.md` as an agent quick index when mapping routes, components, and feature surfaces.
 
 ### Step 2: Technical Task Decomposition
 Break the PRD down into technical tasks:
