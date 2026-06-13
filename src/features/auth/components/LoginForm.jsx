@@ -29,16 +29,12 @@ const LoginForm = ({ onSwitch }) => {
     };
 
     // 개발자 빠른 진입: mock 유저로 즉시 로그인
-    const handleDevBypassLogin = (role = 'owner') => {
+    const handleDevBypassLogin = async (role = 'owner') => {
         if (role === 'owner') {
-            const mockUser = {
-                id: 'owner_999',
-                role: 'owner',
-                name: '김사장 (Dev)',
-                storeName: '펄스 식당'
-            };
-            localStorage.setItem('user', JSON.stringify(mockUser));
-            localStorage.setItem('accessToken', 'dev-bypass-token');
+            // 통합 가상 사장님(범계 든든국밥/김든든)을 localStorage 에 시딩.
+            // 동적 import 로 dev 목 모듈을 프로덕션 번들에서 격리한다.
+            const { seedDevOwner } = await import('../../../dev/seedDevOwner');
+            seedDevOwner();
             navigate('/dashboard');
         } else {
             const mockInfluencer = {

@@ -5,8 +5,8 @@
 
 export const MOCK_STORE = {
     storeId: "store_001",
-    storeName: "범계 로데오점",
-    address: "경기도 안양시 동안구 범계로 ...",
+    storeName: "범계 든든국밥",
+    address: "경기도 안양시 동안구 범계로 18",
     lat: 37.3900,
     lng: 126.9510,
     primaryCategoryGroupCode: "FD6"

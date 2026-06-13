@@ -10,8 +10,8 @@ const USE_MOCK_ANALYSIS = import.meta.env.VITE_USE_MOCK_ANALYSIS === 'true';
 // ─── 목업 데이터 (API 연결 실패 시 fallback) ────────────────────────────────
 // API 응답 구조와 동일하게 유지해야 합니다.
 const MOCK_ANALYSIS_DATA = {
-    store_name: '범계 로데오점',
-    store_summary: '범계역 로데오거리의 대표 맛집. 직장인 점심과 저녁 회식 수요가 높으며 재방문율이 높은 가게입니다.',
+    store_name: '범계 든든국밥',
+    store_summary: '범계역 직장인 상권의 든든한 국밥집. 평일 점심과 해장 수요가 높으며 재방문율이 높은 가게입니다.',
     average_rating: 4.5,
     total_reviews: 128,
     personas: [

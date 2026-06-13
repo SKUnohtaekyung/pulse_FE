@@ -71,7 +71,7 @@ export const PERSONA_DATA = [
 ];
 
 export const LOCAL_DATA = {
-    areaName: "범계역 로데오거리",
+    areaName: "범계역 상권",
     type: "직장인 점심 & 저녁 회식 상권",
     badges: ["#오피스상권", "#2030유동인구", "#회식명소"],
     peakTime: "금요일 19:00 - 22:00",

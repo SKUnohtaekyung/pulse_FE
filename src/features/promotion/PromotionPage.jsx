@@ -59,6 +59,21 @@ export default function PromotionPage({ initialParams, onNavigate }) {
         setIsAutoPrompt(!initialParams.prompt);
     }, [initialParams]);
 
+    // dev 전용: 사장님 자동 로그인 시 입력 사진을 샘플(public/dev/pizza.png)로
+    // 자동 세팅해, 업로드 없이도 "영상 생성하기"가 바로 활성화되게 한다.
+    useEffect(() => {
+        if (!import.meta.env.DEV) return;
+        if (localStorage.getItem('accessToken') !== 'dev-bypass-token') return;
+        let cancelled = false;
+        import('../../dev/mockOwner').then(({ MOCK_OWNER }) => {
+            if (cancelled) return;
+            setImages((prev) => (prev.length ? prev : [MOCK_OWNER.promotionSampleImage]));
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
     useEffect(() => {
         let cancelled = false;
 

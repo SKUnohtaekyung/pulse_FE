@@ -145,7 +145,7 @@ export function ProfileEditDrawer({ isOpen, onClose, initialData, onSave }) {
                                    focus:outline-none focus:ring-2 focus:ring-primary/20
                                    focus:border-primary/40 transition-colors
                                    placeholder:text-text-main/30"
-                        placeholder="예: 범계 로데오점"
+                        placeholder="예: 범계 든든국밥"
                     />
                     {errors.name && (
                         <p className="text-caption text-warning">가게 이름을 입력해 주세요.</p>

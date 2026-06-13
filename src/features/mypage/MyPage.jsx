@@ -106,16 +106,16 @@ const MyPage = ({ onNavigate, profile }) => {
 
     // profile state
     const [profileData, setProfileData] = useState({
-        storeName: '범계 로데오점',
-        storeType: '이자카야',
-        tones: ['친근한', '감성적인', '트렌디한'],
-        keywords: ['#하이볼맛집', '#숙성회', '#데이트코스', '#분위기강패', '#안주가맛있는', '#사진맛집'],
+        storeName: '범계 든든국밥',
+        storeType: '한식',
+        tones: ['친근한', '든든한', '정겨운'],
+        keywords: ['#해장맛집', '#진한국물', '#직장인점심', '#가성비', '#순댓국', '#든든한한끼'],
     });
 
     // platform state
     const [platforms, setPlatforms] = useState([
-        { id: 'instagram', name: 'Instagram', handle: '@bumgye_rodeo', status: 'connected' },
-        { id: 'naver',     name: 'Naver Place', handle: '범계 로데오점', status: 'collecting' },
+        { id: 'instagram', name: 'Instagram', handle: '@dondon_gukbap', status: 'connected' },
+        { id: 'naver',     name: 'Naver Place', handle: '범계 든든국밥', status: 'collecting' },
         { id: 'kakao',     name: '카카오 채널', handle: null, status: 'unlinked' },
     ]);
 
