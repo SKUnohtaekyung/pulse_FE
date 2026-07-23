@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { RefreshCw, AlertTriangle } from 'lucide-react';
 import {
@@ -8,8 +8,15 @@ import {
 } from './services/dashboardV2Api';
 import { fetchLatestAnalysisData } from '../insight/api/analysisApi';
 import { buildStoreInsightFromAnalysisData, getLocalStoreProfile } from '../influencer/influencerMatchingUtils';
+import { FASTAPI_BASE_URL } from '../../config/env';
+import { apiPost } from '../../utils/httpClient';
+import { getErrorMessage, isCanceledError } from '../../utils/apiError';
+import { toArray } from '../../utils/safeFormat';
 
-const FASTAPI_URL = import.meta.env.VITE_FASTAPI_BASE_URL || 'http://127.0.0.1:8000/api';
+const FASTAPI_URL = FASTAPI_BASE_URL;
+
+/** 응답에서 KPI 섹션이 통째로 빠져도 타일이 "데이터 없음"으로 뜨도록 만든 기본값 */
+const EMPTY_SEARCH_TREND = { state: 'empty' };
 import V2Skeleton from './components/V2Skeleton';
 import V2ReelsImpactHero from './components/V2ReelsImpactHero';
 import V2TodaySignalCard from './components/V2TodaySignalCard';
@@ -81,7 +88,15 @@ const StatusV2Page = ({ onNavigate }) => {
     const [delayWarning, setDelayWarning] = useState(false);
     const [retryVisible, setRetryVisible] = useState(false);
 
+    const controllerRef = useRef(null);
+
     const loadData = useCallback(async (isRefreshAction = false) => {
+        // 이전 요청을 끊어 오래된 응답이 최신 화면을 덮어쓰지 않게 한다.
+        controllerRef.current?.abort();
+        const controller = new AbortController();
+        controllerRef.current = controller;
+        const { signal } = controller;
+
         if (isRefreshAction) {
             setIsRefreshing(true);
             setLoadingTip(LOADING_TIPS[Math.floor(Math.random() * LOADING_TIPS.length)]);
@@ -95,62 +110,70 @@ const StatusV2Page = ({ onNavigate }) => {
         try {
             // storeId: 실제 연동 시 인증 컨텍스트(userProfile 등)에서 주입
             const response = await fetchDashboardData('store_123', isRefreshAction);
-            if (response.success) {
-                // 손님 페르소나 위젯은 실제 손님분석(DeepSeek) 결과로 교체 (best-effort).
-                let analysis = null;
-                try {
-                    analysis = await fetchLatestAnalysisData();
-                } catch {
-                    /* 분석 결과 없음 — mock 페르소나 유지 */
-                }
-                if (analysis?.personas?.length && response.data.insights) {
-                    response.data.insights.personas = analysis.personas.slice(0, 3).map((persona, index) => ({
-                        emoji: PERSONA_EMOJIS[index % PERSONA_EMOJIS.length],
-                        label: persona.nickname || persona.tags?.[0] || '단골 손님',
-                        detail: persona.summary || (persona.tags || []).join(', '),
-                    }));
-                }
+            if (signal.aborted) return;
 
-                // '오늘의 기회 신호'는 네이버 DataLab 검색어 트렌드로 교체 (best-effort).
-                // 후보 키워드는 손님분석 키워드(없으면 가게 업종 기반)에서 추출한다.
-                try {
-                    const insight = analysis
-                        ? buildStoreInsightFromAnalysisData(analysis)
-                        : getLocalStoreProfile();
-                    const signalResponse = await fetch(`${FASTAPI_URL}/insights/search-signal`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            candidates: insight?.keywords || [],
-                            category: insight?.category || '',
-                        }),
-                    });
-                    if (signalResponse.ok) {
-                        const signal = await signalResponse.json();
-                        response.data.todaySignal = { state: 'default', ...signal };
-                    }
-                } catch {
-                    /* DataLab 미연동/오류 — mock 신호 유지 */
-                }
-
-                // 서버 dismissedIds와 localStorage 병합 (서버 정본 우선, MVP+1 연동 대비)
-                const serverDismissed = response.data.dismissedIds || [];
-                const localDismissed = getLocalDismissedIds();
-                const merged = [...new Set([...serverDismissed, ...localDismissed])];
-                setDismissedIds(merged);
-                setData(response.data);
+            // success=false 를 그냥 흘려보내면 로딩도 오류도 아닌 빈 화면이 남는다.
+            if (!response?.success || !response?.data) {
+                setError('가게 데이터를 불러오지 못했어요.');
+                return;
             }
+
+            // 손님 페르소나 위젯은 실제 손님분석(DeepSeek) 결과로 교체 (best-effort).
+            let analysis = null;
+            try {
+                analysis = await fetchLatestAnalysisData(signal);
+            } catch {
+                /* 분석 결과 없음 — mock 페르소나 유지 */
+            }
+            if (signal.aborted) return;
+
+            if (analysis?.personas?.length && response.data.insights) {
+                response.data.insights.personas = analysis.personas.slice(0, 3).map((persona, index) => ({
+                    emoji: PERSONA_EMOJIS[index % PERSONA_EMOJIS.length],
+                    label: persona.nickname || persona.tags?.[0] || '단골 손님',
+                    detail: persona.summary || toArray(persona.tags).join(', '),
+                }));
+            }
+
+            // '오늘의 기회 신호'는 네이버 DataLab 검색어 트렌드로 교체 (best-effort).
+            // 후보 키워드는 손님분석 키워드(없으면 가게 업종 기반)에서 추출한다.
+            try {
+                const insight = analysis
+                    ? buildStoreInsightFromAnalysisData(analysis)
+                    : getLocalStoreProfile();
+                const signalData = await apiPost(
+                    `${FASTAPI_URL}/insights/search-signal`,
+                    {
+                        candidates: toArray(insight?.keywords),
+                        category: insight?.category || '',
+                    },
+                    { signal, context: 'dashboard/search-signal' },
+                );
+                if (signalData) response.data.todaySignal = { state: 'default', ...signalData };
+            } catch {
+                /* DataLab 미연동/오류 — mock 신호 유지 */
+            }
+            if (signal.aborted) return;
+
+            // 서버 dismissedIds와 localStorage 병합 (서버 정본 우선, MVP+1 연동 대비)
+            const serverDismissed = toArray(response.data.dismissedIds);
+            const localDismissed = getLocalDismissedIds();
+            setDismissedIds([...new Set([...serverDismissed, ...localDismissed])]);
+            setData(response.data);
         } catch (err) {
-            setError('가게 데이터를 불러오지 못했어요.');
-            console.error('Dashboard API Error:', err);
+            if (signal.aborted || isCanceledError(err)) return;
+            setError(getErrorMessage(err, '가게 데이터를 불러오지 못했어요.'));
         } finally {
-            setIsLoading(false);
-            setIsRefreshing(false);
+            if (!signal.aborted) {
+                setIsLoading(false);
+                setIsRefreshing(false);
+            }
         }
     }, []);
 
     useEffect(() => {
         loadData();
+        return () => controllerRef.current?.abort();
     }, [loadData]);
 
     // 3초 후 지연 안내, 10초 후 재시도 CTA
@@ -189,9 +212,13 @@ const StatusV2Page = ({ onNavigate }) => {
             {/* 페이지 헤더: 마지막 업데이트 시간 + 새로고침 */}
             <div className="flex items-center justify-end mb-2 shrink-0">
                 <button
+                    type="button"
                     onClick={() => !isRefreshing && loadData(true)}
                     disabled={isRefreshing}
+                    aria-busy={isRefreshing}
+                    aria-label={isRefreshing ? '가게 데이터를 새로 불러오는 중' : '가게 데이터 새로 불러오기'}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-sm transition-colors duration-200 text-[12px] font-bold tracking-wide
+                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
                         ${isRefreshing
                             ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
                             : 'bg-[#EBF1FF] hover:bg-[#DCE6FF] border-[#C2D6FF] hover:border-[#99BDFC] hover:shadow-md text-[#002B7A] cursor-pointer'
@@ -215,7 +242,9 @@ const StatusV2Page = ({ onNavigate }) => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
-                        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[100] bg-gray-900/80 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-gray-700/50"
+                        role="status"
+                        aria-live="polite"
+                        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[100] max-w-[calc(100vw-32px)] bg-gray-900/80 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-gray-700/50"
                     >
                         <RefreshCw size={16} className="animate-spin text-blue-400" />
                         <span className="text-[13px] font-bold tracking-wide">{loadingTip}</span>
@@ -230,7 +259,9 @@ const StatusV2Page = ({ onNavigate }) => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
-                        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[100] bg-gray-900/80 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-gray-700/50"
+                        role="status"
+                        aria-live="polite"
+                        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[100] max-w-[calc(100vw-32px)] bg-gray-900/80 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-gray-700/50"
                     >
                         <span className="text-[13px] font-medium">
                             데이터를 불러오는 중이에요. 잠시만 기다려 주세요.
@@ -264,17 +295,19 @@ const StatusV2Page = ({ onNavigate }) => {
                         className="flex-1 flex gap-6 mt-2 min-h-0"
                     >
                         {/* Left — 에러 메시지 */}
-                        <div className="flex-[1.4] flex flex-col items-center justify-center gap-4 overflow-hidden min-h-0">
-                            <AlertTriangle size={40} className="text-orange-400" />
-                            <p className="text-[18px] font-bold text-[#191F28]">
+                        <div className="flex-[1.4] flex flex-col items-center justify-center gap-4 overflow-hidden min-h-0 px-4 text-center" role="alert">
+                            <AlertTriangle size={40} className="text-orange-400" aria-hidden="true" />
+                            <p className="text-[18px] font-bold text-[#191F28] break-keep">
                                 가게 데이터를 불러오지 못했어요.
                             </p>
-                            <p className="text-[14px] text-gray-500">
-                                연결 상태를 확인한 뒤 다시 시도해 주세요.
+                            <p className="text-[14px] text-gray-500 max-w-[320px] break-keep">
+                                {error}
                             </p>
                             <button
+                                type="button"
                                 onClick={() => loadData()}
-                                className="mt-2 bg-[#FF5A36] text-white px-6 py-2.5 rounded-xl font-bold text-[15px] hover:opacity-90 transition-opacity"
+                                className="mt-2 bg-[#FF5A36] text-white px-6 py-2.5 rounded-xl font-bold text-[15px] hover:opacity-90 transition-opacity
+                                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                             >
                                 다시 시도
                             </button>
@@ -308,23 +341,26 @@ const StatusV2Page = ({ onNavigate }) => {
                         <div className="flex-[1.4] flex flex-col gap-4 overflow-y-auto scrollbar-hide pr-2 min-h-0">
 
                             {/* Hero — 단독 row */}
-                            <V2ReelsImpactHero
-                                data={data.reelsImpact}
-                                onCta={() => onNavigate && onNavigate('promotion')}
-                            />
+                            <V2ErrorBoundary name="ReelsImpactHero" title="홍보 성과를 표시하지 못했어요">
+                                <V2ReelsImpactHero
+                                    data={data.reelsImpact}
+                                    onCta={() => onNavigate && onNavigate('promotion')}
+                                />
+                            </V2ErrorBoundary>
 
                             {/* KPI Strip: ① 검색 노출 · ③ 오늘의 기회 신호 */}
                             <div className="flex flex-wrap xl:flex-nowrap items-start gap-6 xl:gap-10 shrink-0">
+                                {/* 응답에 searchTrend/metadata 가 없어도 타일만 빈 상태로 표시된다 */}
                                 <V2KpiTile
                                     label="프로필 방문"
-                                    currentValue={data.searchTrend.value}
-                                    unit={data.searchTrend.unit}
-                                    compareText={data.searchTrend.compareText}
-                                    compareStatus={data.searchTrend.compareStatus}
-                                    source={data.searchTrend.source}
-                                    period={data.searchTrend.period}
-                                    baseTime={data.metadata.baseTime}
-                                    state={data.searchTrend.state}
+                                    currentValue={(data.searchTrend ?? EMPTY_SEARCH_TREND).value}
+                                    unit={data.searchTrend?.unit}
+                                    compareText={data.searchTrend?.compareText}
+                                    compareStatus={data.searchTrend?.compareStatus}
+                                    source={data.searchTrend?.source}
+                                    period={data.searchTrend?.period}
+                                    baseTime={data.metadata?.baseTime}
+                                    state={data.searchTrend?.state ?? 'empty'}
                                 />
                                 <div className="w-px h-12 bg-gray-200 mt-1 hidden xl:block" />
                                 <V2TodaySignalCard data={data.todaySignal} />
@@ -354,13 +390,15 @@ const StatusV2Page = ({ onNavigate }) => {
                             {/* 트렌드 차트 — 남은 공간을 flex-1로 채움 */}
                             {data.trendChart && (
                                 <div className="flex-1 min-h-0">
-                                    <V2TrendChart
-                                        title={data.trendChart.title}
-                                        seriesData={data.trendChart.seriesData}
-                                        lineDataKey="value"
-                                        onDetailClick={() => setIsDrawerOpen(true)}
-                                        isDetailOpen={isDrawerOpen}
-                                    />
+                                    <V2ErrorBoundary name="TrendChart" title="추이 그래프를 표시하지 못했어요">
+                                        <V2TrendChart
+                                            title={data.trendChart.title}
+                                            seriesData={data.trendChart.seriesData}
+                                            lineDataKey="value"
+                                            onDetailClick={() => setIsDrawerOpen(true)}
+                                            isDetailOpen={isDrawerOpen}
+                                        />
+                                    </V2ErrorBoundary>
                                 </div>
                             )}
                         </div>

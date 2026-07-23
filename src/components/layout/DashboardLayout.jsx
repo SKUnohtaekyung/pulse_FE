@@ -10,6 +10,7 @@ import PromotionPage from '../../features/promotion/PromotionPage';
 import ReviewManagementPage from '../../features/reviewManagement/ReviewManagementPage';
 import SubscriptionPage from '../../pages/SubscriptionPage';
 import InfluencerMatchingPage from '../../features/influencer/InfluencerMatchingPage';
+import ErrorBoundary from '../common/ErrorBoundary';
 import { fetchCurrentProfile } from '../../features/auth/api/authApi';
 import { COLORS } from '../../constants';
 import '../../styles/globals.css';
@@ -22,20 +23,24 @@ export default function DashboardLayout({ initialPage, content }) {
     const [navParams, setNavParams] = useState(null);
 
     useEffect(() => {
-        let isMounted = true;
+        const controller = new AbortController();
 
         const loadCurrentProfile = async () => {
-            const profile = await fetchCurrentProfile();
-            if (isMounted && profile) {
-                setUserProfile(profile);
+            try {
+                const profile = await fetchCurrentProfile(controller.signal);
+                if (!controller.signal.aborted && profile) {
+                    setUserProfile(profile);
+                }
+            } catch (error) {
+                // 프로필은 화면의 보조 정보다. 실패해도 대시보드는 그대로 동작해야 하므로
+                // 오류를 전면에 띄우지 않고 이름 영역만 비워 둔다. (401 은 httpClient 가 처리)
+                if (import.meta.env.DEV) console.warn('[PULSE] 프로필을 불러오지 못했습니다.', error);
             }
         };
 
         loadCurrentProfile();
 
-        return () => {
-            isMounted = false;
-        };
+        return () => controller.abort();
     }, []);
 
     const handleNavigate = (menuId, params = null) => {
@@ -62,6 +67,9 @@ export default function DashboardLayout({ initialPage, content }) {
                 className={`flex-1 p-6 h-full flex flex-col main-content pt-20 md:pt-6 transition-[margin] duration-300 ${isExpanded ? 'md:ml-[276px] ml-0' : 'md:ml-[96px] ml-0'}`}
             >
                 <div className="max-w-[1400px] h-full flex flex-col w-full mx-auto">
+                    {/* 한 메뉴에서 렌더링 오류가 나도 셸(사이드바·헤더)은 유지되고,
+                        메뉴를 옮기면 오류 상태가 자동으로 풀린다. */}
+                    <ErrorBoundary name={`Dashboard:${activeMenu}`} resetKeys={[activeMenu]}>
                     {activeMenu === 'status' ? (
                         // UNIFIED STORE DASHBOARD
                         <>
@@ -118,6 +126,7 @@ export default function DashboardLayout({ initialPage, content }) {
                             <p>준비 중인 기능입니다.</p>
                         </div>
                     )}
+                    </ErrorBoundary>
                 </div>
             </main>
         </div>

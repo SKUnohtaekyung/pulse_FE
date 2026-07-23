@@ -11,20 +11,29 @@ const PERSONA_ICON_RULES = [
     { icon: '🎓', keywords: ['학생', '시험', '학원', '대학', '캠퍼스'] },
 ];
 
+/** tags 가 배열이 아닐 때 문자열이 글자 단위로 펼쳐지는 것을 막는다. */
+const toTagArray = (tags) => {
+    if (Array.isArray(tags)) return tags.filter((tag) => typeof tag === 'string' && tag.trim());
+    if (typeof tags === 'string' && tags.trim()) return [tags.trim()];
+    return [];
+};
+
 function collectPersonaText(persona = {}) {
+    const source = persona && typeof persona === 'object' ? persona : {};
     return [
-        persona.nickname,
-        persona.summary,
-        persona.action_recommendation,
-        ...(persona.tags || []),
+        source.nickname,
+        source.summary,
+        source.action_recommendation,
+        ...toTagArray(source.tags),
     ]
-        .filter(Boolean)
+        .filter((value) => typeof value === 'string' && value)
         .join(' ')
         .toLowerCase();
 }
 
 function trimText(text = '', maxLength = 160) {
-    if (!text) return '';
+    // 문자열이 아닌 값이 들어와도 .slice 에서 터지지 않도록 방어한다.
+    if (typeof text !== 'string' || !text) return '';
     if (text.length <= maxLength) return text;
     return `${text.slice(0, maxLength - 1).trim()}…`;
 }
@@ -39,8 +48,12 @@ export function inferPersonaIcon(persona, index = 0) {
 }
 
 export function mapPromotionPersona(persona, index = 0) {
+    // id 가 없으면 key 가 중복되고 "선택 여부" 비교(undefined === undefined)가 전부 참이 되어
+    // 모든 페르소나가 선택된 것처럼 보인다. 인사이트 화면과 같은 규칙으로 채워 준다.
     return {
         ...persona,
+        id: persona?.id ?? index + 1,
+        tags: toTagArray(persona?.tags),
         icon: inferPersonaIcon(persona, index),
         label: persona?.nickname || `타겟 손님 ${index + 1}`,
     };

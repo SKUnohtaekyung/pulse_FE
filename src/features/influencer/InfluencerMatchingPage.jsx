@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { INFLUENCER_DATA, CATEGORIES, filterInfluencersByCategory } from '../../data/mockInfluencers';
@@ -13,6 +13,8 @@ import {
     scoreInfluencers,
 } from './influencerMatchingUtils';
 import { fetchInfluencerRecommendations } from './influencerApi';
+import { isCanceledError } from '../../utils/apiError';
+import { SectionError } from '../../components/common/StateViews';
 
 export default function InfluencerMatchingPage() {
     const navigate = useNavigate();
@@ -22,33 +24,48 @@ export default function InfluencerMatchingPage() {
     const [selectedInfluencer, setSelectedInfluencer] = useState(null);
     const [storeInsight, setStoreInsight] = useState(() => getLocalStoreProfile());
     const [apiInfluencers, setApiInfluencers] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    // 추천 API 가 실패했을 때 예시 데이터를 실제 추천처럼 보여주면 안 되므로 상태로 구분한다.
+    const [recommendationFailed, setRecommendationFailed] = useState(false);
 
-    useEffect(() => {
-        let ignore = false;
+    const controllerRef = useRef(null);
+
+    const loadRecommendations = useCallback(async () => {
+        controllerRef.current?.abort();
+        const controller = new AbortController();
+        controllerRef.current = controller;
+
+        setIsLoading(true);
+        setRecommendationFailed(false);
 
         // 추천 목록(Spring)과 손님분석(DeepSeek)을 함께 불러와,
         // Spring 점수를 손님분석 키워드 + 부분일치 기준으로 재계산한다.
-        Promise.all([
-            fetchInfluencerRecommendations().catch(() => null),
-            fetchLatestAnalysisData().catch(() => null),
-        ]).then(([recommendation, analysisData]) => {
-            if (ignore) return;
+        const [recommendation, analysisData] = await Promise.all([
+            fetchInfluencerRecommendations(controller.signal).catch((error) => (isCanceledError(error) ? undefined : null)),
+            fetchLatestAnalysisData(controller.signal).catch(() => null),
+        ]);
 
-            const insight = analysisData
-                ? buildStoreInsightFromAnalysisData(analysisData)
-                : getLocalStoreProfile();
-            setStoreInsight(insight);
+        if (controller.signal.aborted) return;
 
-            if (recommendation?.influencers?.length) {
-                // 원본 목록만 저장하고, 점수는 아래 useMemo에서 손님분석 인사이트로 계산한다.
-                setApiInfluencers(recommendation.influencers);
-            }
-        });
+        const insight = analysisData
+            ? buildStoreInsightFromAnalysisData(analysisData)
+            : getLocalStoreProfile();
+        setStoreInsight(insight);
 
-        return () => {
-            ignore = true;
-        };
+        if (recommendation?.influencers?.length) {
+            // 원본 목록만 저장하고, 점수는 아래 useMemo에서 손님분석 인사이트로 계산한다.
+            setApiInfluencers(recommendation.influencers);
+        } else if (recommendation === null) {
+            setRecommendationFailed(true);
+        }
+
+        setIsLoading(false);
     }, []);
+
+    useEffect(() => {
+        loadRecommendations();
+        return () => controllerRef.current?.abort();
+    }, [loadRecommendations]);
 
     // storeInsight가 갱신되면(예: 분석 결과 도착) 재점수도 반영한다.
     const scoredInfluencers = useMemo(
@@ -170,17 +187,22 @@ export default function InfluencerMatchingPage() {
 
                     <OwnerSentProposals />
 
+                    {/* 추천을 못 받아온 상태에서 예시 목록을 실제 추천처럼 보여주지 않도록 명시한다 */}
+                    {recommendationFailed && (
+                        <SectionError
+                            compact
+                            title="추천 인플루언서를 불러오지 못했어요"
+                            error="아래 목록은 참고용 예시예요. 잠시 후 다시 시도해 주세요."
+                            onRetry={loadRecommendations}
+                        />
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                         <InfluencerList
                             influencers={filteredInfluencers}
+                            isLoading={isLoading}
                             onViewDetail={setSelectedInfluencer}
                         />
-                    </div>
-
-                    <div className="flex justify-center items-center gap-2 mt-4 pb-10">
-                        <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-[#E5E8EB] text-[#8B95A1] hover:bg-[#F9FAFB] transition-colors"><ChevronLeft size={18} /></button>
-                        <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-[#333D4B] text-white font-bold shadow-md">1</button>
-                        <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-[#E5E8EB] text-[#8B95A1] hover:bg-[#F9FAFB] transition-colors"><ChevronRight size={18} /></button>
                     </div>
                 </div>
             </div>

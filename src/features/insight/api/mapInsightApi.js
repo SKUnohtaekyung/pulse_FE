@@ -149,9 +149,9 @@ export async function fetchMyStoreInfo() {
         }
 
         const result = await response.json();
-        
-        // 예시: 백엔드 응답이 { lat: 37.4979, lng: 127.0276, category: 'RESTAURANT', name: '바람난 수제비' } 인 경우
-        const store = result.data;
+
+        // 응답 래핑 형태가 달라도 터지지 않게 한다. ({ data: {...} } 또는 {...})
+        const store = (result && typeof result === 'object' ? (result.data ?? result) : null) || {};
 
         // [외식업 특화 매핑 로직] 카페/베이커리 종류면 CE7, 그 외 한식/중식 등 모든 외식업은 FD6으로 통일
         const categoryString = (store.category || '').toUpperCase();
@@ -173,16 +173,19 @@ export async function fetchMyStoreInfo() {
         };
 
     } catch (error) {
-        console.warn('[mapInsightApi] 백엔드 가게 정보 조회 실패. 임시(Fallback) 좌표를 반환합니다.', error);
-        
-        // ----------------------------------------------------
-        // [Fallback] 백엔드 미지원 시 화면 테스트용 기본 좌표 반환
-        // ----------------------------------------------------
+        if (import.meta.env.DEV) {
+            console.warn('[mapInsightApi] 가게 정보를 불러오지 못했습니다.', error);
+        }
+
+        // 예전에는 강남역 좌표를 정상값처럼 돌려줘, 사장님이 전혀 다른 동네의
+        // 상권 리포트를 본인 가게 분석으로 신뢰하게 되는 문제가 있었다.
+        // 지금은 좌표를 비워 두고, 호출부가 "예시 데이터"임을 화면에 표시하도록 한다.
         return {
-            lat: 37.4979,     // 강남역 부근 임시 위도
-            lng: 127.0276,    // 강남역 부근 임시 경도
+            lat: null,
+            lng: null,
             primaryCategoryGroupCode: 'FD6',
-            storeName: '바람난 얼큰 수제비 (테스트)'
+            storeName: null,
+            isFallback: true,
         };
     }
 }

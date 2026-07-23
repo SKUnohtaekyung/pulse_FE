@@ -6,9 +6,11 @@ import V2TrendDetailChart from './V2TrendDetailChart';
 import V2ReelsContributionList from './V2ReelsContributionList';
 
 const formatPeriod = (startDate, endDate) => {
-    if (!startDate || !endDate) return '';
+    if (typeof startDate !== 'string' || typeof endDate !== 'string') return '';
     const [, sm, sd] = startDate.split('-').map(Number);
     const [, em, ed] = endDate.split('-').map(Number);
+    // 형식이 다르면 "NaN월 NaN일"이 노출되므로 아예 표시하지 않는다.
+    if ([sm, sd, em, ed].some((part) => !Number.isFinite(part))) return '';
     return `${sm}월 ${sd}일 ~ ${em}월 ${ed}일`;
 };
 

@@ -10,34 +10,41 @@ import {
     ResponsiveContainer,
 } from 'recharts';
 import { Info } from 'lucide-react';
+import { formatNumber, toArray, toValidDate } from '../../../utils/safeFormat';
 
 /**
  * 28일 일별 도달수 라인차트.
  * period.endDate 기준 해당 주(월~endDate)를 은은하게 음영 강조.
  */
-const V2TrendDetailChart = ({ dailySeries = [], period = {} }) => {
+const V2TrendDetailChart = ({ dailySeries, period = {} }) => {
+    // 날짜 필드가 없거나 잘못된 항목이 섞여도 차트 전체가 죽지 않도록 걸러낸다.
+    const series = toArray(dailySeries).filter((point) => typeof point?.date === 'string' && point.date.trim());
+
     // endDate가 속한 주의 월요일 계산
     const thisWeekStart = useMemo(() => {
-        if (!period.endDate) return null;
-        const d = new Date(period.endDate);
-        const day = d.getDay(); // 0=Sun, 1=Mon...
+        const end = toValidDate(period?.endDate);
+        if (!end) return null;
+        const day = end.getDay(); // 0=Sun, 1=Mon...
         const diff = day === 0 ? -6 : 1 - day;
-        const monday = new Date(d);
-        monday.setDate(d.getDate() + diff);
-        return monday.toISOString().split('T')[0];
-    }, [period.endDate]);
+        const monday = new Date(end);
+        monday.setDate(end.getDate() + diff);
+        // toISOString 은 Invalid Date 에서 RangeError 를 던지므로 유효성 확인 후에만 호출한다.
+        return Number.isNaN(monday.getTime()) ? null : monday.toISOString().split('T')[0];
+    }, [period?.endDate]);
 
     const formatXTick = (dateStr) => {
-        const parts = dateStr.split('-');
-        return `${parseInt(parts[1])}/${parseInt(parts[2])}`;
+        const parts = String(dateStr ?? '').split('-');
+        if (parts.length < 3) return '';
+        return `${parseInt(parts[1], 10)}/${parseInt(parts[2], 10)}`;
     };
 
     const formatTooltipLabel = (dateStr) => {
-        const parts = dateStr.split('-').map(Number);
+        const parts = String(dateStr ?? '').split('-').map(Number);
+        if (parts.length < 3 || parts.some(Number.isNaN)) return '';
         return `${parts[1]}월 ${parts[2]}일`;
     };
 
-    if (!dailySeries.length) {
+    if (!series.length) {
         return (
             <div className="flex flex-col items-center justify-center h-[180px] gap-2">
                 <Info size={20} className="text-gray-300" />
@@ -52,11 +59,11 @@ const V2TrendDetailChart = ({ dailySeries = [], period = {} }) => {
         <div className="w-full h-[190px]">
             <ResponsiveContainer width="100%" height="100%">
                 <LineChart
-                    data={dailySeries}
+                    data={series}
                     margin={{ top: 5, right: 8, left: -20, bottom: 0 }}
                 >
                     {/* 이번 주 구간 음영 */}
-                    {thisWeekStart && period.endDate && (
+                    {thisWeekStart && period?.endDate && (
                         <ReferenceArea
                             x1={thisWeekStart}
                             x2={period.endDate}
@@ -95,7 +102,7 @@ const V2TrendDetailChart = ({ dailySeries = [], period = {} }) => {
                             color: '#191F28',
                         }}
                         cursor={{ stroke: '#002B7A', strokeWidth: 1, strokeDasharray: '4 4' }}
-                        formatter={(value) => [`${value.toLocaleString()}회`, '도달수']}
+                        formatter={(value) => [formatNumber(value, { suffix: '회' }), '도달수']}
                         labelFormatter={formatTooltipLabel}
                     />
                     <Line

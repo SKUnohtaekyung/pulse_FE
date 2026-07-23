@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Users, Sparkles, AlertCircle, ChevronRight, Trophy, Clock, TrendingUp, Film, Loader2 } from 'lucide-react';
 import JourneyMapSection from './JourneyMapSection';
-import ReelCreationModal from './components/ReelCreationModal';
-
-const FASTAPI_URL = import.meta.env.VITE_FASTAPI_BASE_URL || 'http://127.0.0.1:8000/api';
-const USE_MOCK_ANALYSIS = import.meta.env.VITE_USE_MOCK_ANALYSIS === 'true';
+import { fetchLatestAnalysisData } from './api/analysisApi';
+import { getErrorMessage, isCanceledError } from '../../utils/apiError';
+import { formatNumber, toFiniteNumber } from '../../utils/safeFormat';
+import { USE_MOCK_ANALYSIS } from '../../config/env';
 
 // ─── 목업 데이터 (API 연결 실패 시 fallback) ────────────────────────────────
 // API 응답 구조와 동일하게 유지해야 합니다.
@@ -165,18 +165,24 @@ const DEFAULT_JOURNEY = {
     }
 };
 
+/**
+ * 실제 분석 응답을 화면이 기대하는 형태로 맞춘다.
+ *
+ * 예전에는 목업 데이터를 fallback 으로 섞어, API 가 가게명·평점을 빠뜨리면
+ * 목업 가게 이름과 평점이 실제 데이터처럼 표시됐다.
+ * 지금은 값이 없으면 "표시할 수 없음"으로 두고, 목업은 USE_MOCK_ANALYSIS 경로에서만 쓴다.
+ */
 const normalizePersona = (persona, index) => {
-    const fallback = MOCK_ANALYSIS_DATA.personas[index % MOCK_ANALYSIS_DATA.personas.length];
     const journey = persona?.journey || {};
 
     return {
         id: persona?.id ?? index + 1,
-        nickname: persona?.nickname || fallback.nickname || `대표 고객 ${index + 1}`,
-        summary: persona?.summary || fallback.summary || '리뷰 기반 대표 고객 그룹입니다.',
-        img: persona?.img || fallback.img || `https://api.dicebear.com/7.x/adventurer/svg?seed=persona-${index + 1}`,
-        tags: Array.isArray(persona?.tags) && persona.tags.length ? persona.tags : (fallback.tags || ['고객분석']),
-        overall_comment: persona?.overall_comment || fallback.overall_comment || '리뷰 기반 분석 총평을 준비 중입니다.',
-        action_recommendation: persona?.action_recommendation || fallback.action_recommendation || '대표 메뉴와 방문 이유를 더 명확히 노출해보세요.',
+        nickname: persona?.nickname || `대표 고객 ${index + 1}`,
+        summary: persona?.summary || '리뷰 기반 대표 고객 그룹입니다.',
+        img: persona?.img || `https://api.dicebear.com/7.x/adventurer/svg?seed=persona-${index + 1}`,
+        tags: Array.isArray(persona?.tags) && persona.tags.length ? persona.tags : ['고객분석'],
+        overall_comment: persona?.overall_comment || '리뷰 기반 분석 총평을 준비 중입니다.',
+        action_recommendation: persona?.action_recommendation || '대표 메뉴와 방문 이유를 더 명확히 노출해보세요.',
         journey: {
             explore: { ...DEFAULT_JOURNEY.explore, ...(journey.explore || {}) },
             visit: { ...DEFAULT_JOURNEY.visit, ...(journey.visit || {}) },
@@ -187,14 +193,11 @@ const normalizePersona = (persona, index) => {
 };
 
 const normalizeAnalysisData = (data) => {
-    const sourcePersonas = Array.isArray(data?.personas) && data.personas.length
-        ? data.personas
-        : MOCK_ANALYSIS_DATA.personas;
-    const personas = sourcePersonas.slice(0, 3).map(normalizePersona);
+    const source = data && typeof data === 'object' ? data : {};
+    const personas = (Array.isArray(source.personas) ? source.personas : []).slice(0, 3).map(normalizePersona);
 
     return {
-        ...MOCK_ANALYSIS_DATA,
-        ...data,
+        ...source,
         personas,
     };
 };
@@ -209,64 +212,44 @@ export default function UnifiedInsightPage({ onNavigate }) {
     // ID 'local' 제거 - 첫 번째 페르소나를 기본으로 선택
     const [selectedId, setSelectedId] = useState(null);
 
+    const controllerRef = useRef(null);
+
     // API에서 페르소나 데이터 가져오기
-    useEffect(() => {
-        const fetchAnalysisData = async () => {
-            try {
-                setLoading(true);
-                setError(null);
+    const loadAnalysis = useCallback(async () => {
+        controllerRef.current?.abort();
+        const controller = new AbortController();
+        controllerRef.current = controller;
 
-                const storedTaskId = localStorage.getItem('analysisTaskId');
-                let response = null;
+        setLoading(true);
+        setError(null);
 
-                if (storedTaskId) {
-                    response = await fetch(`${FASTAPI_URL}/analysis/result/${storedTaskId}`);
+        try {
+            const data = await fetchLatestAnalysisData(controller.signal);
+            if (controller.signal.aborted) return;
 
-                    if (!response.ok && response.status !== 400 && response.status !== 404) {
-                        throw new Error(`분석 결과를 불러오지 못했습니다. (${response.status})`);
-                    }
-                }
+            const normalizedData = normalizeAnalysisData(data);
+            setAnalysisData(normalizedData);
+            setPersonas(normalizedData.personas);
+        } catch (err) {
+            if (controller.signal.aborted || isCanceledError(err)) return;
 
-                if (!response || !response.ok) {
-                    response = await fetch(`${FASTAPI_URL}/analysis/latest`);
-                }
-
-                if (!response.ok) {
-                    if (USE_MOCK_ANALYSIS) {
-                        console.warn(`[InsightPage] 분석 결과 조회 실패(${response.status}) → 목업 데이터 사용`);
-                        setAnalysisData(MOCK_ANALYSIS_DATA);
-                        setPersonas(MOCK_ANALYSIS_DATA.personas);
-                        return;
-                    }
-
-                    if (response.status === 404) {
-                        throw new Error('아직 분석 결과가 없습니다. 회원가입 후 리뷰 수집과 분석이 완료되면 표시됩니다.');
-                    }
-
-                    throw new Error(`분석 결과를 불러오지 못했습니다. (${response.status})`);
-                }
-
-                const data = await response.json();
-                console.log('📊 분석 데이터 로드 완료:', data);
-
-                const normalizedData = normalizeAnalysisData(data);
-                setAnalysisData(normalizedData);
-                setPersonas(normalizedData.personas);
-            } catch (err) {
-                if (USE_MOCK_ANALYSIS) {
-                    console.warn('[InsightPage] API 연결 실패 → 목업 데이터 사용:', err.message);
-                    setAnalysisData(MOCK_ANALYSIS_DATA);
-                    setPersonas(MOCK_ANALYSIS_DATA.personas);
-                } else {
-                    setError(err.message || '분석 데이터를 불러오지 못했습니다.');
-                }
-            } finally {
-                setLoading(false);
+            // 목업 모드는 개발 편의를 위한 명시적 옵션일 때만 동작한다.
+            if (USE_MOCK_ANALYSIS) {
+                setAnalysisData(MOCK_ANALYSIS_DATA);
+                setPersonas(MOCK_ANALYSIS_DATA.personas);
+                return;
             }
-        };
 
-        fetchAnalysisData();
+            setError(getErrorMessage(err, '손님 분석 결과를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.'));
+        } finally {
+            if (!controller.signal.aborted) setLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        loadAnalysis();
+        return () => controllerRef.current?.abort();
+    }, [loadAnalysis]);
 
     // 페르소나 로드 완료 시 첫 번째 페르소나 자동 선택
     useEffect(() => {
@@ -279,6 +262,12 @@ export default function UnifiedInsightPage({ onNavigate }) {
     const selectedPersona = typeof selectedId === 'number'
         ? personas.find(p => p.id === selectedId)
         : null;
+
+    // 숫자가 아니면 배지를 아예 렌더하지 않는다. (null/NaN 노출 방지)
+    const ratingValue = toFiniteNumber(analysisData?.average_rating);
+    const ratingLabel = ratingValue === null ? null : ratingValue.toFixed(1);
+    const reviewCountValue = toFiniteNumber(analysisData?.total_reviews);
+    const reviewCountLabel = reviewCountValue === null ? null : formatNumber(reviewCountValue);
 
     // Mapping for Promotion Page (ID 기반 동적 매핑)
     return (
@@ -301,9 +290,12 @@ export default function UnifiedInsightPage({ onNavigate }) {
                         <AlertCircle size={48} className="text-[#FF5A36] mx-auto mb-4" />
                         <h3 className="text-[18px] font-bold text-[#191F28] mb-2">데이터 로드 실패</h3>
                         <p className="text-[#8B95A1] text-[14px] mb-4">{error}</p>
+                        {/* 페이지 전체를 새로고침하면 다른 입력이 유실된다. 이 화면만 다시 조회한다. */}
                         <button
-                            onClick={() => window.location.reload()}
-                            className="px-4 py-2 bg-[#002B7A] text-white rounded-xl text-sm font-bold hover:bg-[#001F5C] transition-colors"
+                            type="button"
+                            onClick={loadAnalysis}
+                            className="px-4 py-2 bg-[#002B7A] text-white rounded-xl text-sm font-bold hover:bg-[#001F5C] transition-colors
+                                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                         >
                             다시 시도
                         </button>
@@ -332,14 +324,19 @@ export default function UnifiedInsightPage({ onNavigate }) {
                                     {analysisData.store_summary}
                                 </p>
                             )}
-                            {analysisData && (
-                                <div className="flex gap-3 mt-3">
-                                    <span className="px-2.5 py-1 bg-blue-50 text-[#002B7A] text-[11px] font-bold rounded-full border border-blue-100">
-                                        ⭐ 평균 {analysisData.average_rating}점
-                                    </span>
-                                    <span className="px-2.5 py-1 bg-blue-50 text-[#002B7A] text-[11px] font-bold rounded-full border border-blue-100">
-                                        📝 리뷰 {analysisData.total_reviews}개 분석
-                                    </span>
+                            {/* 값이 없으면 "⭐ 평균 점" 같은 빈 배지가 되므로, 있을 때만 표시한다 */}
+                            {analysisData && (ratingLabel || reviewCountLabel) && (
+                                <div className="flex gap-3 mt-3 flex-wrap">
+                                    {ratingLabel && (
+                                        <span className="px-2.5 py-1 bg-blue-50 text-[#002B7A] text-[11px] font-bold rounded-full border border-blue-100">
+                                            ⭐ 평균 {ratingLabel}점
+                                        </span>
+                                    )}
+                                    {reviewCountLabel && (
+                                        <span className="px-2.5 py-1 bg-blue-50 text-[#002B7A] text-[11px] font-bold rounded-full border border-blue-100">
+                                            📝 리뷰 {reviewCountLabel}개 분석
+                                        </span>
+                                    )}
                                 </div>
                             )}
                         </div>

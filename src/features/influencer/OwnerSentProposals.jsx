@@ -1,6 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Calendar, CheckCircle2, Clock, XCircle } from 'lucide-react';
 import { cancelInfluencerProposal, fetchOwnerInfluencerProposals } from './influencerApi';
+import ConfirmModal from '../../components/common/ConfirmModal';
+import { SectionError } from '../../components/common/StateViews';
+import { useToast } from '../../components/common/ToastProvider';
+import { isCanceledError } from '../../utils/apiError';
+import { toArray } from '../../utils/safeFormat';
 
 const STATUS_LABEL = {
     PENDING: '대기중',
@@ -26,46 +31,88 @@ const STATUS_ICON = {
 export default function OwnerSentProposals() {
     const [proposals, setProposals] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState(null);
+    const [cancelTargetId, setCancelTargetId] = useState(null);
+    const [isCanceling, setIsCanceling] = useState(false);
+    const toast = useToast();
+    const controllerRef = useRef(null);
 
-    const loadProposals = async () => {
+    const loadProposals = useCallback(async () => {
+        controllerRef.current?.abort();
+        const controller = new AbortController();
+        controllerRef.current = controller;
+
         setLoading(true);
+        setLoadError(null);
         try {
-            const data = await fetchOwnerInfluencerProposals();
-            setProposals(data || []);
+            const data = await fetchOwnerInfluencerProposals(controller.signal);
+            if (controller.signal.aborted) return;
+            setProposals(toArray(data));
         } catch (error) {
-            console.warn('Owner proposals load failed:', error);
+            if (controller.signal.aborted || isCanceledError(error)) return;
+            // 실패를 빈 목록으로 감추면 "보낸 제안이 없다"고 잘못 읽힌다.
             setProposals([]);
+            setLoadError(error);
         } finally {
-            setLoading(false);
+            if (!controller.signal.aborted) setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         loadProposals();
-    }, []);
+        return () => controllerRef.current?.abort();
+    }, [loadProposals]);
 
-    const handleCancel = async (proposalId) => {
-        if (!window.confirm('대기중인 제안을 취소할까요?')) return;
+    const handleCancel = async () => {
+        if (isCanceling || cancelTargetId === null) return;
+        setIsCanceling(true);
         try {
-            await cancelInfluencerProposal(proposalId);
+            await cancelInfluencerProposal(cancelTargetId);
+            setCancelTargetId(null);
+            toast.success('제안을 취소했어요.');
             await loadProposals();
         } catch (error) {
-            alert(error.message || '제안 취소에 실패했습니다.');
+            toast.fromError(error, '제안을 취소하지 못했어요. 잠시 후 다시 시도해 주세요.');
+        } finally {
+            setIsCanceling(false);
         }
     };
+
+    const cancelConfirm = (
+        <ConfirmModal
+            isOpen={cancelTargetId !== null}
+            onClose={() => setCancelTargetId(null)}
+            onConfirm={handleCancel}
+            isProcessing={isCanceling}
+            title="보낸 제안을 취소할까요?"
+            description="취소하면 되돌릴 수 없어요. 인플루언서에게 제안이 더 이상 보이지 않아요."
+            confirmLabel="제안 취소"
+        />
+    );
 
     if (loading) {
         return (
             <div className="bg-white border border-[#E5E8EB] rounded-xl p-4 text-[14px] text-[#8B95A1]">
-                보낸 제안을 불러오는 중입니다.
+                보낸 제안을 불러오는 중이에요.
             </div>
+        );
+    }
+
+    if (loadError) {
+        return (
+            <SectionError
+                compact
+                error={loadError}
+                title="보낸 제안을 불러오지 못했어요"
+                onRetry={loadProposals}
+            />
         );
     }
 
     if (proposals.length === 0) {
         return (
-            <div className="bg-white border border-[#E5E8EB] rounded-xl p-4 text-[14px] text-[#8B95A1]">
-                아직 보낸 제안이 없습니다.
+            <div className="bg-white border border-[#E5E8EB] rounded-xl p-4 text-[14px] text-[#8B95A1] break-keep">
+                아직 보낸 제안이 없어요. 마음에 드는 인플루언서에게 먼저 협업을 제안해 보세요.
             </div>
         );
     }
@@ -102,8 +149,11 @@ export default function OwnerSentProposals() {
                         {proposal.status === 'PENDING' && (
                             <button
                                 type="button"
-                                onClick={() => handleCancel(proposal.id)}
-                                className="w-full h-9 rounded-lg border border-[#D1D6DB] bg-white text-[#4E5968] text-[13px] font-bold hover:bg-[#F2F4F6]"
+                                onClick={() => setCancelTargetId(proposal.id)}
+                                disabled={isCanceling}
+                                className="w-full h-9 rounded-lg border border-[#D1D6DB] bg-white text-[#4E5968] text-[13px] font-bold hover:bg-[#F2F4F6] transition-colors
+                                           disabled:opacity-40 disabled:cursor-not-allowed
+                                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             >
                                 제안 취소
                             </button>
@@ -111,6 +161,7 @@ export default function OwnerSentProposals() {
                     </div>
                 ))}
             </div>
+            {cancelConfirm}
         </div>
     );
 }

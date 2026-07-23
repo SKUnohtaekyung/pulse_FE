@@ -3,9 +3,11 @@ import { ChevronLeft } from 'lucide-react';
 import Header from '../components/layout/Header';
 import PricingCard from '../components/subscription/PricingCard';
 import FaqSection from '../components/subscription/FaqSection';
+import { useToast } from '../components/common/ToastProvider';
 
 const SubscriptionPage = ({ onNavigate }) => {
     const [isYearly, setIsYearly] = useState(false);
+    const toast = useToast();
 
     // Plan Data (Content SSOT: subscription_model.md)
     const plans = [
@@ -57,11 +59,11 @@ const SubscriptionPage = ({ onNavigate }) => {
     ];
 
     const handleSelectPlan = (planId) => {
+        // 결제 연동은 아직 준비 중이다. 동작하지 않는 것처럼 보이지 않도록 상태를 알린다.
         if (planId === 'expert') {
-            // Pro Plan logic
-            alert("Pro 플랜 가입 페이지로 이동합니다. (준비 중)");
+            toast.info('Pro 플랜 결제는 준비 중이에요. 준비되면 가장 먼저 알려드릴게요.');
         } else {
-            alert(`${planId.toUpperCase()} 플랜이 선택되었습니다.`);
+            toast.success('현재 사용 중인 플랜이에요.');
         }
     };
 

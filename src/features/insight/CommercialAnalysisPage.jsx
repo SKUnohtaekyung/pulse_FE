@@ -13,16 +13,18 @@
  *   - 유동인구 분석
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import KakaoMapContainer from './components/KakaoMapContainer';
 import SummaryPanel from './components/SummaryPanel';
 import SearchBar from './components/SearchBar';
-import { AlertCircle, Loader2, RefreshCw, Search } from 'lucide-react';
+import { AlertCircle, Loader2, MapPinOff, RefreshCw, Search } from 'lucide-react';
 import { MOCK_STORE } from '../../data/marketMockData'; // 가게 좌표는 유지 (추후 API로 교체)
 import { fetchRealMarketData } from './kakaoPlacesService';
 import { fetchMyStoreInfo, fetchAiMarketingActions } from './api/mapInsightApi';
 import { fetchLatestAnalysisData } from './api/analysisApi';
 import { getLocalStoreProfile } from '../influencer/influencerMatchingUtils';
+import { loadKakaoMapSDK } from '../../utils/kakaoMapLoader';
+import { isCanceledError } from '../../utils/apiError';
 
 function normalizeMarketError(error) {
     return {
@@ -67,21 +69,34 @@ export default function CommercialAnalysisPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isKakaoReady, setIsKakaoReady] = useState(false);
+    const [mapUnavailable, setMapUnavailable] = useState(false);
     const [isTargetReady, setIsTargetReady] = useState(false);
     const [actionsLoading, setActionsLoading] = useState(false);
+    // 가게 좌표를 못 받아 예시 위치로 분석 중인지 여부
+    const [isUsingSampleLocation, setIsUsingSampleLocation] = useState(false);
     // 진행 중인 조회를 식별해, 반경/장소가 바뀌면 이전 비동기 결과가 덮어쓰지 않도록 가드한다.
     const loadIdRef = useRef(0);
 
-    // 카카오 SDK 로드 대기
+    // 카카오 SDK 로드
+    // 예전에는 200ms 간격 재귀 setTimeout 으로 무한 폴링해, 로드가 실패하면
+    // 스피너가 영원히 돌고 언마운트 후에도 setState 가 호출됐다.
     useEffect(() => {
-        const checkKakao = () => {
-            if (window.kakao?.maps?.services) {
-                setIsKakaoReady(true);
-            } else {
-                setTimeout(checkKakao, 200);
-            }
+        let cancelled = false;
+
+        loadKakaoMapSDK()
+            .then(() => {
+                if (!cancelled) setIsKakaoReady(true);
+            })
+            .catch(() => {
+                if (cancelled) return;
+                // 지도를 못 써도 페이지 전체가 멈추지 않도록, 로딩을 끝내고 안내를 띄운다.
+                setMapUnavailable(true);
+                setIsLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
         };
-        checkKakao();
     }, []);
 
     useEffect(() => {
@@ -95,29 +110,26 @@ export default function CommercialAnalysisPage() {
 
             try {
                 const store = await fetchMyStoreInfo();
-                let lat = Number(store.lat);
-                let lng = Number(store.lng);
-
-                if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-                    console.warn('[CommercialAnalysis] backend coordinates missing. Using temporary fallback coordinates.', store);
-                    lat = MOCK_STORE.lat;
-                    lng = MOCK_STORE.lng;
-                }
-
                 if (cancelled) return;
 
+                const lat = Number(store.lat);
+                const lng = Number(store.lng);
+                const hasRealCoordinates = Number.isFinite(lat) && Number.isFinite(lng);
+
+                // 좌표를 못 받으면 예시 위치로 화면을 채우되, "예시 데이터"임을 화면에 명시한다.
+                setIsUsingSampleLocation(!hasRealCoordinates);
                 setAnalysisTarget({
                     storeId: store.storeId || store.id || 'current-store',
-                    storeName: store.storeName,
-                    address: store.address,
-                    lat,
-                    lng,
+                    storeName: hasRealCoordinates ? store.storeName : MOCK_STORE.storeName,
+                    address: hasRealCoordinates ? store.address : MOCK_STORE.address,
+                    lat: hasRealCoordinates ? lat : MOCK_STORE.lat,
+                    lng: hasRealCoordinates ? lng : MOCK_STORE.lng,
                     primaryCategoryGroupCode: store.primaryCategoryGroupCode || 'FD6',
                 });
                 setIsTargetReady(true);
             } catch (err) {
-                console.warn('[CommercialAnalysis] store target fallback:', err);
-                if (cancelled) return;
+                if (cancelled || isCanceledError(err)) return;
+                setIsUsingSampleLocation(true);
                 setAnalysisTarget(MOCK_STORE);
                 setIsTargetReady(true);
             }
@@ -172,6 +184,11 @@ export default function CommercialAnalysisPage() {
             // 응답이 도착하는 사이 반경/장소가 바뀌었다면 무시한다.
             if (loadIdRef.current !== loadId) return;
             setMarketData((prev) => (prev ? { ...prev, actions } : prev));
+        } catch (actionError) {
+            // AI 액션은 보조 정보다. 실패해도 리포트 본문은 그대로 유지한다.
+            if (import.meta.env.DEV && !isCanceledError(actionError)) {
+                console.warn('[CommercialAnalysis] AI 액션을 불러오지 못했습니다.', actionError);
+            }
         } finally {
             if (loadIdRef.current === loadId) setActionsLoading(false);
         }
@@ -235,19 +252,34 @@ export default function CommercialAnalysisPage() {
 
     // 검색 이동
     const handleSearch = (place) => {
+        const lat = parseFloat(place?.y);
+        const lng = parseFloat(place?.x);
+
+        // 좌표를 못 읽으면 지도를 NaN 위치로 옮겨 뷰가 깨진다. 먼저 막는다.
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            setError({
+                code: 'invalid_coordinates',
+                title: '선택한 장소의 위치를 확인하지 못했어요',
+                message: '다른 장소를 검색해 주세요.',
+                actionLabel: '다시 시도',
+            });
+            return;
+        }
+
         const nextTarget = {
             storeId: place.id || `place-${place.y}-${place.x}`,
             storeName: place.place_name || '선택한 장소',
             address: place.road_address_name || place.address_name || '',
-            lat: parseFloat(place.y),
-            lng: parseFloat(place.x),
+            lat,
+            lng,
             primaryCategoryGroupCode: analysisTarget?.primaryCategoryGroupCode || 'FD6',
         };
 
+        setError(null);
         setAnalysisTarget(nextTarget);
 
-        if (map && window.kakao) {
-            map.panTo(new window.kakao.maps.LatLng(nextTarget.lat, nextTarget.lng));
+        if (map && window.kakao?.maps?.LatLng) {
+            map.panTo(new window.kakao.maps.LatLng(lat, lng));
         }
     };
 
@@ -265,13 +297,51 @@ export default function CommercialAnalysisPage() {
         loadMarketData();
     };
 
-    const center = analysisTarget
-        ? { lat: analysisTarget.lat, lng: analysisTarget.lng }
-        : { lat: MOCK_STORE.lat, lng: MOCK_STORE.lng };
+    // 매 렌더마다 새 객체를 만들면 지도 훅이 원(Circle)과 줌 레벨을 계속 초기화해,
+    // 사용자가 확대·축소한 상태가 곧바로 되돌아간다.
+    const center = useMemo(
+        () => (analysisTarget
+            ? { lat: analysisTarget.lat, lng: analysisTarget.lng }
+            : { lat: MOCK_STORE.lat, lng: MOCK_STORE.lng }),
+        [analysisTarget],
+    );
     const isEmptyReport = marketData?.reportState === 'empty';
+
+    // 지도를 아예 쓸 수 없는 경우 — 페이지 전체를 막지 않고 안내만 보여준다.
+    if (mapUnavailable) {
+        return (
+            <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-white rounded-[24px] border border-[#E5E8EB] shadow-sm p-8 text-center" role="alert">
+                <div className="w-14 h-14 rounded-full bg-[#F5F7FA] flex items-center justify-center">
+                    <MapPinOff size={24} className="text-[#94A3B8]" aria-hidden="true" />
+                </div>
+                <h3 className="text-[18px] font-bold text-[#191F28] break-keep">지도를 불러오지 못했어요</h3>
+                <p className="text-[14px] text-gray-600 max-w-sm break-keep">
+                    잠시 후 다시 시도해 주세요. 문제가 계속되면 네트워크 상태를 확인해 주세요.
+                </p>
+                <button
+                    type="button"
+                    onClick={() => window.location.reload()}
+                    className="mt-2 px-5 py-2.5 bg-[#002B7A] text-white rounded-lg text-[14px] font-bold hover:bg-[#001F5C] transition-colors
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                >
+                    다시 시도
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="w-full h-full flex flex-col gap-0 bg-white rounded-[24px] overflow-hidden border border-[#E5E8EB] shadow-sm relative">
+            {/* 예시 위치로 분석 중임을 명시한다 — 다른 동네 리포트를 내 가게 분석으로 오인하지 않도록 */}
+            {isUsingSampleLocation && !isLoading && (
+                <div className="shrink-0 flex items-start gap-2 px-5 py-3 bg-point-bg border-b border-[#FFE5DF]" role="status">
+                    <AlertCircle size={16} className="text-point shrink-0 mt-[2px]" aria-hidden="true" />
+                    <p className="text-[13px] text-[#191F28] leading-snug break-keep">
+                        가게 위치를 확인하지 못해 <b>예시 지역</b>으로 분석 중이에요. 상단 검색창에서 우리 가게를 찾아 주세요.
+                    </p>
+                </div>
+            )}
+
             {/* 로딩 상태 */}
             {isLoading && (
                 <div className="absolute inset-0 bg-white/90 flex items-center justify-center z-50 rounded-[24px]">
@@ -289,13 +359,15 @@ export default function CommercialAnalysisPage() {
                     <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
                         <AlertCircle size={32} className="text-red-500" />
                     </div>
-                    <h3 className="text-[18px] font-bold text-[#191F28] mb-2">{error.title}</h3>
-                    <p className="text-[14px] text-gray-600 text-center max-w-md mb-5 leading-relaxed">
+                    <h3 className="text-[18px] font-bold text-[#191F28] mb-2 break-keep">{error.title}</h3>
+                    <p className="text-[14px] text-gray-600 text-center max-w-md mb-5 leading-relaxed break-keep">
                         {error.message}
                     </p>
                     <button
+                        type="button"
                         onClick={handleErrorAction}
-                        className="px-4 py-2 bg-[#002B7A] text-white rounded-lg text-sm font-bold hover:bg-[#001F5C]"
+                        className="px-4 py-2 bg-[#002B7A] text-white rounded-lg text-sm font-bold hover:bg-[#001F5C] transition-colors
+                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     >
                         {error.actionLabel}
                     </button>

@@ -3,11 +3,31 @@ import { Send, X, MessageCircle, Bot, MoreHorizontal, ChevronUp } from 'lucide-r
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchCurrentProfile } from '../auth/api/authApi';
 import { getLocalStoreProfile } from '../influencer/influencerMatchingUtils';
-import { fetchLatestAnalysisData } from './api/analysisApi';
+import { fetchLatestAnalysisData, MOCK_ANALYSIS_DATA } from './api/analysisApi';
+import { FASTAPI_BASE_URL, USE_MOCK_ANALYSIS } from '../../config/env';
+import { apiPost } from '../../utils/httpClient';
+import { getErrorMessage, isCanceledError } from '../../utils/apiError';
 
-const FASTAPI_URL = import.meta.env.VITE_FASTAPI_BASE_URL || 'http://127.0.0.1:8000/api';
+const FASTAPI_URL = FASTAPI_BASE_URL;
 const OWNER_GREETING = '안녕하세요, 사장님! 👋\n매장과 손님 분석에 대해 궁금한 점을 언제든 물어보세요.';
 const INFLUENCER_GREETING = '안녕하세요! 👋\n프로필이나 협업 제안에 대해 무엇이든 물어보세요.';
+/** LLM 응답은 오래 걸릴 수 있지만, 무한 대기는 막는다. */
+const CHAT_TIMEOUT_MS = 60000;
+const MAX_MESSAGE_LENGTH = 1000;
+
+const getMockReply = (question) => {
+    const normalized = question.trim();
+
+    if (normalized.includes('리뷰')) {
+        return '최근 리뷰에서 반복되는 키워드를 먼저 확인한 뒤, 응답 템플릿을 긍정·개선 요청·예외 상황으로 나누어 운영해 보세요.';
+    }
+
+    if (normalized.includes('인플루언서') || normalized.includes('홍보')) {
+        return '매장과 고객층에 맞는 인플루언서를 먼저 고르고, 방문 일정·제공 메뉴·필수 콘텐츠를 제안서에 명확히 적어 보세요.';
+    }
+
+    return '개발용 AI 도우미입니다. 현재는 예시 분석 데이터를 기준으로 안내하고 있어요. 리뷰 관리, 홍보, 인플루언서 매칭 중 궁금한 내용을 물어보세요.';
+};
 
 export default function InlineChatInterface() {
     const [isOpen, setIsOpen] = useState(false);
@@ -17,6 +37,10 @@ export default function InlineChatInterface() {
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const scrollRef = useRef(null);
+    const chatControllerRef = useRef(null);
+
+    // 언마운트 시 진행 중인 요청을 끊는다.
+    useEffect(() => () => chatControllerRef.current?.abort(), []);
 
     // 로그인 사용자(사장님/인플루언서) 컨텍스트 로드.
     // 로그아웃 시 localStorage가 비워지므로 컨텍스트도 자연히 초기화된다.
@@ -53,7 +77,11 @@ export default function InlineChatInterface() {
                 });
                 setMessages([{ role: 'assistant', text: OWNER_GREETING }]);
 
-                fetchLatestAnalysisData()
+                const analysisPromise = USE_MOCK_ANALYSIS
+                    ? Promise.resolve(MOCK_ANALYSIS_DATA)
+                    : fetchLatestAnalysisData();
+
+                analysisPromise
                     .then((data) => {
                         if (ignore || !data) return;
                         setContext((prev) => ({
@@ -81,37 +109,54 @@ export default function InlineChatInterface() {
     }, [messages, isOpen]);
 
     const handleSend = async () => {
+        // 전송 중에는 중복 전송을 막는다.
         if (!input.trim() || isTyping) return;
-        const userMsg = { role: 'user', text: input };
+        const userMsg = { role: 'user', text: input.trim().slice(0, MAX_MESSAGE_LENGTH) };
         const nextMessages = [...messages, userMsg];
         setMessages(nextMessages);
         setInput('');
         setIsTyping(true);
 
+        const controller = new AbortController();
+        chatControllerRef.current = controller;
+
         try {
-            const response = await fetch(`${FASTAPI_URL}/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+            if (USE_MOCK_ANALYSIS) {
+                setMessages(prev => [...prev, {
+                    role: 'assistant',
+                    text: getMockReply(userMsg.text),
+                }]);
+                return;
+            }
+
+            const data = await apiPost(
+                `${FASTAPI_URL}/chat`,
+                {
                     role,
                     context,
                     messages: nextMessages.map((message) => ({
                         role: message.role === 'user' ? 'user' : 'assistant',
                         content: message.text,
                     })),
-                }),
-            });
-            if (!response.ok) throw new Error(`status ${response.status}`);
-            const data = await response.json();
-            setMessages(prev => [...prev, { role: 'assistant', text: data.reply || '응답을 받지 못했습니다.' }]);
-        } catch (error) {
-            console.error('PULSE AI chat failed:', error);
+                },
+                { signal: controller.signal, timeout: CHAT_TIMEOUT_MS, context: 'insight/chat' },
+            );
+
+            if (controller.signal.aborted) return;
+            const reply = typeof data?.reply === 'string' && data.reply.trim() ? data.reply : null;
             setMessages(prev => [...prev, {
                 role: 'assistant',
-                text: '죄송해요, 지금 답변을 가져오지 못했어요. 잠시 후 다시 시도해주세요.',
+                text: reply || '답변을 받지 못했어요. 질문을 조금 더 구체적으로 적어 주시면 도움이 돼요.',
+            }]);
+        } catch (error) {
+            if (controller.signal.aborted || isCanceledError(error)) return;
+            setMessages(prev => [...prev, {
+                role: 'assistant',
+                text: getErrorMessage(error, '지금 답변을 가져오지 못했어요. 잠시 후 다시 시도해 주세요.'),
             }]);
         } finally {
-            setIsTyping(false);
+            if (chatControllerRef.current === controller) chatControllerRef.current = null;
+            if (!controller.signal.aborted) setIsTyping(false);
         }
     };
 

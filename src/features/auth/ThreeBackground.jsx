@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Icosahedron, Float, Environment } from '@react-three/drei';
+import { Icosahedron, Float } from '@react-three/drei';
+import ErrorBoundary from '../../components/common/ErrorBoundary';
 
 function GeometricHeart() {
     const meshRef = useRef();
@@ -45,17 +46,17 @@ function GeometricHeart() {
 const ThreeBackground = ({ position = [0, 0, 0], scale = 1 }) => {
     return (
         <div className="w-full h-full absolute inset-0 pointer-events-none">
-            <Canvas camera={{ position: [0, 0, 6], fov: 45 }} gl={{ alpha: true, antialias: true }}>
-                <ambientLight intensity={0.8} />
-                <pointLight position={[10, 10, 10]} intensity={1.5} color="#4D85FF" />
-                <pointLight position={[-10, -10, -5]} intensity={1} color="#002B7A" />
+            <ErrorBoundary fallback={<div aria-hidden="true" className="w-full h-full" />} name="ThreeBackground">
+                <Canvas camera={{ position: [0, 0, 6], fov: 45 }} gl={{ alpha: true, antialias: true }}>
+                    <ambientLight intensity={0.8} />
+                    <pointLight position={[10, 10, 10]} intensity={1.5} color="#4D85FF" />
+                    <pointLight position={[-10, -10, -5]} intensity={1} color="#002B7A" />
 
-                <group position={position} scale={scale}>
-                    <GeometricHeart />
-                </group>
-
-                <Environment preset="city" />
-            </Canvas>
+                    <group position={position} scale={scale}>
+                        <GeometricHeart />
+                    </group>
+                </Canvas>
+            </ErrorBoundary>
         </div>
     );
 };

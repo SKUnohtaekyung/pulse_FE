@@ -1,7 +1,14 @@
-import React, { useRef, useState } from 'react';
-import { Upload, X, Zap, Crown, Coffee, Lightbulb, AlertCircle, CheckCircle, TrendingUp, Clock, Hash, Copy, Download, Instagram, RefreshCw, Play, Wand2, Settings, Crop, Edit2, Trash2, ChevronDown, Info, Plus, Star, Sparkles, Lock } from 'lucide-react';
+import React, { useCallback, useRef, useState } from 'react';
+import { Upload, X, Zap, Crown, Coffee, AlertCircle, Clock, Hash, Copy, Download, RefreshCw, Play, Wand2, Trash2, ChevronDown, Info, Plus, Sparkles, Lock } from 'lucide-react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Sphere, MeshDistortMaterial } from '@react-three/drei';
+import VideoPlayer from '../../components/common/VideoPlayer';
+import ImageWithFallback from '../../components/common/ImageWithFallback';
+import ConfirmModal from '../../components/common/ConfirmModal';
+import { LoadingSpinner } from '../../components/common/StateViews';
+import { useToast } from '../../components/common/ToastProvider';
+import { releasePreview, validateImageFiles } from '../../utils/imageUpload';
+import { IMAGE_ACCEPT_ATTR, MAX_IMAGE_COUNT, UPLOAD_GUIDE_TEXT, UPLOAD_ORDER_NOTICE } from '../../constants/upload';
 
 // --- 3D Components for Loading (로딩 화면용 3D 컴포넌트) ---
 // 회전하는 왜곡된 구체 (AI가 생각하는 뇌를 추상적으로 표현)
@@ -98,26 +105,108 @@ const PERSONA_PROMPTS = [
     }
 ];
 
-export default function VideoCreator({ step, resultData, onReset, images, setImages, selectedFile, setSelectedFile, options, setOptions, personas = [], selectedPersona, isAutoPrompt, setIsAutoPrompt, isPromptLoading = false, qualityMode, setQualityMode, onConfirm, onNavigate, progress = 0, progressMessage = '' }) {
+/** 영상 생성 단계 안내 — 가짜 퍼센트 대신 "지금 무엇을 하는 중인지"를 보여준다. */
+const GENERATION_STAGES = ['이미지 확인 중', '장면 구성 중', '홍보 영상 생성 중', '결과 정리 중'];
+
+export default function VideoCreator({ step, resultData, onReset, onRetry, images, setImages, options, setOptions, personas = [], personaLoadFailed = false, onRetryPersonas, selectedPersona, isAutoPrompt, setIsAutoPrompt, isPromptLoading = false, qualityMode, setQualityMode, onConfirm, onNavigate, progress = null, progressMessage = '', isSlowGeneration = false, apiError = null, onDismissError }) {
     const fileInputRef = useRef(null);
+    const toast = useToast();
 
     // Local State for UI (화면 제어를 위한 로컬 상태)
     const [isQualityMenuOpen, setIsQualityMenuOpen] = useState(false); // 화질 선택 메뉴 토글
     // promptText와 videoTitle은 부모 컴포넌트(PromotionPage)에서 관리합니다 (상태 끌어올리기)
 
     const [activeTooltip, setActiveTooltip] = useState(null); // 'persona' | 'desc' | null
+    const [isValidatingFiles, setIsValidatingFiles] = useState(false);
+    const [fileErrors, setFileErrors] = useState([]); // [{ name, reason }]
+    const [isProUpgradeOpen, setIsProUpgradeOpen] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
 
-    // Loading message steps (progressMessage prop이 없을 때 fallback 메시지)
-    const LOADING_LOGS = ['사진을 분석하고 있어요...', '영상을 생성하고 있어요...', '장면을 최적화하고 있어요...', '영상을 렌더링하고 있어요...'];
-    const displayMessage = progressMessage || LOADING_LOGS[Math.min(Math.floor(progress / 25), LOADING_LOGS.length - 1)];
+    const isFull = images.length >= MAX_IMAGE_COUNT;
+    const hasProgressValue = typeof progress === 'number' && Number.isFinite(progress);
 
-    const handleFileChange = (e) => {
-        const files = Array.from(e.target.files);
-        if (files.length > 0) {
-            const file = files[0];
-            const newImage = URL.createObjectURL(file); // 프론트엔드 표시용 Blob URL
-            setImages([newImage]);
-            setSelectedFile(file); // 백엔드 전송용 Raw File 저장
+    // 진행률을 서버가 주지 않으면 가짜 퍼센트를 만들지 않고 단계 안내만 보여준다.
+    const stageIndex = hasProgressValue ? Math.min(Math.floor(progress / 25), GENERATION_STAGES.length - 1) : 0;
+    const displayMessage = progressMessage || GENERATION_STAGES[stageIndex];
+
+    const addFiles = useCallback(
+        async (fileList) => {
+            const incoming = Array.from(fileList || []);
+            if (incoming.length === 0) return;
+
+            setIsValidatingFiles(true);
+            try {
+                const { accepted, rejected } = await validateImageFiles(incoming, images);
+                // 잘못된 파일만 제외하고 정상 파일은 그대로 추가한다.
+                if (accepted.length > 0) setImages((prev) => [...prev, ...accepted]);
+                setFileErrors(rejected);
+                if (rejected.length > 0 && accepted.length > 0) {
+                    toast.info(`${accepted.length}장을 등록했어요. 나머지는 아래 안내를 확인해 주세요.`);
+                }
+            } finally {
+                setIsValidatingFiles(false);
+            }
+        },
+        [images, setImages, toast],
+    );
+
+    const handleFileChange = async (e) => {
+        const input = e.target;
+        await addFiles(input.files);
+        // 같은 파일을 지웠다가 다시 고를 때도 onChange 가 발생하도록 값을 비운다.
+        input.value = '';
+    };
+
+    const handleDrop = async (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+        await addFiles(e.dataTransfer?.files);
+    };
+
+    const handleRemoveImage = (key) => {
+        setImages((prev) => {
+            const target = prev.find((image) => image.key === key);
+            if (target) releasePreview(target);
+            return prev.filter((image) => image.key !== key);
+        });
+        setFileErrors([]);
+    };
+
+    const handleDownload = async () => {
+        if (!resultData?.videoUrl || isDownloading) return;
+        setIsDownloading(true);
+        try {
+            const response = await fetch(resultData.videoUrl);
+            if (!response.ok) throw new Error('download failed');
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = objectUrl;
+            anchor.download = `${(options.title || resultData.videoTitle || 'pulse-promotion').replace(/[\\/:*?"<>|]/g, '')}.mp4`;
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+            URL.revokeObjectURL(objectUrl);
+            toast.success('영상을 저장했어요.');
+        } catch {
+            toast.error('영상을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.');
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
+    const handleCopyTitle = async () => {
+        const title = (options.title || '').trim();
+        if (!title) {
+            toast.info('복사할 제목을 먼저 입력해 주세요.');
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(title);
+            toast.success('제목을 복사했어요.');
+        } catch {
+            toast.error('복사하지 못했어요. 제목을 직접 선택해 복사해 주세요.');
         }
     };
 
@@ -127,81 +216,14 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
 
 
 
-    // --- Phase 5: VEO3 Payload Generator (VEO3 연동을 위한 검증 로직) ---
-    // UI에서 선택한 값들을 AI 모델(VEO3)이 이해할 수 있는 JSON 구조로 변환합니다.
-    // Video.md 명세서의 규칙을 엄격하게 따릅니다.
-    const generateVeoPayload = () => {
-        const transactionId = `PULSE_Gen_${Date.now()}`; // 고유 트랜잭션 ID 생성
-
-        // Mappings based on Video.md (Video.md 기반 매핑 로직)
-        const qualityKeywords = qualityMode === 'pro'
-            ? "8K, Masterpiece, Highly Detailed, Sharp Focus, Ray Tracing"
-            : "Photorealistic, 4K, Clean Image";
-
-        const vibeMap = {
-            energetic: { keywords: "Fast-paced, Vibrant Colors, High Saturation, Pop Style", camera: "Dynamic zoom, Fast transitions, Handheld shake" },
-            luxury: { keywords: "Luxurious, Cinematic Lighting, Slow Motion, Elegant, Soft Focus", camera: "Slow smooth pan, Stabilized gimbal shot, Rack focus" },
-            emotional: { keywords: "Cozy, Warm Tone, Instagram Aesthetic, Emotional, Lo-fi", camera: "Static shot with subtle movement, Shallow depth of field" }
-        };
-        const selectedVibe = vibeMap[options.vibe || 'energetic']; // Default to energetic
-
-        const targetPersona = selectedPersona?.nickname || "A happy customer";
-
-        const locationDesc = options.prompt || "A warm sunlit Korean restaurant table";
-
-        return {
-            metadata: {
-                prompt_name: transactionId,
-                base_style: `Vertical 9:16, Portrait Mode, ${qualityKeywords}, ${selectedVibe.keywords}, ${targetPersona} atmosphere`,
-                aspect_ratio: "9:16",
-                duration: "8-10 seconds",
-                location: `${locationDesc} (e.g., A warm sunlit Korean restaurant table)`,
-                camera_setup: `Vertical framing. ${selectedVibe.camera}`
-            },
-            key_elements: [
-                options.prompt || "Delicious Food",
-                `${targetPersona} (e.g., A happy couple, a busy office worker)`,
-                "No text overlays",
-                "High visual fidelity"
-            ],
-            negative_prompts: [
-                "text", "subtitles", "captions", "english text", "korean text", "watermark", "logo", "signature",
-                "horizontal", "landscape", "16:9", "letterbox",
-                "distorted food", "messy table", "ugly faces", "bad anatomy", "violence", "disturbing content"
-            ],
-            timeline: [
-                {
-                    sequence: 1,
-                    section: "HOOK (0-3s)",
-                    timestamp: "00:00-00:03",
-                    action: `[Shot: Close-up] + [Subject: ${options.prompt || "Main Menu"}] + [Action: Dynamic Sizzling] + [Context: High Contrast Lighting].`,
-                    audio: "Upbeat Intro + Sizzling Sound"
-                },
-                {
-                    sequence: 2,
-                    section: "BODY (3-7s)",
-                    timestamp: "00:03-00:07",
-                    action: `[Shot: Medium Shot] + [Subject: ${targetPersona}] + [Action: Eating Happily] + [Context: Busy Store Atmosphere].`,
-                    audio: "Ambient Chatter + Chewing Sound"
-                },
-                {
-                    sequence: 3,
-                    section: "OUTRO (7-10s)",
-                    timestamp: "00:07-00:10",
-                    action: `[Shot: Pull-back/Wide] + [Subject: Full Table Spread] + [Action: Static] + [Context: Inviting Atmosphere].`,
-                    audio: "Logo Sound + Fading BGM"
-                }
-            ]
-        };
-    };
-
+    // 분석 데이터를 못 불러온 경우와 아직 불러오는 중인 경우를 구분해서 보여준다.
     const displayedPersonas = personas.length > 0
         ? personas
         : PERSONA_PROMPTS.map((persona, index) => ({
             ...persona,
-            id: `persona-loading-${index + 1}`,
-            label: '분석 연결 중',
-            icon: '⏳',
+            id: `persona-placeholder-${index + 1}`,
+            label: personaLoadFailed ? '불러오기 실패' : '분석 연결 중',
+            icon: personaLoadFailed ? '—' : '⏳',
             disabled: true,
         }));
 
@@ -226,45 +248,126 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                         {/* Image Upload */}
                         <div className="space-y-2 shrink-0">
                             <div className="flex justify-between items-center gap-2">
-                                <label className="text-[14px] font-bold text-[#191F28] shrink-0 whitespace-nowrap">원본 이미지 (필수)</label>
+                                <span className="text-[14px] font-bold text-[#191F28] shrink-0 whitespace-nowrap">
+                                    원본 이미지 (필수)
+                                    <span className="ml-1.5 text-[12px] font-medium text-gray-400">{images.length}/{MAX_IMAGE_COUNT}</span>
+                                </span>
                                 <div className="flex items-center gap-1 text-[11px] text-[#002B7A] bg-blue-50 px-2 py-1 rounded-full whitespace-nowrap shrink-0">
-                                    <Info size={11} className="shrink-0" /> <span>음식이나 가게의 분위기 중심 사진을 권장해요.</span>
+                                    <Info size={11} className="shrink-0" aria-hidden="true" /> <span>음식이나 가게 분위기 사진을 권장해요.</span>
                                 </div>
                             </div>
+
+                            {/* 허용 개수·형식·용량을 업로드 전에 안내한다 */}
+                            <p className="text-[11px] text-gray-400 leading-snug">
+                                {UPLOAD_GUIDE_TEXT} · {UPLOAD_ORDER_NOTICE}
+                            </p>
+
                             <div
-                                className={`h-[200px] rounded-2xl border-2 border-dashed transition-all relative overflow-hidden group ${images.length > 0 ? 'border-transparent' : 'border-gray-200 hover:border-[#002B7A]/30 hover:bg-gray-50 cursor-pointer'
-                                    }`}
-                                onClick={() => images.length === 0 && fileInputRef.current?.click()}
+                                className={`min-h-[168px] rounded-2xl border-2 border-dashed transition-colors relative p-2 ${isDragging ? 'border-[#002B7A] bg-blue-50/50' : 'border-gray-200'}`}
+                                onDragOver={(e) => {
+                                    e.preventDefault();
+                                    setIsDragging(true);
+                                }}
+                                onDragLeave={() => setIsDragging(false)}
+                                onDrop={handleDrop}
                             >
                                 {images.length > 0 ? (
-                                    <>
-                                        <img src={images[0]} alt="preview" className="w-full h-full object-cover" />
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                            <button className="p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-black transition-colors" title="자르기">
-                                                <Crop size={18} />
-                                            </button>
-                                            <button onClick={() => fileInputRef.current?.click()} className="p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white hover:text-black transition-colors" title="변경">
-                                                <Edit2 size={18} />
-                                            </button>
-                                            <button onClick={() => {
-                                                setImages([]);
-                                                setSelectedFile(null);
-                                            }} className="p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-red-500 hover:text-white transition-colors" title="삭제">
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    </>
+                                    <ul className="grid grid-cols-3 gap-2" aria-label="등록한 이미지 목록">
+                                        {images.map((image, index) => (
+                                            <li key={image.key} className="relative rounded-xl overflow-hidden bg-gray-100 aspect-square">
+                                                <ImageWithFallback
+                                                    src={image.previewUrl}
+                                                    alt={`${index + 1}번째 장면 이미지`}
+                                                    className="w-full h-full object-cover"
+                                                    wrapperClassName="w-full h-full"
+                                                    showFallbackLabel={false}
+                                                />
+                                                <span className="absolute top-1 left-1 w-5 h-5 rounded-full bg-[#002B7A] text-white text-[11px] font-bold flex items-center justify-center" aria-hidden="true">
+                                                    {index + 1}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveImage(image.key)}
+                                                    aria-label={`${index + 1}번째 이미지 삭제`}
+                                                    className="absolute top-1 right-1 p-1 rounded-full bg-black/50 text-white
+                                                               transition-colors hover:bg-error
+                                                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                                                >
+                                                    <Trash2 size={12} aria-hidden="true" />
+                                                </button>
+                                            </li>
+                                        ))}
+                                        {!isFull && (
+                                            <li>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    disabled={isValidatingFiles}
+                                                    className="w-full aspect-square rounded-xl border border-dashed border-gray-300 text-gray-400
+                                                               flex flex-col items-center justify-center gap-1
+                                                               transition-colors hover:border-[#002B7A] hover:text-[#002B7A] disabled:opacity-50
+                                                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#002B7A]"
+                                                >
+                                                    {isValidatingFiles ? <LoadingSpinner size="sm" label="이미지 확인 중" /> : <Plus size={18} aria-hidden="true" />}
+                                                    <span className="text-[11px] font-medium">사진 추가</span>
+                                                </button>
+                                            </li>
+                                        )}
+                                    </ul>
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center h-full">
-                                        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                                            <Upload size={20} className="text-gray-400 group-hover:text-[#002B7A]" />
+                                    <button
+                                        type="button"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={isValidatingFiles}
+                                        className="w-full h-[150px] flex flex-col items-center justify-center gap-1 rounded-xl
+                                                   transition-colors hover:bg-gray-50 disabled:opacity-50
+                                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#002B7A]"
+                                    >
+                                        <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-1">
+                                            {isValidatingFiles ? (
+                                                <LoadingSpinner label="이미지 확인 중" />
+                                            ) : (
+                                                <Upload size={20} className="text-gray-400" aria-hidden="true" />
+                                            )}
                                         </div>
-                                        <p className="text-[13px] font-bold text-gray-500">이미지 업로드</p>
-                                        <p className="text-[12px] text-gray-400">클릭하거나 드래그하세요</p>
-                                    </div>
+                                        <span className="text-[13px] font-bold text-gray-500">
+                                            {isValidatingFiles ? '이미지를 확인하고 있어요' : '이미지 업로드'}
+                                        </span>
+                                        <span className="text-[12px] text-gray-400">클릭하거나 여기로 끌어다 놓으세요</span>
+                                    </button>
                                 )}
                             </div>
-                            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
+
+                            {isFull && (
+                                <p className="text-[11px] text-gray-400">
+                                    최대 {MAX_IMAGE_COUNT}장까지 등록했어요. 다른 사진을 넣으려면 기존 사진을 삭제해 주세요.
+                                </p>
+                            )}
+
+                            {/* 파일별 실패 사유 — 정상 파일은 그대로 유지된다 */}
+                            {fileErrors.length > 0 && (
+                                <ul className="flex flex-col gap-1" role="alert">
+                                    {fileErrors.map((item, index) => (
+                                        <li key={`${item.name}-${index}`} className="flex items-start gap-1.5 text-error text-error">
+                                            <AlertCircle size={13} className="shrink-0 mt-[2px]" aria-hidden="true" />
+                                            <span className="break-keep">
+                                                <span className="font-semibold">{item.name}</span> — {item.reason}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileChange}
+                                accept={IMAGE_ACCEPT_ATTR}
+                                multiple
+                                className="hidden"
+                                tabIndex={-1}
+                                aria-hidden="true"
+                            />
                         </div>
 
                         {/* Persona Prompt Section */}
@@ -312,6 +415,21 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                     );
                                 })}
                             </div>
+                            {personaLoadFailed && (
+                                <div className="flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl bg-point-bg" role="alert">
+                                    <p className="text-[12px] text-[#191F28] break-keep">
+                                        손님 분석 결과를 불러오지 못했어요. 타겟 없이도 영상은 만들 수 있어요.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={onRetryPersonas}
+                                        className="shrink-0 text-[12px] font-bold text-[#002B7A] underline underline-offset-2 rounded
+                                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#002B7A]"
+                                    >
+                                        다시 시도
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         {/* Prompt Section */}
@@ -391,9 +509,7 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                         <button
                                             onClick={() => {
                                                 // [PRO LOCK LOGIC]
-                                                if (confirm("Pro 플랜 전용 기능입니다. 지금 업그레이드하고 4K 화질을 경험해보세요!")) {
-                                                    onNavigate('subscription');
-                                                }
+                                                setIsProUpgradeOpen(true);
                                                 setIsQualityMenuOpen(false);
                                             }}
                                             className="w-full text-left px-3 py-2.5 text-[12px] font-medium text-gray-400 flex justify-between items-center transition-all duration-200 hover:bg-gray-50 bg-gray-50/50 cursor-pointer"
@@ -411,33 +527,50 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                             </button>
                         </div>
 
+                        {/* 직전 시도가 실패했다면 입력값을 유지한 채 재시도 경로를 제공한다 */}
+                        {apiError && (
+                            <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-point-bg" role="alert">
+                                <AlertCircle size={15} className="text-point shrink-0 mt-[2px]" aria-hidden="true" />
+                                <p className="flex-1 text-[12px] text-[#191F28] leading-snug break-keep">{apiError}</p>
+                                <button
+                                    type="button"
+                                    onClick={onDismissError}
+                                    aria-label="오류 안내 닫기"
+                                    className="shrink-0 p-0.5 text-gray-400 rounded transition-colors hover:text-[#191F28]
+                                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#002B7A]"
+                                >
+                                    <X size={13} aria-hidden="true" />
+                                </button>
+                            </div>
+                        )}
+
                         <button
-                            onClick={() => {
-                                try {
-                                    const payload = generateVeoPayload();
-                                    console.log("[VEO3 Payload Verification]", JSON.stringify(payload, null, 2));
-                                    if (selectedFile) console.log("[Image File Ready]", selectedFile.name, selectedFile.size);
-                                    // 콘티(storyboard) 단계 없이 바로 생성 로딩으로 이동
-                                    onConfirm();
-                                } catch (error) {
-                                    console.error("[Payload Generation Error]", error);
-                                    alert("영상 생성 요청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
-                                }
-                            }}
+                            type="button"
+                            onClick={apiError && onRetry ? onRetry : onConfirm}
                             data-testid="promotion-generate-button"
-                            disabled={images.length === 0 || step === 'loading'}
-                            className={`w-full py-3.5 rounded-xl font-bold text-[15px] flex items-center justify-center gap-2 transition-all shadow-lg ${images.length > 0 && step !== 'loading'
-                                ? 'bg-gradient-to-r from-[#FF5A36] to-[#FF8A65] text-white hover:shadow-orange-500/30 hover:scale-[1.02]'
+                            disabled={images.length === 0 || step === 'loading' || isValidatingFiles}
+                            aria-busy={step === 'loading'}
+                            aria-describedby={images.length === 0 ? 'promotion-generate-hint' : undefined}
+                            className={`w-full py-3.5 rounded-xl font-bold text-[15px] flex items-center justify-center gap-2 transition-transform shadow-lg
+                                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#002B7A] focus-visible:ring-offset-2 ${images.length > 0 && step !== 'loading' && !isValidatingFiles
+                                ? 'bg-gradient-to-r from-[#FF5A36] to-[#FF8A65] text-white hover:scale-[1.02]'
                                 : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                 }`}
                         >
                             {step === 'loading' ? (
-                                <RefreshCw size={16} className="animate-spin" />
+                                <RefreshCw size={16} className="animate-spin" aria-hidden="true" />
                             ) : (
-                                <Wand2 size={16} />
+                                <Wand2 size={16} aria-hidden="true" />
                             )}
-                            {step === 'loading' ? '제작 중...' : '영상 생성하기'}
+                            {step === 'loading' ? '제작 중…' : apiError ? '다시 시도하기' : '영상 생성하기'}
                         </button>
+
+                        {/* 버튼이 왜 비활성인지 명시한다 */}
+                        {images.length === 0 && (
+                            <p id="promotion-generate-hint" className="text-[11px] text-gray-400 text-center -mt-1">
+                                사진을 1장 이상 등록하면 영상을 만들 수 있어요.
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>
@@ -484,14 +617,46 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                     <OrbitingSatellite radius={5.4} speed={0.4} size={0.06} color="#BFDBFE" offset={6.0} />
                                 </Canvas>
                             </div>
-                            <div className="text-center space-y-3 z-10">
-                                <h2 className="text-[24px] font-bold text-[#191F28] animate-pulse">
+                            <div className="text-center space-y-3 z-10" role="status" aria-live="polite">
+                                <h2 className="text-[24px] font-bold text-[#191F28]">
                                     {displayMessage}
                                 </h2>
-                                <div className="w-[280px] bg-gray-200 h-1.5 rounded-full overflow-hidden mx-auto">
-                                    <div className="h-full bg-[#002B7A] transition-all duration-300 ease-out" style={{ width: `${progress}%` }}></div>
-                                </div>
-                                <p className="text-[14px] text-gray-500 font-medium">잠시만 기다려주세요 ({Math.round(progress)}%)</p>
+
+                                {/* 단계 안내 — 서버가 진행률을 주지 않아도 어디쯤인지 알 수 있게 한다 */}
+                                <ol className="flex items-center justify-center gap-2 text-[12px]">
+                                    {GENERATION_STAGES.map((stage, index) => (
+                                        <li
+                                            key={stage}
+                                            className={`px-2.5 py-1 rounded-full transition-colors ${index <= stageIndex ? 'bg-[#002B7A] text-white font-semibold' : 'bg-gray-100 text-gray-400'}`}
+                                            aria-current={index === stageIndex ? 'step' : undefined}
+                                        >
+                                            {stage}
+                                        </li>
+                                    ))}
+                                </ol>
+
+                                {/* 서버가 실제 진행률을 줄 때만 퍼센트를 표시한다 (가짜 진행률 금지) */}
+                                {hasProgressValue ? (
+                                    <>
+                                        <div className="w-[280px] bg-gray-200 h-1.5 rounded-full overflow-hidden mx-auto">
+                                            <div
+                                                className="h-full bg-[#002B7A] transition-transform duration-300 ease-out origin-left"
+                                                style={{ transform: `scaleX(${Math.max(0, Math.min(100, progress)) / 100})`, width: '100%' }}
+                                            />
+                                        </div>
+                                        <p className="text-[14px] text-gray-500 font-medium">잠시만 기다려주세요 ({Math.round(progress)}%)</p>
+                                    </>
+                                ) : (
+                                    <p className="text-[14px] text-gray-500 font-medium">
+                                        현재 작업은 계속 진행 중입니다. 시간이 조금 걸릴 수 있어요.
+                                    </p>
+                                )}
+
+                                {isSlowGeneration && (
+                                    <p className="text-[13px] text-point font-medium break-keep max-w-[320px] mx-auto">
+                                        영상 생성에 평소보다 시간이 걸리고 있어요. 창을 닫으면 작업이 취소되니 잠시만 기다려 주세요.
+                                    </p>
+                                )}
                             </div>
                         </div>
                     )}
@@ -499,7 +664,17 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                     {/* RESULT STATE: Video Player (No Title Overlay, Height Based) */}
                     {step === 'result' && resultData && (
                         <div className="relative h-full max-h-full w-auto aspect-[9/16] bg-black rounded-[24px] shadow-2xl overflow-hidden ring-4 ring-white animate-in zoom-in-95 duration-500 group object-contain">
-                            <video key={resultData.videoUrl} src={resultData.videoUrl} controls autoPlay loop muted playsInline preload="metadata" className="w-full h-full object-cover" />
+                            <VideoPlayer
+                                src={resultData.videoUrl}
+                                onRegenerate={onRetry}
+                                className="w-full h-full object-cover"
+                                controls
+                                autoPlay
+                                loop
+                                muted
+                                playsInline
+                                preload="metadata"
+                            />
                         </div>
                     )}
                 </div>
@@ -681,26 +856,38 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                                         className="w-full h-11 rounded-xl bg-white border border-gray-200 px-3 pr-24 text-[13px] focus:border-[#002B7A] focus:ring-1 focus:ring-[#002B7A] transition-all outline-none shadow-sm"
                                     />
                                     <button
-                                        onClick={() => {
-                                            if (options.title) {
-                                                navigator.clipboard.writeText(options.title)
-                                                    .then(() => alert('제목이 복사됐어요!'))
-                                                    .catch(() => alert('복사에 실패했습니다.'));
-                                            }
-                                        }}
-                                        className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[12px] font-bold text-amber-700 bg-gradient-to-r from-amber-50 to-orange-100 hover:from-amber-100 hover:to-orange-200 border border-amber-200 hover:scale-105 px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 shadow-sm"
+                                        type="button"
+                                        onClick={handleCopyTitle}
+                                        className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[12px] font-bold text-amber-700 bg-gradient-to-r from-amber-50 to-orange-100 hover:from-amber-100 hover:to-orange-200 border border-amber-200 hover:scale-105 px-3 py-1.5 rounded-full transition-transform flex items-center gap-1.5 shadow-sm
+                                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#002B7A]"
                                     >
-                                        <Copy size={11} /> 복사하기
+                                        <Copy size={11} aria-hidden="true" /> 복사하기
                                     </button>
                                 </div>
 
                                 {/* 새로고침 + 저장 버튼 */}
                                 <div className="flex items-center gap-2 shrink-0">
-                                    <button onClick={onReset} className="h-11 w-11 rounded-xl bg-white border border-gray-200 text-gray-500 hover:text-[#002B7A] hover:border-[#002B7A] hover:bg-blue-50 shadow-sm flex items-center justify-center transition-all group" title="다시 만들기">
-                                        <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" />
+                                    <button
+                                        type="button"
+                                        onClick={onReset}
+                                        aria-label="처음부터 다시 만들기"
+                                        title="처음부터 다시 만들기"
+                                        className="h-11 w-11 rounded-xl bg-white border border-gray-200 text-gray-500 hover:text-[#002B7A] hover:border-[#002B7A] hover:bg-blue-50 shadow-sm flex items-center justify-center transition-colors group
+                                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#002B7A]"
+                                    >
+                                        <RefreshCw size={18} className="group-hover:rotate-180 transition-transform duration-500" aria-hidden="true" />
                                     </button>
-                                    <button className="h-11 px-6 rounded-xl bg-[#002B7A] text-white font-bold text-[14px] shadow-md hover:bg-[#001F5C] hover:shadow-lg flex items-center justify-center gap-2 transition-all hover:scale-[1.02]">
-                                        <Download size={16} /> 저장하기
+                                    <button
+                                        type="button"
+                                        onClick={handleDownload}
+                                        disabled={!resultData?.videoUrl || isDownloading}
+                                        aria-busy={isDownloading}
+                                        className="h-11 px-6 rounded-xl bg-[#002B7A] text-white font-bold text-[14px] shadow-md hover:bg-[#001F5C] flex items-center justify-center gap-2 transition-transform hover:scale-[1.02]
+                                                   disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100
+                                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#002B7A] focus-visible:ring-offset-2"
+                                    >
+                                        {isDownloading ? <LoadingSpinner size="sm" label="저장 중" /> : <Download size={16} aria-hidden="true" />}
+                                        {isDownloading ? '저장 중…' : '저장하기'}
                                     </button>
                                 </div>
                             </div>
@@ -716,6 +903,20 @@ export default function VideoCreator({ step, resultData, onReset, images, setIma
                     )}
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={isProUpgradeOpen}
+                onClose={() => setIsProUpgradeOpen(false)}
+                onConfirm={() => {
+                    setIsProUpgradeOpen(false);
+                    onNavigate?.('subscription');
+                }}
+                title="고화질은 Pro 플랜 기능이에요"
+                description="Pro 플랜으로 바꾸면 더 선명한 화질로 홍보 영상을 만들 수 있어요."
+                confirmLabel="플랜 살펴보기"
+                cancelLabel="나중에"
+                tone="primary"
+            />
         </div >
     );
 }

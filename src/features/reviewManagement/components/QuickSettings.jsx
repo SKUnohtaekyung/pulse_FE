@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Wand2, Copy, Star, RefreshCw, Check, Loader2 } from 'lucide-react';
 import { ExceptionCaseSettings, DEFAULT_CASES } from './ExceptionCaseSettings';
 import { SaveTemplateModal } from './TemplateComponents';
 import { ReviewCard } from './ReviewList';
+import { useToast } from '../../../components/common/ToastProvider';
+import { InlineError } from '../../../components/common/StateViews';
+import { toArray } from '../../../utils/safeFormat';
 
 function ToggleSwitch({ label, checked, onChange }) {
   return (
@@ -10,8 +13,13 @@ function ToggleSwitch({ label, checked, onChange }) {
       <span className="text-sm text-neutral-700">{label}</span>
       <button
         type="button"
+        role="switch"
+        aria-checked={!!checked}
+        aria-label={label}
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? 'bg-[#002B7A]' : 'bg-neutral-300'}`}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
+                    ${checked ? 'bg-[#002B7A]' : 'bg-neutral-300'}`}
       >
         <span
           className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}
@@ -23,11 +31,35 @@ function ToggleSwitch({ label, checked, onChange }) {
 
 function ReplyCard({ reply, onSaveTemplate, onRegenerate, isRegenerating }) {
   const [isCopied, setIsCopied] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const copyTimerRef = useRef(null);
+  const toast = useToast();
+
+  // 언마운트 후 setState 로 경고가 뜨지 않도록 타이머를 정리한다.
+  useEffect(() => () => clearTimeout(copyTimerRef.current), []);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(reply.content);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(reply?.content || '');
+      setIsCopied(true);
+      clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setIsCopied(false), 2000);
+    } catch {
+      // 비-HTTPS·권한 거부 환경에서는 클립보드 접근이 막힌다.
+      toast.error('복사하지 못했어요. 답변을 직접 선택해 복사해 주세요.');
+    }
+  };
+
+  const handleSaveTemplate = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      await onSaveTemplate(reply.content);
+    } catch {
+      /* 오류 안내는 상위(ReviewManagementPage)에서 토스트로 처리한다 */
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -43,13 +75,17 @@ function ReplyCard({ reply, onSaveTemplate, onRegenerate, isRegenerating }) {
 
       <div className="flex gap-2">
         <button
-          onClick={() => onSaveTemplate(reply.content)}
-          className="flex items-center gap-2 px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-lg transition-colors text-sm font-medium"
+          type="button"
+          onClick={handleSaveTemplate}
+          disabled={isSaving}
+          className="flex items-center gap-2 px-4 py-2 bg-neutral-100 hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed text-neutral-700 rounded-lg transition-colors text-sm font-medium
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
-          <Star className="w-4 h-4" />
-          즐겨찾기
+          <Star className="w-4 h-4" aria-hidden="true" />
+          {isSaving ? '저장 중…' : '즐겨찾기'}
         </button>
         <button
+          type="button"
           onClick={() => onRegenerate(reply.reviewId)}
           disabled={isRegenerating}
           className="flex items-center gap-2 px-4 py-2 bg-neutral-100 hover:bg-neutral-200 disabled:bg-neutral-100 disabled:text-neutral-400 text-neutral-700 rounded-lg transition-colors text-sm font-medium"
@@ -58,8 +94,10 @@ function ReplyCard({ reply, onSaveTemplate, onRegenerate, isRegenerating }) {
           새로고침
         </button>
         <button
+          type="button"
           onClick={handleCopy}
-          className="flex items-center gap-2 px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-lg transition-colors text-sm font-medium"
+          className="flex items-center gap-2 px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-lg transition-colors text-sm font-medium
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           {isCopied ? (
             <>
@@ -92,6 +130,7 @@ export function QuickSettings({
 }) {
   const [showPresetInput, setShowPresetInput] = useState(false);
   const [newPresetName, setNewPresetName] = useState('');
+  const [generateError, setGenerateError] = useState(null);
   const [generatedReplies, setGeneratedReplies] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showCountDropdown, setShowCountDropdown] = useState(false);
@@ -137,15 +176,23 @@ export function QuickSettings({
     }
 
     setIsGenerating(true);
+    setGenerateError(null);
     try {
       const response = await onGenerateReplies(selectedReviews, settings);
       const reviewsById = new Map(selectedReviews.map((review) => [review.id, review]));
-      const mappedReplies = (response.replies || []).map((reply) => ({
+      // 응답에 replies 가 없거나 빈 배열이어도 화면이 멈추지 않도록 구분해서 안내한다.
+      const mappedReplies = toArray(response?.replies).map((reply) => ({
         ...reply,
         reviewId: reply.reviewId || reply.review_id,
         review: reviewsById.get(reply.reviewId || reply.review_id),
       }));
       setGeneratedReplies(mappedReplies);
+      if (mappedReplies.length === 0) {
+        setGenerateError('답변을 만들지 못했어요. 선택한 리뷰를 바꾸거나 잠시 후 다시 시도해 주세요.');
+      }
+    } catch {
+      // 상세 오류 안내는 상위에서 토스트로 처리한다. 여기서는 재시도 경로만 남긴다.
+      setGenerateError('답변 생성에 실패했어요. 설정은 그대로 유지되니 다시 시도할 수 있어요.');
     } finally {
       setIsGenerating(false);
     }
@@ -165,8 +212,9 @@ export function QuickSettings({
     setRegeneratingReviewId(reviewId);
     try {
       const response = await onRegenerateReply(review, settings);
-      const regenerated = (response.replies || [])[0];
+      const regenerated = toArray(response?.replies)[0];
       if (!regenerated) {
+        setGenerateError('새 답변을 받지 못했어요. 잠시 후 다시 시도해 주세요.');
         return;
       }
 
@@ -182,6 +230,8 @@ export function QuickSettings({
             : item,
         ),
       );
+    } catch {
+      setGenerateError('새 답변을 만들지 못했어요. 잠시 후 다시 시도해 주세요.');
     } finally {
       setRegeneratingReviewId(null);
     }
@@ -364,20 +414,34 @@ export function QuickSettings({
                   />
                 </div>
 
+                {generateError && (
+                  <div className="mb-3">
+                    <InlineError>{generateError}</InlineError>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-3">
                   <button
+                    type="button"
                     onClick={handleGenerate}
                     disabled={isGenerating || selectedReviews.length === 0}
-                    className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-[#FF5A36CC] hover:bg-[#FF5A36] disabled:bg-neutral-400 text-white rounded-xl font-semibold shadow-sm transition-colors"
+                    aria-busy={isGenerating}
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-[#FF5A36CC] hover:bg-[#FF5A36] disabled:bg-neutral-400 disabled:cursor-not-allowed text-white rounded-xl font-semibold shadow-sm transition-colors
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                   >
-                    {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Wand2 className="w-5 h-5" />}
-                    {isGenerating ? '생성 중...' : `${selectedReviews.length || replyCount}개 답변 생성`}
+                    {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" /> : <Wand2 className="w-5 h-5" aria-hidden="true" />}
+                    {isGenerating ? '생성 중…' : `${selectedReviews.length || replyCount}개 답변 생성`}
                   </button>
 
                   <div className="relative">
                     <button
+                      type="button"
                       onClick={() => setShowCountDropdown((prev) => !prev)}
-                      className="px-4 py-4 bg-[#FF5A36CC] hover:bg-[#FF5A36] text-white rounded-xl shadow-sm transition-colors"
+                      aria-haspopup="listbox"
+                      aria-expanded={showCountDropdown}
+                      aria-label="한 번에 만들 답변 개수 선택"
+                      className="px-4 py-4 bg-[#FF5A36CC] hover:bg-[#FF5A36] text-white rounded-xl shadow-sm transition-colors
+                                 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

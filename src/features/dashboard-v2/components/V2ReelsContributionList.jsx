@@ -1,7 +1,9 @@
 import React from 'react';
+import { formatNumber, formatText, toArray, toFiniteNumber } from '../../../utils/safeFormat';
 
-const V2ReelsContributionList = ({ reels = [] }) => {
-    if (!reels.length) {
+const V2ReelsContributionList = ({ reels }) => {
+    const items = toArray(reels);
+    if (!items.length) {
         return (
             <p className="text-[13px] text-gray-400 text-center py-4">
                 이번 기간 업로드된 릴스가 없어요.
@@ -11,8 +13,12 @@ const V2ReelsContributionList = ({ reels = [] }) => {
 
     return (
         <ol className="flex flex-col gap-4">
-            {reels.map((reel, i) => (
-                <li key={reel.id} className="flex items-start gap-3">
+            {items.map((reel, i) => {
+                // 응답 필드가 비어도 "undefined%" 같은 값이 화면에 나오지 않게 한다.
+                const rate = toFiniteNumber(reel?.contributionRate);
+                const clampedRate = rate === null ? null : Math.max(0, Math.min(100, rate));
+                return (
+                <li key={reel?.id ?? i} className="flex items-start gap-3">
                     {/* 순위 배지 */}
                     <span
                         className={[
@@ -27,28 +33,29 @@ const V2ReelsContributionList = ({ reels = [] }) => {
                     <div className="flex-1 min-w-0">
                         <div className="flex items-baseline justify-between gap-2 mb-1.5">
                             <span className="text-[13px] font-semibold text-[#191F28] truncate">
-                                {reel.title}
+                                {formatText(reel?.title, '제목 없는 릴스')}
                             </span>
                             <span className="text-[13px] font-bold text-[#002B7A] shrink-0">
-                                {reel.reach.toLocaleString()}회
+                                {formatNumber(reel?.reach, { suffix: '회' })}
                             </span>
                         </div>
                         {/* 기여율 바 */}
                         <div className="h-1.5 bg-bg-page rounded-full overflow-hidden">
                             <div
                                 className={[
-                                    'h-full rounded-full',
+                                    'h-full rounded-full origin-left transition-transform duration-300',
                                     i === 0 ? 'bg-primary' : i === 1 ? 'bg-primary-sub' : 'bg-primary-inactive',
                                 ].join(' ')}
-                                style={{ width: `${reel.contributionRate}%` }}
+                                style={{ width: '100%', transform: `scaleX(${(clampedRate ?? 0) / 100})` }}
                             />
                         </div>
                         <span className="text-[11px] text-gray-400 mt-1 block">
-                            {reel.contributionRate}% 기여
+                            {clampedRate === null ? '기여도 집계 중' : `${Math.round(clampedRate)}% 기여`}
                         </span>
                     </div>
                 </li>
-            ))}
+                );
+            })}
         </ol>
     );
 };

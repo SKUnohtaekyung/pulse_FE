@@ -10,8 +10,15 @@ import CompetitionCard from './CompetitionCard';
 import AnchorCard from './AnchorCard';
 import ActionCard from './ActionCard';
 import { AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
+import { formatDate, toArray } from '../../../utils/safeFormat';
 
 export default function SummaryPanel({ data, onPlaceClick, onRefresh, actionsLoading = false, showHeader = true }) {
+    // 리포트 자체가 비어 있어도 하위 카드가 각자 "집계 중"으로 표시된다.
+    const report = data && typeof data === 'object' ? data : {};
+    const warnings = toArray(report.warnings);
+    const actions = toArray(report.actions);
+    const generatedAtLabel = formatDate(report.generatedAt, { style: 'korean', fallback: '' });
+
     return (
         <div className="w-full h-full overflow-y-auto bg-[#F5F7FA] rounded-r-[24px] custom-scrollbar">
             {/* 패널 헤더 - 조건부 렌더링 */}
@@ -20,23 +27,23 @@ export default function SummaryPanel({ data, onPlaceClick, onRefresh, actionsLoa
                     <div className="flex items-start justify-between">
                         <div>
                             <h2 className="text-[20px] font-bold text-[#002B7A]">상권 분석 리포트</h2>
-                            <p className="text-[14px] text-gray-600 mt-1">
-                                {new Date(data.generatedAt).toLocaleDateString('ko-KR', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric'
-                                })} 기준
-                            </p>
+                            {/* 생성 시각이 없거나 형식이 다르면 "Invalid Date" 대신 아무것도 표시하지 않는다 */}
+                            {generatedAtLabel && (
+                                <p className="text-[14px] text-gray-600 mt-1">{generatedAtLabel} 기준</p>
+                            )}
                         </div>
 
                         {/* 새로고침 버튼 */}
                         {onRefresh && (
                             <button
+                                type="button"
                                 onClick={onRefresh}
-                                className="flex items-center gap-1.5 px-3 py-2 bg-white border border-[#E5E8EB] rounded-lg hover:bg-gray-50 hover:border-[#002B7A] transition-all group"
+                                className="flex items-center gap-1.5 px-3 py-2 bg-white border border-[#E5E8EB] rounded-lg hover:bg-gray-50 hover:border-[#002B7A] transition-colors group
+                                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                 title="데이터 새로고침"
+                                aria-label="상권 데이터 새로고침"
                             >
-                                <RefreshCw size={14} className="text-gray-600 group-hover:text-[#002B7A] transition-colors" />
+                                <RefreshCw size={14} className="text-gray-600 group-hover:text-[#002B7A] transition-colors" aria-hidden="true" />
                                 <span className="text-[13px] font-medium text-gray-700 group-hover:text-[#002B7A]">새로고침</span>
                             </button>
                         )}
@@ -46,7 +53,7 @@ export default function SummaryPanel({ data, onPlaceClick, onRefresh, actionsLoa
 
             {/* 카드 리스트 - 개선된 간격 */}
             <div className="px-6 pb-6 space-y-5">
-                {data.warnings?.map((warning, index) => (
+                {warnings.map((warning, index) => (
                     <div
                         key={`${warning.type}-${index}`}
                         className="bg-amber-50 border border-amber-200 rounded-xl p-4"
@@ -69,16 +76,16 @@ export default function SummaryPanel({ data, onPlaceClick, onRefresh, actionsLoa
                 ))}
 
                 {/* 상권 스냅샷 */}
-                <SnapshotCard counts={data.counts} radius={data.radius} />
+                <SnapshotCard counts={report.counts} radius={report.radius} />
 
                 {/* 경쟁 분석 */}
-                <CompetitionCard competition={data.competition} onPlaceClick={onPlaceClick} />
+                <CompetitionCard competition={report.competition} onPlaceClick={onPlaceClick} />
 
                 {/* 앵커 분석 */}
-                <AnchorCard anchors={data.anchors} />
+                <AnchorCard anchors={report.anchors} />
 
                 {/* 구분선 + 액션 카드 - AI 응답 도착 시 표시 (백그라운드 로드) */}
-                {data.actions && data.actions.length > 0 && (
+                {actions.length > 0 && (
                     <>
                         <div className="border-t-2 border-gray-200 pt-5 mt-2">
                             <h3 className="text-[16px] font-bold text-[#191F28] mb-3 flex items-center gap-2">
@@ -86,14 +93,14 @@ export default function SummaryPanel({ data, onPlaceClick, onRefresh, actionsLoa
                                 이번 주 실행 액션
                             </h3>
                         </div>
-                        {data.actions.map((action, i) => (
+                        {actions.map((action, i) => (
                             <ActionCard key={i} action={action} index={i} />
                         ))}
                     </>
                 )}
 
                 {/* AI 액션 생성 중 안내 (리포트는 이미 표시됨) */}
-                {actionsLoading && (!data.actions || data.actions.length === 0) && (
+                {actionsLoading && actions.length === 0 && (
                     <div className="border-t-2 border-gray-200 pt-5 mt-2">
                         <div className="flex items-center gap-2.5 rounded-xl bg-blue-50 border border-blue-100 p-4">
                             <Loader2 size={18} className="text-[#002B7A] animate-spin flex-shrink-0" />
@@ -105,34 +112,16 @@ export default function SummaryPanel({ data, onPlaceClick, onRefresh, actionsLoa
                 )}
 
                 {/* 하단 노트 */}
-                {data.note && (
+                {report.note && (
                     <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
                         <p className="text-[13px] text-gray-600 leading-relaxed">
-                            ℹ️ {data.note}
+                            ℹ️ {report.note}
                         </p>
                     </div>
                 )}
             </div>
-
-            {/* 커스텀 스크롤바 스타일 */}
-            <style jsx>{`
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 6px;
-                }
-                
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: #CBD5E1;
-                    border-radius: 3px;
-                }
-                
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: #94A3B8;
-                }
-            `}</style>
+            {/* 스크롤바 스타일은 globals.css 의 .custom-scrollbar 를 사용한다.
+                (styled-jsx 미설치 상태에서 <style jsx> 를 쓰면 비표준 속성 경고가 나고 전역으로 새어 나간다) */}
         </div >
     );
 }

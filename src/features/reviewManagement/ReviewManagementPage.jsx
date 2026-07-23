@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { QuickSettings, SavedTemplatesTab, ReviewSummary, ReviewList, DEFAULT_CASES } from './components';
 import {
   createReviewTemplate,
@@ -8,6 +8,10 @@ import {
   saveReviewManagementSettings,
   updateReviewTemplate,
 } from './api/reviewManagementApi';
+import { PageError, PageSkeleton } from '../../components/common/StateViews';
+import { useToast } from '../../components/common/ToastProvider';
+import { isCanceledError } from '../../utils/apiError';
+import { toArray } from '../../utils/safeFormat';
 
 const DEFAULT_SETTINGS = {
   tone: '친근함',
@@ -22,6 +26,12 @@ const DEFAULT_SETTINGS = {
   exceptionCases: DEFAULT_CASES,
 };
 
+const TABS = [
+  { id: 'review-management', label: '리뷰관리' },
+  { id: 'quick-settings', label: '빠른 설정' },
+  { id: 'saved-templates', label: '저장된 템플릿' },
+];
+
 const DEFAULT_SUMMARY = {
   averageRating: 0,
   totalReviews: 0,
@@ -29,6 +39,7 @@ const DEFAULT_SUMMARY = {
 };
 
 export default function ReviewManagementPage() {
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState('review-management');
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [savedTemplates, setSavedTemplates] = useState([]);
@@ -42,41 +53,54 @@ export default function ReviewManagementPage() {
 
   const hasLoadedContextRef = useRef(false);
   const saveTimeoutRef = useRef(null);
+  const contextControllerRef = useRef(null);
+
+  const loadContext = useCallback(async () => {
+    // 이전 요청을 취소해 오래된 응답이 최신 데이터를 덮어쓰지 않게 한다.
+    contextControllerRef.current?.abort();
+    const controller = new AbortController();
+    contextControllerRef.current = controller;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await fetchReviewManagementContext(controller.signal);
+      if (controller.signal.aborted) return;
+
+      // 응답 필드가 일부 빠져도 나머지는 그대로 보여준다.
+      const source = data && typeof data === 'object' ? data : {};
+      const loadedReviews = toArray(source.reviews);
+
+      setReviewData({ ...DEFAULT_SUMMARY, ...(source.summary || {}) });
+      setReviews(loadedReviews);
+      setSettings({
+        ...DEFAULT_SETTINGS,
+        ...(source.settings || {}),
+        exceptionCases: toArray(source.settings?.exceptionCases).length ? source.settings.exceptionCases : DEFAULT_CASES,
+        brandPresets: toArray(source.settings?.brandPresets),
+      });
+      setSavedTemplates(toArray(source.templates));
+      setSelectedReviewIds(loadedReviews[0]?.id ? [loadedReviews[0].id] : []);
+      hasLoadedContextRef.current = true;
+    } catch (fetchError) {
+      if (controller.signal.aborted || isCanceledError(fetchError)) return;
+      setError(fetchError);
+    } finally {
+      if (!controller.signal.aborted) setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const loadContext = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await fetchReviewManagementContext();
-        const loadedReviews = data.reviews || [];
-
-        setReviewData(data.summary || DEFAULT_SUMMARY);
-        setReviews(loadedReviews);
-        setSettings({
-          ...DEFAULT_SETTINGS,
-          ...(data.settings || {}),
-          exceptionCases: data.settings?.exceptionCases?.length ? data.settings.exceptionCases : DEFAULT_CASES,
-          brandPresets: data.settings?.brandPresets || [],
-        });
-        setSavedTemplates(data.templates || []);
-        setSelectedReviewIds(loadedReviews[0]?.id ? [loadedReviews[0].id] : []);
-        hasLoadedContextRef.current = true;
-      } catch (fetchError) {
-        setError(fetchError.message || '리뷰 관리 데이터를 불러오지 못했습니다.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadContext();
 
     return () => {
+      contextControllerRef.current?.abort();
       if (saveTimeoutRef.current) {
         window.clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, []);
+  }, [loadContext]);
 
   useEffect(() => {
     setSelectedReviewIds((prev) => {
@@ -105,7 +129,10 @@ export default function ReviewManagementPage() {
         setIsSavingSettings(true);
         await saveReviewManagementSettings(settings);
       } catch (saveError) {
-        console.error('[ReviewManagementPage] settings save failed:', saveError);
+        // 저장 실패를 조용히 넘기면 사용자는 설정이 반영된 줄 안다.
+        if (!isCanceledError(saveError)) {
+          toast.fromError(saveError, '설정을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.');
+        }
       } finally {
         setIsSavingSettings(false);
       }
@@ -116,7 +143,7 @@ export default function ReviewManagementPage() {
         window.clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [settings]);
+  }, [settings, toast]);
 
   const selectedReviews = useMemo(() => {
     const selectedIdSet = new Set(selectedReviewIds);
@@ -147,49 +174,73 @@ export default function ReviewManagementPage() {
     });
   };
 
+  // 템플릿 CRUD 는 실패해도 화면이 멈추지 않도록 오류를 잡아 사용자에게 알리고,
+  // 호출부가 성공 여부를 알 수 있도록 다시 던진다.
   const handleCreateTemplate = async (template) => {
-    const created = await createReviewTemplate(template);
-    setSavedTemplates((prev) => [created, ...prev]);
-    return created;
+    try {
+      const created = await createReviewTemplate(template);
+      setSavedTemplates((prev) => [created, ...prev]);
+      toast.success('템플릿을 저장했어요.');
+      return created;
+    } catch (actionError) {
+      toast.fromError(actionError, '템플릿을 저장하지 못했어요. 잠시 후 다시 시도해 주세요.');
+      throw actionError;
+    }
   };
 
   const handleUpdateTemplate = async (templateId, template) => {
-    const updated = await updateReviewTemplate(templateId, template);
-    setSavedTemplates((prev) => prev.map((item) => (item.id === templateId ? updated : item)));
-    return updated;
+    try {
+      const updated = await updateReviewTemplate(templateId, template);
+      setSavedTemplates((prev) => prev.map((item) => (item.id === templateId ? updated : item)));
+      toast.success('템플릿을 수정했어요.');
+      return updated;
+    } catch (actionError) {
+      toast.fromError(actionError, '템플릿을 수정하지 못했어요. 잠시 후 다시 시도해 주세요.');
+      throw actionError;
+    }
   };
 
   const handleDeleteTemplate = async (templateId) => {
-    await deleteReviewTemplate(templateId);
-    setSavedTemplates((prev) => prev.filter((item) => item.id !== templateId));
+    try {
+      await deleteReviewTemplate(templateId);
+      setSavedTemplates((prev) => prev.filter((item) => item.id !== templateId));
+      toast.success('템플릿을 삭제했어요.');
+    } catch (actionError) {
+      toast.fromError(actionError, '템플릿을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.');
+      throw actionError;
+    }
   };
 
-  const handleGenerateReplies = async (reviewsToGenerate, currentSettings) =>
-    generateReviewReplies({
-      reviews: reviewsToGenerate,
-      settings: currentSettings,
-    });
+  const handleGenerateReplies = async (reviewsToGenerate, currentSettings) => {
+    try {
+      return await generateReviewReplies({
+        reviews: reviewsToGenerate,
+        settings: currentSettings,
+      });
+    } catch (actionError) {
+      toast.fromError(actionError, 'AI 답변을 만들지 못했어요. 잠시 후 다시 시도해 주세요.');
+      throw actionError;
+    }
+  };
 
   const renderContent = () => {
     if (loading) {
-      return (
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-sm text-neutral-500">리뷰 관리 데이터를 불러오는 중입니다...</div>
-        </div>
-      );
+      return <PageSkeleton cards={2} />;
     }
 
     if (error) {
       return (
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-neutral-200 text-center text-neutral-600">
-          {error}
-        </div>
+        <PageError
+          error={error}
+          title="리뷰 정보를 불러오지 못했어요"
+          onRetry={loadContext}
+        />
       );
     }
 
     if (activeTab === 'review-management') {
       return (
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <div>
             <ReviewSummary
               averageRating={reviewData.averageRating}
@@ -238,31 +289,23 @@ export default function ReviewManagementPage() {
   return (
     <div className="flex-1 flex flex-col min-h-0 gap-0" data-testid="review-management-page">
       <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 shrink-0">
-        <div className="flex border-b border-neutral-200">
-          <button
-            onClick={() => setActiveTab('review-management')}
-            data-testid="review-tab-review-management"
-            className={`flex-1 px-6 py-4 font-bold transition-colors relative ${activeTab === 'review-management' ? 'text-[#002B7A]' : 'text-neutral-500 hover:text-neutral-700'}`}
-          >
-            리뷰관리
-            {activeTab === 'review-management' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#002B7A]" />}
-          </button>
-          <button
-            onClick={() => setActiveTab('quick-settings')}
-            data-testid="review-tab-quick-settings"
-            className={`flex-1 px-6 py-4 font-bold transition-colors relative ${activeTab === 'quick-settings' ? 'text-[#002B7A]' : 'text-neutral-500 hover:text-neutral-700'}`}
-          >
-            빠른 설정
-            {activeTab === 'quick-settings' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#002B7A]" />}
-          </button>
-          <button
-            onClick={() => setActiveTab('saved-templates')}
-            data-testid="review-tab-saved-templates"
-            className={`flex-1 px-6 py-4 font-bold transition-colors relative ${activeTab === 'saved-templates' ? 'text-[#002B7A]' : 'text-neutral-500 hover:text-neutral-700'}`}
-          >
-            저장된 템플릿
-            {activeTab === 'saved-templates' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#002B7A]" />}
-          </button>
+        <div className="flex border-b border-neutral-200" role="tablist" aria-label="리뷰 관리 메뉴">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              data-testid={`review-tab-${tab.id}`}
+              className={`flex-1 px-4 sm:px-6 py-4 font-bold transition-colors relative
+                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:-ring-offset-1
+                          ${activeTab === tab.id ? 'text-[#002B7A]' : 'text-neutral-500 hover:text-neutral-700'}`}
+            >
+              {tab.label}
+              {activeTab === tab.id && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#002B7A]" />}
+            </button>
+          ))}
         </div>
         <div className="px-6 py-3 bg-neutral-50 text-sm text-neutral-600">{tabDescriptions[activeTab]}</div>
       </div>

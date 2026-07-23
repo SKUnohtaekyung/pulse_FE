@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Inbox, User, LogOut, ChevronUp, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { logout } from '../../features/auth/api/authApi';
 
 const InfluencerSidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded, profile }) => {
     const navigate = useNavigate();
@@ -16,8 +17,8 @@ const InfluencerSidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpande
 
     const handleLogout = (event) => {
         event.stopPropagation();
-        localStorage.removeItem('user');
-        localStorage.removeItem('accessToken');
+        // 공통 logout() 을 써야 이전 사용자의 프로필·가게 정보까지 함께 지워진다.
+        logout();
         navigate('/login');
     };
 

@@ -1,36 +1,21 @@
 import React from 'react';
+import ErrorBoundary from '../../../components/common/ErrorBoundary';
 
-class V2ErrorBoundary extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = { hasError: false, error: null };
-    }
-
-    static getDerivedStateFromError(error) {
-        // Update state so the next render will show the fallback UI.
-        return { hasError: true, error };
-    }
-
-    componentDidCatch(error, errorInfo) {
-        // You can also log the error to an error reporting service
-        console.error("V2ErrorBoundary caught an error:", error, errorInfo);
-    }
-
-    render() {
-        if (this.state.hasError) {
-            // You can render any custom fallback UI
-            return (
-                <div className="p-4 border border-red-200 bg-red-50 rounded-[16px] text-sm text-red-600 flex flex-col items-center justify-center min-h-[80px]">
-                    <p className="font-bold">위젯 렌더링 오류</p>
-                    <p className="text-xs opacity-80 text-center mt-1 break-all">
-                        {this.state.error?.message || '지원하지 않는 데이터 형식입니다.'}
-                    </p>
-                </div>
-            );
-        }
-
-        return this.props.children;
-    }
-}
+/**
+ * 대시보드 위젯용 오류 경계.
+ *
+ * 공통 ErrorBoundary 의 section 변형을 그대로 쓴다.
+ * (예전에는 error.message 원문을 사용자에게 그대로 보여주고 재시도 경로도 없었다)
+ */
+const V2ErrorBoundary = ({ children, name = 'DashboardWidget', title, description }) => (
+    <ErrorBoundary
+        variant="section"
+        name={name}
+        title={title || '이 위젯을 표시하지 못했어요'}
+        description={description || '다른 정보는 그대로 확인할 수 있어요. 잠시 후 다시 시도해 주세요.'}
+    >
+        {children}
+    </ErrorBoundary>
+);
 
 export default V2ErrorBoundary;

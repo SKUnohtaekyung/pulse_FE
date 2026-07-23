@@ -1,70 +1,46 @@
-import { getToken } from '../../auth/api/authApi';
+import { SPRING_API_BASE_URL } from '../../../config/env';
+import { apiRequest } from '../../../utils/httpClient';
 
-const SPRING_API_BASE_URL = import.meta.env.VITE_SPRING_API_BASE_URL || 'http://localhost:8080/api';
+/**
+ * 리뷰 관리 API.
+ * 인증 헤더·타임아웃·401 처리·오류 정규화는 공통 httpClient 가 담당한다.
+ */
+const request = (path, options = {}) =>
+    apiRequest(`${SPRING_API_BASE_URL}${path}`, { ...options, context: `review${path}` });
 
-async function authorizedRequest(path, options = {}) {
-  const token = getToken();
-  const response = await fetch(`${SPRING_API_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    },
-  });
-
-  if (!response.ok) {
-    let message = '요청 처리에 실패했습니다.';
-    try {
-      const errorBody = await response.json();
-      message = errorBody.message || errorBody.detail || message;
-    } catch (_) {
-      // ignore parsing error
-    }
-    throw new Error(message);
-  }
-
-  if (response.status === 204) {
-    return null;
-  }
-
-  return response.json();
+export function fetchReviewManagementContext(signal) {
+  return request('/review-management/context', { signal });
 }
 
-export function fetchReviewManagementContext() {
-  return authorizedRequest('/review-management/context');
+export function saveReviewManagementSettings(settings, signal) {
+  return request('/review-management/settings', { method: 'PUT', body: settings, signal });
 }
 
-export function saveReviewManagementSettings(settings) {
-  return authorizedRequest('/review-management/settings', {
+export function createReviewTemplate(template, signal) {
+  return request('/review-management/templates', { method: 'POST', body: template, signal });
+}
+
+export function updateReviewTemplate(templateId, template, signal) {
+  return request(`/review-management/templates/${encodeURIComponent(templateId)}`, {
     method: 'PUT',
-    body: JSON.stringify(settings),
+    body: template,
+    signal,
   });
 }
 
-export function createReviewTemplate(template) {
-  return authorizedRequest('/review-management/templates', {
-    method: 'POST',
-    body: JSON.stringify(template),
-  });
-}
-
-export function updateReviewTemplate(templateId, template) {
-  return authorizedRequest(`/review-management/templates/${templateId}`, {
-    method: 'PUT',
-    body: JSON.stringify(template),
-  });
-}
-
-export function deleteReviewTemplate(templateId) {
-  return authorizedRequest(`/review-management/templates/${templateId}`, {
+export function deleteReviewTemplate(templateId, signal) {
+  return request(`/review-management/templates/${encodeURIComponent(templateId)}`, {
     method: 'DELETE',
+    signal,
   });
 }
 
-export function generateReviewReplies(payload) {
-  return authorizedRequest('/review-management/replies/generate', {
+export function generateReviewReplies(payload, signal) {
+  // AI 답변 생성은 일반 조회보다 오래 걸린다.
+  return request('/review-management/replies/generate', {
     method: 'POST',
-    body: JSON.stringify(payload),
+    body: payload,
+    signal,
+    timeout: 60000,
   });
 }

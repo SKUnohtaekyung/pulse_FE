@@ -103,15 +103,33 @@ function validateRadius(radiusM) {
  * @param {number} radiusM - 검색 반경 (미터)
  * @returns {Promise<object>} 카테고리 조회 결과
  */
+/** 카카오 콜백이 오지 않으면 Promise 가 영원히 pending 되어 로딩이 끝나지 않는다. */
+const CATEGORY_SEARCH_TIMEOUT_MS = 12000;
+
 function searchCategoryAll(ps, category, center, radiusM) {
     return new Promise((resolve) => {
         const { code, label } = category;
         const allPlaces = [];
         let currentPage = 1;
         let pageCount = 0;
+        let settled = false;
+
+        const settle = (result) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            resolve(result);
+        };
+
+        // 콜백 미호출·SDK 이상으로 응답이 끊겨도 부분 결과로 마무리한다.
+        const timer = setTimeout(
+            () => settle({ code, label, status: allPlaces.length > 0 ? 'PARTIAL_ERROR' : 'ERROR', places: allPlaces, pageCount }),
+            CATEGORY_SEARCH_TIMEOUT_MS,
+        );
 
         const fetchPage = () => {
-            ps.categorySearch(
+            try {
+                ps.categorySearch(
                 code,
                 (data, status, pagination) => {
                     const statusName = getKakaoStatusName(status);
@@ -124,7 +142,7 @@ function searchCategoryAll(ps, category, center, radiusM) {
                             radius: radiusM,
                         }, true);
 
-                        resolve({
+                        settle({
                             code,
                             label,
                             status: 'ZERO_RESULT',
@@ -146,7 +164,7 @@ function searchCategoryAll(ps, category, center, radiusM) {
                             page: currentPage,
                         }, resultStatus !== 'ERROR');
 
-                        resolve({
+                        settle({
                             code,
                             label,
                             status: resultStatus,
@@ -158,10 +176,11 @@ function searchCategoryAll(ps, category, center, radiusM) {
                     }
 
                     pageCount++;
-                    allPlaces.push(...data);
+                    allPlaces.push(...(Array.isArray(data) ? data : []));
 
                     // 다음 페이지가 있고 최대 3페이지까지만 (과도한 요청 방지)
-                    if (pagination.hasNextPage && currentPage < 3) {
+                    // pagination 이 없을 수 있으므로 옵셔널 체이닝으로 접근한다.
+                    if (pagination?.hasNextPage && currentPage < 3) {
                         currentPage++;
                         fetchPage();
                     } else {
@@ -173,7 +192,7 @@ function searchCategoryAll(ps, category, center, radiusM) {
                             radius: radiusM,
                         }, true);
 
-                        resolve({
+                        settle({
                             code,
                             label,
                             status: 'OK',
@@ -189,7 +208,12 @@ function searchCategoryAll(ps, category, center, radiusM) {
                     size: 15,
                     page: currentPage,
                 }
-            );
+                );
+            } catch (searchError) {
+                // 콜백 밖에서 던져진 예외는 rejection 이 되지 않아 영원한 pending 을 만든다.
+                logMarket('error', '[KakaoPlaces] category:threw', { code, label, error: searchError?.message }, false);
+                settle({ code, label, status: allPlaces.length > 0 ? 'PARTIAL_ERROR' : 'ERROR', places: allPlaces, pageCount });
+            }
         };
 
         fetchPage();

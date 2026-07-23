@@ -1,72 +1,120 @@
-const API_BASE_URL = import.meta.env.VITE_FASTAPI_BASE_URL || 'http://127.0.0.1:8000/api';
-const AUTH_TOKEN_KEY = 'accessToken';
+import { FASTAPI_BASE_URL } from '../../config/env';
+import { apiRequest } from '../../utils/httpClient';
+import { ERROR_TYPES, isCanceledError, normalizeApiError } from '../../utils/apiError';
 
-const MOCK_RESPONSE = {
-    status: 'success',
-    data: {
-        videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-coffee-pouring-into-a-cup-in-slow-motion-4288-large.mp4',
-        videoTitle: '깊고 진한 라떼의 한 모금',
-        hashtags: ['#카페', '#시그니처라떼', '#오늘의한잔', '#감성카페'],
-        generationTime: '5.2s'
-    }
-};
-
-const MOCK_PROGRESS_STEPS = [
-    { progress: 10, message: '사진을 분석하고 있어요..' },
-    { progress: 30, message: '영상 콘셉트를 구성하고 있어요..' },
-    { progress: 55, message: '영상을 생성하고 있어요..' },
-    { progress: 75, message: '장면을 다듬고 있어요..' },
-    { progress: 90, message: '영상을 렌더링하고 있어요..' },
-    { progress: 100, message: '완성되었어요' },
-];
+const API_BASE_URL = FASTAPI_BASE_URL;
 
 const POLL_INTERVAL_MS = 2000;
+/** 폴링 전체 상한 — 이 시간을 넘기면 "너무 오래 걸린다"로 사용자에게 알린다. */
+const POLL_DEADLINE_MS = 10 * 60 * 1000;
+/** 폴링 중 일시적 네트워크 오류를 몇 번까지 넘길지 (수 분짜리 작업이 순간 끊김으로 날아가지 않도록) */
+const POLL_MAX_TRANSIENT_FAILURES = 5;
+/** 영상 생성 요청 자체의 타임아웃 — 업로드 + 큐잉을 고려해 넉넉히 잡는다. */
+const GENERATE_TIMEOUT_MS = 120000;
+const STATUS_TIMEOUT_MS = 15000;
 
 const VIBE_TO_STYLE = {
     energetic: 'energy',
     luxury: 'premium',
-    emotional: 'mood'
+    emotional: 'mood',
 };
 
 const QUALITY_TO_MODE = {
     standard: 'standard',
-    pro: 'pro'
+    pro: 'pro',
 };
 
-function normalizeVideoUrl(videoUrl) {
-    if (!videoUrl || !API_BASE_URL) {
-        return videoUrl;
-    }
+/** 사용자 문구가 확정된 영상 생성 전용 오류 */
+const generationError = (message, { retryable = true, type = ERROR_TYPES.UNKNOWN } = {}) => ({
+    type,
+    message,
+    retryable,
+    status: null,
+    fieldErrors: null,
+    cause: null,
+});
 
-    if (/^https?:\/\//i.test(videoUrl)) {
-        return videoUrl;
-    }
+const sleep = (ms, signal) =>
+    new Promise((resolve, reject) => {
+        const timer = setTimeout(resolve, ms);
+        if (!signal) return;
+        if (signal.aborted) {
+            clearTimeout(timer);
+            reject(new DOMException('취소됨', 'AbortError'));
+            return;
+        }
+        signal.addEventListener(
+            'abort',
+            () => {
+                clearTimeout(timer);
+                reject(new DOMException('취소됨', 'AbortError'));
+            },
+            { once: true },
+        );
+    });
+
+/**
+ * 서버가 상대 경로를 주는 경우 절대 URL 로 바꾼다.
+ * base 의 경로(`/api` 등)를 잃지 않도록 항상 끝에 슬래시를 붙여 해석한다.
+ */
+function normalizeVideoUrl(videoUrl) {
+    if (typeof videoUrl !== 'string' || !videoUrl.trim()) return null;
+    const trimmed = videoUrl.trim();
+
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    if (trimmed.startsWith('blob:') || trimmed.startsWith('data:')) return trimmed;
+    if (!API_BASE_URL) return trimmed;
 
     try {
-        return new URL(videoUrl, `${API_BASE_URL}/`).toString();
+        return new URL(trimmed, `${API_BASE_URL}/`).toString();
     } catch {
-        return videoUrl;
+        return trimmed;
     }
 }
 
-function normalizePromotionResult(data) {
-    if (!data) {
-        return data;
-    }
+const toStringOrNull = (value) => {
+    if (typeof value !== 'string') return null;
+    const trimmed = value.trim();
+    return trimmed || null;
+};
 
+/**
+ * 서버 응답을 화면이 기대하는 형태로 정규화한다.
+ * 필드가 빠져 있어도 렌더 단계에서 터지지 않도록 항상 같은 모양을 보장한다.
+ */
+function normalizePromotionResult(data) {
+    const source = data && typeof data === 'object' ? data : {};
     return {
-        ...data,
-        videoUrl: normalizeVideoUrl(data.videoUrl),
+        videoUrl: normalizeVideoUrl(source.videoUrl ?? source.video_url),
+        videoTitle: toStringOrNull(source.videoTitle ?? source.video_title),
+        hashtags: Array.isArray(source.hashtags) ? source.hashtags.filter((tag) => typeof tag === 'string' && tag.trim()) : [],
+        generationTime: source.generationTime ?? source.generation_time ?? null,
     };
 }
 
-async function readResponseText(response) {
-    try {
-        return await response.text();
-    } catch {
-        return '';
-    }
-}
+/** 진행률이 숫자가 아니면 화면에 NaN 이 뜨지 않도록 null 로 만든다. */
+const sanitizeProgress = (value) => {
+    const num = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(num)) return null;
+    return Math.max(0, Math.min(100, num));
+};
+
+const buildFormData = (entries, imageFiles) => {
+    const formData = new FormData();
+    Object.entries(entries).forEach(([key, value]) => {
+        formData.append(key, value == null ? '' : String(value));
+    });
+
+    const files = Array.isArray(imageFiles) ? imageFiles : imageFiles ? [imageFiles] : [];
+    files.forEach((file, index) => {
+        if (!file) return;
+        // 서버가 단일 필드만 받는 경우를 고려해 첫 장은 'image' 로도 보낸다.
+        if (index === 0) formData.append('image', file);
+        formData.append('images', file);
+    });
+
+    return formData;
+};
 
 export async function fetchPromotionPromptRecommendation({
     target,
@@ -79,128 +127,118 @@ export async function fetchPromotionPromptRecommendation({
     style,
     mode,
     imageFile,
+    signal,
 }) {
-    if (!API_BASE_URL) {
-        throw new Error('Promotion API base URL is missing');
-    }
-
-    const token = localStorage.getItem(AUTH_TOKEN_KEY);
-    const formData = new FormData();
-    formData.append('target', target);
-    formData.append('store_name', storeName || '');
-    formData.append('store_summary', storeSummary || '');
-    formData.append('persona_label', personaLabel || '');
-    formData.append('persona_summary', personaSummary || '');
-    formData.append('persona_tags_json', JSON.stringify(personaTags || []));
-    formData.append('action_recommendation', actionRecommendation || '');
-    formData.append('style', style);
-    formData.append('mode', mode);
-    if (imageFile) {
-        formData.append('image', imageFile);
-    }
-
-    const response = await fetch(`${API_BASE_URL}/info/prompt-recommendation`, {
-        method: 'POST',
-        headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    const formData = buildFormData(
+        {
+            target,
+            store_name: storeName,
+            store_summary: storeSummary,
+            persona_label: personaLabel,
+            persona_summary: personaSummary,
+            persona_tags_json: JSON.stringify(personaTags || []),
+            action_recommendation: actionRecommendation,
+            style,
+            mode,
         },
+        imageFile,
+    );
+
+    return apiRequest(`${API_BASE_URL}/info/prompt-recommendation`, {
+        method: 'POST',
         body: formData,
+        signal,
+        context: 'promotion/prompt-recommendation',
     });
-
-    if (!response.ok) {
-        const detail = await readResponseText(response);
-        throw new Error(`Prompt recommendation failed (${response.status}) ${detail}`.trim());
-    }
-
-    return response.json();
 }
 
-export async function generatePromotionVideo({ target, concept, mode, style, imageFile, onProgress }) {
-    const notify = onProgress || (() => { });
+/**
+ * 홍보 영상 생성.
+ *
+ * @param {object} params
+ * @param {File[]|File} params.imageFiles 업로드 이미지 (등록 순서 = 장면 순서)
+ * @param {(progress: number|null, message: string) => void} [params.onProgress]
+ * @param {AbortSignal} [params.signal]
+ * @returns {Promise<{videoUrl: string|null, videoTitle: string|null, hashtags: string[], generationTime: any}>}
+ */
+export async function generatePromotionVideo({ target, concept, mode, style, imageFiles, imageFile, onProgress, signal }) {
+    const notify = typeof onProgress === 'function' ? onProgress : () => {};
+    const files = imageFiles ?? imageFile;
 
-    if (!API_BASE_URL) {
-        console.warn('[promotionApi] VITE_API_BASE_URL is missing. Returning mock response.');
-        await _simulateMockProgress(notify);
-        return MOCK_RESPONSE.data;
-    }
+    const formData = buildFormData({ target, concept, mode, style }, files);
 
-    const token = localStorage.getItem(AUTH_TOKEN_KEY);
-    const formData = new FormData();
-    formData.append('target', target);
-    formData.append('concept', concept);
-    formData.append('mode', mode);
-    formData.append('style', style);
-    if (imageFile) {
-        formData.append('image', imageFile);
-    }
+    notify(null, '요청을 전송하고 있어요');
 
-    notify(5, '요청을 전송하고 있어요..');
-
-    const startRes = await fetch(`${API_BASE_URL}/info/generate`, {
+    const startJson = await apiRequest(`${API_BASE_URL}/info/generate`, {
         method: 'POST',
-        headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {})
-        },
-        body: formData
+        body: formData,
+        signal,
+        timeout: GENERATE_TIMEOUT_MS,
+        context: 'promotion/generate',
     });
 
-    if (!startRes.ok) {
-        const detail = await readResponseText(startRes);
-        throw new Error(`Video generation request failed (${startRes.status}) ${detail}`.trim());
-    }
-
-    const startJson = await startRes.json();
-    const taskId = startJson?.task_id;
-
+    const taskId = startJson?.task_id ?? startJson?.taskId;
     if (taskId) {
-        return _pollStatus(taskId, token, notify);
+        return pollStatus(String(taskId), notify, signal);
     }
 
-    if (startJson.status !== 'success' || !startJson.data) {
-        throw new Error(startJson.message || 'Unexpected promotion API response');
+    if (startJson?.status !== 'success' || !startJson?.data) {
+        throw generationError('영상 생성 결과를 받지 못했어요. 잠시 후 다시 시도해 주세요.');
     }
 
     notify(100, '완성되었어요');
     return normalizePromotionResult(startJson.data);
 }
 
-async function _pollStatus(taskId, token, onProgress) {
-    const statusUrl = `${API_BASE_URL}/info/status/${taskId}`;
+async function pollStatus(taskId, onProgress, signal) {
+    const statusUrl = `${API_BASE_URL}/info/status/${encodeURIComponent(taskId)}`;
+    const startedAt = Date.now();
+    let transientFailures = 0;
 
-    while (true) {
-        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
+    // while(true) 가 아니라 명확한 종료 조건을 둔다.
+    while (Date.now() - startedAt < POLL_DEADLINE_MS) {
+        await sleep(POLL_INTERVAL_MS, signal);
 
-        const res = await fetch(statusUrl, {
-            headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) }
-        });
+        let json;
+        try {
+            json = await apiRequest(statusUrl, { signal, timeout: STATUS_TIMEOUT_MS, context: 'promotion/status' });
+        } catch (error) {
+            if (isCanceledError(error)) throw error;
 
-        if (!res.ok) {
-            const detail = await readResponseText(res);
-            throw new Error(`Promotion status polling failed (${res.status}) ${detail}`.trim());
+            const normalized = normalizeApiError(error);
+            // 인증 만료·권한 문제는 재시도해도 소용없다.
+            if (normalized.retryable === false) throw normalized;
+
+            transientFailures += 1;
+            if (transientFailures > POLL_MAX_TRANSIENT_FAILURES) {
+                throw generationError('영상 생성 상태를 확인하지 못했어요. 잠시 후 다시 시도해 주세요.', {
+                    type: ERROR_TYPES.NETWORK_ERROR,
+                });
+            }
+            onProgress(null, '연결을 다시 시도하고 있어요');
+            continue;
         }
 
-        const json = await res.json();
-        const { status, progress, message, data } = json;
+        transientFailures = 0;
+        const { status, progress, message, data } = json || {};
+        onProgress(sanitizeProgress(progress), typeof message === 'string' && message.trim() ? message.trim() : '영상을 만들고 있어요');
 
-        onProgress(progress ?? 0, message ?? '처리 중..');
-
-        if (status === 'complete' && data) {
+        if (status === 'complete') {
+            // complete 인데 데이터가 없으면 영원히 도는 대신 명확히 실패시킨다.
+            if (!data) {
+                throw generationError('영상은 만들어졌지만 결과를 받지 못했어요. 다시 시도해 주세요.');
+            }
             return normalizePromotionResult(data);
         }
 
-        if (status === 'error') {
-            throw new Error(message || 'Promotion generation failed');
+        if (status === 'error' || status === 'failed') {
+            throw generationError('영상 생성에 실패했어요. 입력한 내용은 그대로 남아 있으니 다시 시도할 수 있어요.');
         }
     }
-}
 
-async function _simulateMockProgress(onProgress) {
-    for (const step of MOCK_PROGRESS_STEPS) {
-        const delay = step.progress === 100 ? 300 : 700;
-        await new Promise(resolve => setTimeout(resolve, delay));
-        onProgress(step.progress, step.message);
-    }
-    await new Promise(resolve => setTimeout(resolve, 300));
+    throw generationError('영상 생성이 예상보다 오래 걸리고 있어요. 잠시 후 다시 시도해 주세요.', {
+        type: ERROR_TYPES.TIMEOUT,
+    });
 }
 
 export function vibeToStyle(vibeId) {

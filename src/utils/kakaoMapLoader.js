@@ -1,101 +1,89 @@
 /**
  * Kakao Map SDK Dynamic Loader
- * 환경변수에서 API 키를 가져와 SDK를 동적으로 로드합니다.
+ *
+ * 환경변수에서 API 키를 가져와 SDK를 동적으로 로드한다.
+ *
+ * 예전에는 키가 없을 때 불완전한 Mock SDK 를 주입했는데,
+ * Circle·MarkerImage·event 같은 필수 API 가 빠져 있어 지도 화면이 통째로 크래시했다.
+ * 지금은 "지도를 쓸 수 없다"는 사실을 명확한 오류로 알리고, 화면 쪽에서 텍스트 대체 UI 를 보여준다.
  */
 
-let isLoading = false;
-let isLoaded = false;
+import { KAKAO_MAP_API_KEY } from '../config/env';
+
+/** 스크립트 로드 타임아웃 — 응답이 없어도 영원히 대기하지 않는다. */
+const LOAD_TIMEOUT_MS = 12000;
+
 let loadPromise = null;
+
+/** 지도 기능 사용 가능 여부 — 화면에서 미리 확인해 대체 UI 로 분기할 수 있다. */
+export const isKakaoMapConfigured = () => !!KAKAO_MAP_API_KEY && !KAKAO_MAP_API_KEY.includes('your_');
+
+/** 사용자에게 그대로 보여줄 수 있는 지도 오류 */
+export class KakaoMapLoadError extends Error {
+    constructor(reason) {
+        super('지도를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.');
+        this.name = 'KakaoMapLoadError';
+        this.reason = reason;
+    }
+}
 
 export const loadKakaoMapSDK = () => {
     // 이미 로드됨
-    if (window.kakao?.maps) {
+    if (window.kakao?.maps?.Map) {
         return Promise.resolve(window.kakao);
     }
 
-    // 로딩 중이면 기존 Promise 반환
-    if (isLoading && loadPromise) {
-        return loadPromise;
+    // 로딩 중이면 기존 Promise 재사용 (중복 스크립트 주입 방지)
+    if (loadPromise) return loadPromise;
+
+    if (!isKakaoMapConfigured()) {
+        // 개발자에게는 원인을 명확히 알리고, 사용자에게는 일반 문구만 전달한다.
+        if (import.meta.env.DEV) {
+            console.warn('[PULSE map] VITE_KAKAO_MAP_API_KEY 가 설정되지 않아 지도를 사용할 수 없습니다.');
+        }
+        return Promise.reject(new KakaoMapLoadError('missing-key'));
     }
 
-    // 새로 로드
-    isLoading = true;
     loadPromise = new Promise((resolve, reject) => {
         const script = document.createElement('script');
-        const apiKey = import.meta.env.VITE_KAKAO_MAP_API_KEY;
+        const scriptUrl = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${KAKAO_MAP_API_KEY}&libraries=services&autoload=false`;
 
-        // 상세 디버깅
-        console.log('🔑 환경변수 확인:', {
-            apiKey: apiKey ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}` : null,
-            apiKeyType: typeof apiKey,
-            apiKeyLength: apiKey?.length,
-            allEnvKeys: Object.keys(import.meta.env),
-            VITE_KAKAO_MAP_API_KEY: apiKey ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}` : null
-        });
+        let settled = false;
+        const finish = (fn, value) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            // 실패한 경우 다음 시도에서 다시 로드할 수 있도록 캐시를 비운다.
+            if (fn === reject) loadPromise = null;
+            fn(value);
+        };
 
-        if (!apiKey || apiKey.includes('your_')) {
-            console.warn('⚠️ Kakao Map API 키가 설정되지 않아 Mock 객체를 사용합니다.');
-            window.kakao = window.kakao || {};
-            window.kakao.maps = window.kakao.maps || {
-                load: function(cb) { cb(); },
-                LatLng: function(lat, lng) { this.lat = lat; this.lng = lng; },
-                Map: function() { return { setCenter: ()=>{}, setLevel: ()=>{} }; },
-                Marker: function() { return { setMap: ()=>{}, setPosition: ()=>{} }; },
-                InfoWindow: function() { return { open: ()=>{}, close: ()=>{} }; },
-                services: {
-                    Geocoder: function() { this.addressSearch = function(addr, cb) { cb([{y: 37.5665, x: 126.9780}], 'OK'); }; },
-                    Places: function() { this.keywordSearch = function(kw, cb) { cb([], 'OK'); }; },
-                    Status: { OK: 'OK', ZERO_RESULT: 'ZERO_RESULT', ERROR: 'ERROR' }
-                }
-            };
-            isLoaded = true;
-            isLoading = false;
-            resolve(window.kakao);
-            return;
-        }
-
-        const scriptUrl = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&libraries=services&autoload=false`;
-        console.log('📡 SDK 로드 시도:', scriptUrl);
+        const timer = setTimeout(() => finish(reject, new KakaoMapLoadError('timeout')), LOAD_TIMEOUT_MS);
 
         script.src = scriptUrl;
         script.async = true;
 
         script.onload = () => {
-            console.log('✅ SDK 스크립트 다운로드 성공');
-            if (window.kakao?.maps) {
-                window.kakao.maps.load(() => {
-                    isLoaded = true;
-                    isLoading = false;
-                    console.log('✅ Kakao Map SDK 로드 성공');
-                    resolve(window.kakao);
-                });
-            } else {
-                isLoading = false;
-                console.error('❌ window.kakao.maps가 없음');
-                reject(new Error('Kakao Map SDK 로드 실패'));
+            if (!window.kakao?.maps) {
+                finish(reject, new KakaoMapLoadError('sdk-missing'));
+                return;
+            }
+            try {
+                window.kakao.maps.load(() => finish(resolve, window.kakao));
+            } catch (error) {
+                if (import.meta.env.DEV) console.error('[PULSE map] SDK 초기화 실패', error);
+                finish(reject, new KakaoMapLoadError('init-failed'));
             }
         };
 
-        script.onerror = (error) => {
-            isLoading = false;
-            console.error('❌ SDK 스크립트 로드 실패:', error);
-            console.error('📡 실패한 URL:', scriptUrl);
-
-            const errorMsg = `Kakao Map SDK 스크립트 로드 실패.
-            
-가능한 원인:
-1. Kakao Developers에서 Web 플랫폼이 등록되지 않았습니다.
-2. 사이트 도메인(http://localhost:5173)이 등록되지 않았습니다.
-3. 네트워크 연결을 확인해주세요.
-4. API 키가 유효하지 않을 수 있습니다.
-
-해결 방법:
-- https://developers.kakao.com 접속
-- 내 애플리케이션 > 앱 설정 > 플랫폼
-- Web 플랫폼 추가 후 http://localhost:5173 등록
-- F12 > Network 탭에서 sdk.js 요청 상태 확인`;
-
-            reject(new Error(errorMsg));
+        script.onerror = () => {
+            if (import.meta.env.DEV) {
+                console.error(
+                    '[PULSE map] SDK 스크립트를 불러오지 못했습니다. ' +
+                    'Kakao Developers 에서 Web 플랫폼과 사이트 도메인이 등록되어 있는지 확인해 주세요.',
+                );
+            }
+            finish(reject, new KakaoMapLoadError('script-error'));
         };
 
         document.head.appendChild(script);

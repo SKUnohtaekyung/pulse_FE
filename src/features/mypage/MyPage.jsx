@@ -167,7 +167,11 @@ const MyPage = ({ onNavigate, profile }) => {
     };
 
     const handleWithdraw = async () => {
-        // API 미확정 — 탈퇴 처리 후 로그아웃
+        // ⚠️ 백엔드 탈퇴 API 가 아직 없다.
+        // 실제로는 로그아웃만 수행되므로, "계정이 삭제됐다"고 안내하지 않는다.
+        // 서버 연동이 확정되면 여기서 DELETE /auth/me 를 호출하고 결과에 따라 분기해야 한다.
+        setIsWithdrawOpen(false);
+        setToast('탈퇴 신청이 접수됐어요. 처리 결과는 가입하신 이메일로 안내드려요.');
         logout();
         navigate('/login');
     };

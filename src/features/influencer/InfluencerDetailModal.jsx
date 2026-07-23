@@ -1,7 +1,21 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ArrowRight, Award, ExternalLink, MapPin, Star, X } from 'lucide-react';
+import ImageWithFallback from '../../components/common/ImageWithFallback';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 export default function InfluencerDetailModal({ influencer, onClose, onRequest }) {
+    // ESC 닫기 · Tab 포커스 가둠 · 이전 포커스 복귀를 공통 훅으로 처리한다.
+    const panelRef = useFocusTrap(!!influencer, onClose);
+
+    // 모달이 열린 동안 배경 스크롤을 막는다.
+    useEffect(() => {
+        if (!influencer) return undefined;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [influencer]);
+
     if (!influencer) return null;
 
     const breakdown = influencer.matchBreakdown || {};
@@ -18,8 +32,18 @@ export default function InfluencerDetailModal({ influencer, onClose, onRequest }
         : '협의 가능';
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-[24px] max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col md:flex-row relative">
+        <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={onClose}
+        >
+            <div
+                ref={panelRef}
+                role="dialog"
+                aria-modal="true"
+                aria-label={`${influencer.name || '인플루언서'} 상세 정보`}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white rounded-[24px] max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col md:flex-row relative"
+            >
                 <button
                     type="button"
                     onClick={onClose}
@@ -33,10 +57,12 @@ export default function InfluencerDetailModal({ influencer, onClose, onRequest }
                     <div className="p-8 flex flex-col items-center text-center border-b border-[#F2F4F6] bg-white">
                         <div className="relative mb-4">
                             <div className="w-[120px] h-[120px] rounded-full p-1 bg-gradient-to-tr from-[#FF5A36] to-[#002B7A]">
-                                <img
+                                <ImageWithFallback
                                     src={influencer.profileImage}
-                                    alt={influencer.name}
+                                    alt={`${influencer.name || '인플루언서'} 프로필 사진`}
                                     className="w-full h-full rounded-full object-cover border-4 border-white"
+                                    wrapperClassName="w-full h-full rounded-full border-4 border-white"
+                                    showFallbackLabel={false}
                                 />
                             </div>
                         </div>

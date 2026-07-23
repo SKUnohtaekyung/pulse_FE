@@ -1,6 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Store, MapPin, Calendar, CheckCircle2, XCircle, ChevronDown, X, AlertCircle, ArrowUpDown } from 'lucide-react';
 import { acceptInfluencerProposal, fetchInfluencerInbox, rejectInfluencerProposal } from './influencerApi';
+import ConfirmModal from '../../components/common/ConfirmModal';
+import { CardSkeleton, SectionError } from '../../components/common/StateViews';
+import { useToast } from '../../components/common/ToastProvider';
+import { isCanceledError } from '../../utils/apiError';
+import { toArray, toValidDate } from '../../utils/safeFormat';
 
 const INITIAL_PROPOSALS = [
     {
@@ -216,57 +221,83 @@ export default function InfluencerInbox() {
     const [activeTab, setActiveTab] = useState('pending');
     const [selectedProposal, setSelectedProposal] = useState(null); // G1: 상세 모달
     const [confirmId, setConfirmId] = useState(null);               // G2: 수락 확인
+    const [rejectId, setRejectId] = useState(null);                 // 거절 확인 (되돌릴 수 없는 동작)
+    const [updatingId, setUpdatingId] = useState(null);             // 중복 요청 방지
+    const [loadError, setLoadError] = useState(null);
     const [sortBy, setSortBy] = useState('newest');                  // G4: 정렬
     const [showSortMenu, setShowSortMenu] = useState(false);
+    const toast = useToast();
 
-    useEffect(() => {
-        let ignore = false;
+    const controllerRef = useRef(null);
 
-        const loadInbox = async () => {
-            setIsLoading(true);
-            try {
-                const response = await fetchInfluencerInbox();
-                if (!ignore) {
-                    setProposals((response || []).map(mapApiProposal));
-                }
-            } catch (error) {
-                console.warn('Influencer inbox load failed:', error);
-                if (!ignore) {
-                    const token = localStorage.getItem('accessToken');
-                    setProposals(token === 'dev-bypass-token' ? INITIAL_PROPOSALS : []);
-                }
-            } finally {
-                if (!ignore) setIsLoading(false);
+    const loadInbox = useCallback(async () => {
+        controllerRef.current?.abort();
+        const controller = new AbortController();
+        controllerRef.current = controller;
+
+        setIsLoading(true);
+        setLoadError(null);
+
+        try {
+            const response = await fetchInfluencerInbox(controller.signal);
+            if (controller.signal.aborted) return;
+            setProposals(toArray(response).map(mapApiProposal));
+        } catch (error) {
+            if (controller.signal.aborted || isCanceledError(error)) return;
+            const token = localStorage.getItem('accessToken');
+            if (token === 'dev-bypass-token') {
+                setProposals(INITIAL_PROPOSALS);
+                return;
             }
-        };
-
-        loadInbox();
-        return () => {
-            ignore = true;
-        };
+            // 실패를 빈 목록으로 감추면 "제안이 없다"고 잘못 읽힌다.
+            setProposals([]);
+            setLoadError(error);
+        } finally {
+            if (!controller.signal.aborted) setIsLoading(false);
+        }
     }, []);
 
+    useEffect(() => {
+        loadInbox();
+        return () => controllerRef.current?.abort();
+    }, [loadInbox]);
+
     const handleUpdateStatus = async (id, newStatus) => {
+        // 같은 제안에 대한 중복 요청을 막는다.
+        if (updatingId) return;
+        setUpdatingId(id);
+
         try {
             if (newStatus === 'accepted') {
                 await acceptInfluencerProposal(id, '제안을 수락합니다.');
             } else {
                 await rejectInfluencerProposal(id, '이번 제안은 진행이 어렵습니다.');
             }
-        } catch (error) {
-            console.warn('Proposal status update failed, updating local state only:', error);
-        } finally {
+            // 서버에 반영된 뒤에만 화면 상태를 바꾼다.
             setProposals(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p));
+            toast.success(newStatus === 'accepted' ? '제안을 수락했어요.' : '제안을 거절했어요.');
+        } catch (error) {
+            toast.fromError(error, '처리하지 못했어요. 잠시 후 다시 시도해 주세요.');
+        } finally {
+            setUpdatingId(null);
             setConfirmId(null);
+            setRejectId(null);
         }
     };
 
-    // G4: 정렬 로직
+    // G4: 정렬 로직 — 값이 비어 있어도 NaN 비교로 순서가 뒤죽박죽되지 않게 한다.
     const getSortedProposals = (list) => {
         return [...list].sort((a, b) => {
-            if (sortBy === 'price_high') return b.offerPrice - a.offerPrice;
-            if (sortBy === 'deadline') return new Date(a.deadline) - new Date(b.deadline);
-            return b.id - a.id; // newest
+            if (sortBy === 'price_high') return (Number(b.offerPrice) || 0) - (Number(a.offerPrice) || 0);
+            if (sortBy === 'deadline') {
+                const aDate = toValidDate(a.deadline);
+                const bDate = toValidDate(b.deadline);
+                if (!aDate && !bDate) return 0;
+                if (!aDate) return 1;
+                if (!bDate) return -1;
+                return aDate - bDate;
+            }
+            return (Number(b.id) || 0) - (Number(a.id) || 0); // newest
         });
     };
 
@@ -280,7 +311,11 @@ export default function InfluencerInbox() {
                 proposal={selectedProposal}
                 onClose={() => setSelectedProposal(null)}
                 onAccept={(id) => handleUpdateStatus(id, 'accepted')}
-                onReject={(id) => handleUpdateStatus(id, 'rejected')}
+                onReject={(id) => {
+                    // 상세 모달에서도 거절은 확인 절차를 거친다.
+                    setSelectedProposal(null);
+                    setRejectId(id);
+                }}
             />
 
             {/* [UX Fix 2] mt-4 → mt-3 으로 가볍게 */}
@@ -338,10 +373,29 @@ export default function InfluencerInbox() {
                 {/* Content List */}
                 {/* [UX Fix 4] gap-4 → gap-5 */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-[#F9FAFB]">
-                    {filteredProposals.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full text-[#8B95A1]">
+                    {isLoading ? (
+                        <div className="flex flex-col gap-5">
+                            {Array.from({ length: 2 }).map((_, index) => (
+                                <CardSkeleton key={index} lines={4} />
+                            ))}
+                        </div>
+                    ) : loadError ? (
+                        <SectionError
+                            error={loadError}
+                            title="받은 제안을 불러오지 못했어요"
+                            onRetry={loadInbox}
+                        />
+                    ) : filteredProposals.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full text-[#8B95A1] text-center px-6">
                             <InboxIconPlaceholder />
-                            <p className="mt-4 text-[16px] font-medium">해당하는 제안이 없습니다.</p>
+                            <p className="mt-4 text-[16px] font-medium">
+                                {activeTab === 'pending' ? '아직 받은 제안이 없어요.' : '해당하는 제안이 없어요.'}
+                            </p>
+                            {activeTab === 'pending' && (
+                                <p className="mt-1 text-[14px] text-[#8B95A1] break-keep max-w-[280px]">
+                                    프로필을 채워 두면 사장님이 먼저 협업을 제안할 확률이 높아져요.
+                                </p>
+                            )}
                         </div>
                     ) : (
                         <div className="flex flex-col gap-5">
@@ -405,15 +459,24 @@ export default function InfluencerInbox() {
                                             ) : (
                                                 <div className="flex items-center gap-3 w-full">
                                                     {/* [UX Fix 3] min-w 명시 */}
+                                                    {/* 거절은 되돌릴 수 없으므로 확인 절차를 거친다 */}
                                                     <button
-                                                        onClick={() => handleUpdateStatus(proposal.id, 'rejected')}
-                                                        className="min-w-[72px] h-[48px] px-3 bg-white border border-[#D1D6DB] text-[#4E5968] font-bold text-[14px] rounded-[12px] hover:bg-[#F9FAFB] hover:text-[#191F28] transition-all"
+                                                        type="button"
+                                                        onClick={() => setRejectId(proposal.id)}
+                                                        disabled={!!updatingId}
+                                                        className="min-w-[72px] h-[48px] px-3 bg-white border border-[#D1D6DB] text-[#4E5968] font-bold text-[14px] rounded-[12px] hover:bg-[#F9FAFB] hover:text-[#191F28] transition-colors
+                                                                   disabled:opacity-40 disabled:cursor-not-allowed
+                                                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                                                     >
                                                         거절
                                                     </button>
                                                     <button
+                                                        type="button"
                                                         onClick={() => setConfirmId(proposal.id)}
-                                                        className="flex-1 h-[48px] bg-[#002B7A] text-white font-bold text-[14px] rounded-[12px] hover:bg-[#001F5C] shadow-sm hover:-translate-y-0.5 transition-all"
+                                                        disabled={!!updatingId}
+                                                        className="flex-1 h-[48px] bg-[#002B7A] text-white font-bold text-[14px] rounded-[12px] hover:bg-[#001F5C] shadow-sm transition-colors
+                                                                   disabled:opacity-40 disabled:cursor-not-allowed
+                                                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                                                     >
                                                         수락하기
                                                     </button>
@@ -442,6 +505,16 @@ export default function InfluencerInbox() {
                     )}
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={rejectId !== null}
+                onClose={() => setRejectId(null)}
+                onConfirm={() => handleUpdateStatus(rejectId, 'rejected')}
+                isProcessing={!!updatingId}
+                title="이 제안을 거절할까요?"
+                description="거절하면 되돌릴 수 없어요. 사장님에게 거절 사실이 전달돼요."
+                confirmLabel="거절하기"
+            />
         </>
     );
 }

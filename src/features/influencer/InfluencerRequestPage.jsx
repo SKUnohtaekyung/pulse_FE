@@ -1,12 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Sparkles, Send, Info } from 'lucide-react';
 import { INFLUENCER_DATA } from '../../data/mockInfluencers';
 import { createInfluencerProposal } from './influencerApi';
 import { getLocalStoreProfile } from './influencerMatchingUtils';
+import { FormError, PageError } from '../../components/common/StateViews';
+import { useToast } from '../../components/common/ToastProvider';
+import { getErrorMessage } from '../../utils/apiError';
+import { readJson } from '../../utils/safeStorage';
+import { FASTAPI_BASE_URL, USE_MOCK_API } from '../../config/env';
 
-const FASTAPI_URL = import.meta.env.VITE_FASTAPI_BASE_URL || 'http://127.0.0.1:8000/api';
+const FASTAPI_URL = FASTAPI_BASE_URL;
 
 /**
  * InfluencerRequestPage (v2.0)
@@ -15,14 +20,9 @@ const FASTAPI_URL = import.meta.env.VITE_FASTAPI_BASE_URL || 'http://127.0.0.1:8
 export default function InfluencerRequestPage() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const cachedInfluencer = (() => {
-        try {
-            const cached = JSON.parse(localStorage.getItem('selectedInfluencerForProposal') || 'null');
-            return String(cached?.id) === String(id) ? cached : null;
-        } catch {
-            return null;
-        }
-    })();
+    const toast = useToast();
+    const cached = readJson('selectedInfluencerForProposal', null);
+    const cachedInfluencer = cached && String(cached.id) === String(id) ? cached : null;
     // 매칭 화면에서 선택한 실제(백엔드) 인플루언서를 우선 사용하고, 없을 때만 목 데이터로 폴백한다.
     const influencer = cachedInfluencer || INFLUENCER_DATA.find(inf => inf.id === id);
 
@@ -37,6 +37,8 @@ export default function InfluencerRequestPage() {
 
     const [isAiGenerating, setIsAiGenerating] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState(null);
+    const submittingRef = useRef(false);
 
     // AI 제안서 작성 핸들러
     // 과거에는 인플루언서의 활동지/분야를 '우리 매장' 정보로 잘못 사용해
@@ -99,14 +101,21 @@ export default function InfluencerRequestPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        // 중복 제출 차단 (Enter 연타 포함)
+        if (submittingRef.current) return;
+
+        submittingRef.current = true;
         setIsSubmitting(true);
+        setSubmitError(null);
+
         try {
-            if (!influencer?.backendProfileId) {
-                throw new Error('실제 DB 인플루언서 프로필 ID를 찾을 수 없습니다. 매칭 페이지에서 다시 선택해주세요.');
+            if (!influencer?.backendProfileId && !USE_MOCK_API) {
+                setSubmitError('인플루언서 정보를 확인하지 못했어요. 매칭 화면에서 다시 선택해 주세요.');
+                return;
             }
 
             await createInfluencerProposal({
-                influencerProfileId: influencer.backendProfileId,
+                influencerProfileId: influencer.backendProfileId ?? influencer.id,
                 campaignType: formData.type,
                 budget: Number(formData.budget || 0),
                 provideFood: formData.provideFood,
@@ -115,17 +124,28 @@ export default function InfluencerRequestPage() {
                 message: formData.message,
             });
 
-            alert(`${influencer.name}님에게 제안을 보냈습니다.`);
+            // 성공 응답을 받은 뒤에만 화면을 이동한다.
+            toast.success(`${influencer.name || '인플루언서'}님에게 제안을 보냈어요.`);
             navigate('/influencer-matching');
-            return;
         } catch (error) {
-            console.error('Proposal submit failed:', error);
-            alert(error.message || '제안 전송에 실패했습니다.');
+            // 실패해도 입력한 내용은 그대로 유지된다.
+            setSubmitError(getErrorMessage(error, '제안을 보내지 못했어요. 잠시 후 다시 시도해 주세요.'));
+        } finally {
+            submittingRef.current = false;
             setIsSubmitting(false);
         }
     };
 
-    if (!influencer) return <div>인플루언서를 찾을 수 없습니다.</div>;
+    if (!influencer) {
+        return (
+            <PageError
+                title="인플루언서 정보를 찾을 수 없어요"
+                description="매칭 화면에서 인플루언서를 다시 선택해 주세요."
+                onRetry={() => navigate('/influencer-matching')}
+                retryLabel="매칭 화면으로"
+            />
+        );
+    }
 
     const isSubmitDisabled = isSubmitting || !formData.message || !formData.contact || !formData.budget;
 
@@ -268,10 +288,14 @@ export default function InfluencerRequestPage() {
                         </div>
                     </div>
 
+                    {/* 제출 실패 시 입력 내용은 유지한 채 원인을 알린다 */}
+                    {submitError && <FormError>{submitError}</FormError>}
+
                     {/* Submit Button */}
                     <button
                         type="submit"
                         disabled={isSubmitDisabled}
+                        aria-busy={isSubmitting}
                         className={`
                             py-4 rounded-xl font-bold text-[16px] text-white shadow-md transition-all flex items-center justify-center gap-2 mt-2
                             ${isSubmitDisabled

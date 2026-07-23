@@ -3,43 +3,65 @@
  * 지도 상단 검색 바 - 주소/장소명 검색 및 자동완성
  */
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Search, X, Loader2 } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { AlertCircle, Search, X, Loader2 } from 'lucide-react';
 import { searchPlacesByKeyword } from '../api/kakaoLocal';
+import { getErrorMessage, isCanceledError } from '../../../utils/apiError';
+import { toArray } from '../../../utils/safeFormat';
 
 export default function SearchBar({ center, onSearch }) {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
     const [showResults, setShowResults] = useState(false);
+    const [searchError, setSearchError] = useState(null);
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const inputRef = useRef(null);
     const dropdownRef = useRef(null);
+    // 응답 순서가 뒤바뀌어 오래된 결과가 최신 검색을 덮어쓰지 않도록 순번을 둔다.
+    const requestIdRef = useRef(0);
+    // 결과를 골라 query 를 채운 경우, 디바운스 effect 가 드롭다운을 다시 열지 않게 한다.
+    const skipNextSearchRef = useRef(false);
 
     // 검색 API 호출
-    const handleSearch = async (searchQuery) => {
+    const handleSearch = useCallback(async (searchQuery) => {
         if (!searchQuery.trim()) {
             setResults([]);
             setShowResults(false);
+            setSearchError(null);
             return;
         }
 
+        requestIdRef.current += 1;
+        const requestId = requestIdRef.current;
+        const isStale = () => requestId !== requestIdRef.current;
+
         setIsSearching(true);
+        setSearchError(null);
         try {
             const data = await searchPlacesByKeyword(center.lat, center.lng, 20000, searchQuery);
-            setResults(data.documents || []);
+            if (isStale()) return;
+            setResults(toArray(data?.documents));
             setShowResults(true);
             setSelectedIndex(-1);
         } catch (error) {
-            console.error('❌ 검색 실패:', error);
+            if (isStale() || isCanceledError(error)) return;
+            // 실패와 "결과 없음"을 구분한다. (예전에는 오류도 "검색 결과가 없습니다"로 보였다)
             setResults([]);
+            setShowResults(true);
+            setSearchError(getErrorMessage(error, '검색에 실패했어요. 잠시 후 다시 시도해 주세요.'));
         } finally {
-            setIsSearching(false);
+            if (!isStale()) setIsSearching(false);
         }
-    };
+    }, [center.lat, center.lng]);
 
     // 디바운스 검색
     useEffect(() => {
+        if (skipNextSearchRef.current) {
+            skipNextSearchRef.current = false;
+            return undefined;
+        }
+
         const timer = setTimeout(() => {
             if (query) {
                 handleSearch(query);
@@ -47,13 +69,15 @@ export default function SearchBar({ center, onSearch }) {
         }, 300);
 
         return () => clearTimeout(timer);
-    }, [query]);
+    }, [query, handleSearch]);
 
     // 검색 결과 선택
     const handleSelectResult = (place) => {
+        skipNextSearchRef.current = true;
         onSearch(place);
-        setQuery(place.place_name);
+        setQuery(place.place_name || '');
         setShowResults(false);
+        setSearchError(null);
         inputRef.current?.blur();
     };
 
@@ -140,8 +164,28 @@ export default function SearchBar({ center, onSearch }) {
                 </div>
             </div>
 
+            {/* 검색 실패 — 결과 없음과 구분해서 재시도 경로를 제공한다 */}
+            {showResults && searchError && (
+                <div className="absolute top-full mt-2 w-full bg-white border border-[#E5E8EB] rounded-xl shadow-xl p-4 z-25" role="alert">
+                    <div className="flex items-start gap-2">
+                        <AlertCircle size={16} className="text-point shrink-0 mt-[2px]" aria-hidden="true" />
+                        <div className="flex-1">
+                            <p className="text-[14px] text-[#191F28] break-keep">{searchError}</p>
+                            <button
+                                type="button"
+                                onClick={() => handleSearch(query)}
+                                className="mt-2 text-[13px] font-bold text-[#002B7A] underline underline-offset-2 rounded
+                                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            >
+                                다시 검색
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* 검색 결과 드롭다운 */}
-            {showResults && results.length > 0 && (
+            {showResults && !searchError && results.length > 0 && (
                 <div className="absolute top-full mt-2 w-full bg-white border border-[#E5E8EB] rounded-xl shadow-xl overflow-hidden z-25 max-h-[300px] overflow-y-auto">
                     {results.map((place, index) => (
                         <button
@@ -176,10 +220,10 @@ export default function SearchBar({ center, onSearch }) {
             )}
 
             {/* 검색 결과 없음 */}
-            {showResults && !isSearching && query && results.length === 0 && (
+            {showResults && !isSearching && !searchError && query && results.length === 0 && (
                 <div className="absolute top-full mt-2 w-full bg-white border border-[#E5E8EB] rounded-xl shadow-xl p-4 z-25">
-                    <p className="text-[14px] text-gray-600 text-center">
-                        검색 결과가 없습니다
+                    <p className="text-[14px] text-gray-600 text-center break-keep">
+                        검색 결과가 없어요. 지역명이나 가게 이름을 다르게 입력해 보세요.
                     </p>
                 </div>
             )}

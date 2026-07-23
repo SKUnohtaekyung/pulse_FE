@@ -8,6 +8,8 @@
 
 import { useState } from 'react';
 import { AlertTriangle, Utensils, Users, DollarSign, ChevronDown, ChevronUp } from 'lucide-react';
+import ConfirmModal from '../../../components/common/ConfirmModal';
+import { toArray } from '../../../utils/safeFormat';
 
 // ============================================================================
 // DEFAULT CASES
@@ -89,38 +91,57 @@ function CaseCard({ case: exceptionCase, onUpdate }) {
         }
     };
 
+    // keywords 가 누락된 응답에서도 카드가 터지지 않게 한다.
+    const keywords = toArray(exceptionCase?.keywords);
+
     return (
         <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
-            {/* Header */}
-            <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full flex items-center justify-between p-4 hover:bg-neutral-50 transition-colors"
-            >
-                <div className="flex items-center gap-3">
+            {/* Header
+                버튼 안에 체크박스를 중첩하면 유효하지 않은 HTML 이 되고 키보드·스크린리더 동작이 깨진다.
+                토글과 펼치기 버튼을 형제 요소로 분리한다. */}
+            <div className="w-full flex items-center justify-between p-4 gap-2 hover:bg-neutral-50 transition-colors">
+                <button
+                    type="button"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    aria-expanded={isExpanded}
+                    className="flex items-center gap-3 flex-1 min-w-0 text-left rounded
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
                     <div className={`p-2 rounded-lg ${getColor()}`}>
                         {getIcon()}
                     </div>
-                    <div className="text-left">
+                    <div className="text-left min-w-0">
                         <h4 className="font-semibold text-neutral-900">{exceptionCase.type} 문제</h4>
-                        <p className="text-xs text-neutral-500 mt-0.5">
-                            키워드: {exceptionCase.keywords.slice(0, 3).join(', ')}
-                            {exceptionCase.keywords.length > 3 && '...'}
+                        <p className="text-xs text-neutral-500 mt-0.5 truncate">
+                            키워드: {keywords.slice(0, 3).join(', ') || '등록된 키워드 없음'}
+                            {keywords.length > 3 && '...'}
                         </p>
                     </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <label className="relative inline-flex items-center cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                        <span className="sr-only">{exceptionCase.type} 문제 자동 응대 사용</span>
                         <input
                             type="checkbox"
-                            checked={exceptionCase.enabled}
+                            role="switch"
+                            checked={!!exceptionCase.enabled}
                             onChange={(e) => onUpdate({ ...exceptionCase, enabled: e.target.checked })}
                             className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-neutral-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#002B7A]"></div>
+                        <div className="w-11 h-6 bg-neutral-300 peer-focus-visible:ring-2 peer-focus-visible:ring-primary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-transform peer-checked:bg-[#002B7A]"></div>
                     </label>
-                    {isExpanded ? <ChevronUp className="w-5 h-5 text-neutral-400" /> : <ChevronDown className="w-5 h-5 text-neutral-400" />}
+                    <button
+                        type="button"
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        aria-label={isExpanded ? '상세 설정 접기' : '상세 설정 펼치기'}
+                        aria-expanded={isExpanded}
+                        className="p-1 rounded text-neutral-400 transition-colors hover:text-neutral-700
+                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    >
+                        {isExpanded ? <ChevronUp className="w-5 h-5" aria-hidden="true" /> : <ChevronDown className="w-5 h-5" aria-hidden="true" />}
+                    </button>
                 </div>
-            </button>
+            </div>
 
             {/* Expanded Content */}
             {isExpanded && (
@@ -129,7 +150,7 @@ function CaseCard({ case: exceptionCase, onUpdate }) {
                     <div>
                         <label className="block text-xs font-medium text-neutral-700 mb-2">감지 키워드</label>
                         <div className="flex flex-wrap gap-2">
-                            {exceptionCase.keywords.map((keyword, index) => (
+                            {keywords.map((keyword, index) => (
                                 <span
                                     key={index}
                                     className="px-2 py-1 bg-neutral-100 text-neutral-700 rounded-md text-xs"
@@ -188,15 +209,19 @@ function CaseCard({ case: exceptionCase, onUpdate }) {
  * - 공감, 사과, 해결책 템플릿 관리
  */
 export function ExceptionCaseSettings({ cases, onCasesChange }) {
+    const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+    const caseList = toArray(cases);
+
     const handleCaseUpdate = (updatedCase) => {
-        const updatedCases = cases.map(c => c.id === updatedCase.id ? updatedCase : c);
-        onCasesChange(updatedCases);
+        onCasesChange(caseList.map(c => c.id === updatedCase.id ? updatedCase : c));
     };
 
-    const handleResetToDefaults = () => {
-        if (confirm('모든 예외 케이스 설정을 기본값으로 초기화하시겠습니까?')) {
-            onCasesChange(DEFAULT_CASES);
-        }
+    // 초기화는 되돌릴 수 없으므로 확인 모달을 거친다.
+    const handleResetToDefaults = () => setIsResetConfirmOpen(true);
+
+    const confirmReset = () => {
+        onCasesChange(DEFAULT_CASES);
+        setIsResetConfirmOpen(false);
     };
 
     return (
@@ -207,15 +232,17 @@ export function ExceptionCaseSettings({ cases, onCasesChange }) {
                     <p className="text-xs text-neutral-500 mt-1">특정 불만 사항에 대한 맞춤 대응을 설정하세요</p>
                 </div>
                 <button
+                    type="button"
                     onClick={handleResetToDefaults}
-                    className="px-3 py-1.5 text-xs text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
+                    className="px-3 py-1.5 text-xs text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors
+                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                     기본값으로 초기화
                 </button>
             </div>
 
             <div className="space-y-3">
-                {cases.map((exceptionCase) => (
+                {caseList.map((exceptionCase) => (
                     <CaseCard
                         key={exceptionCase.id}
                         case={exceptionCase}
@@ -223,6 +250,15 @@ export function ExceptionCaseSettings({ cases, onCasesChange }) {
                     />
                 ))}
             </div>
+
+            <ConfirmModal
+                isOpen={isResetConfirmOpen}
+                onClose={() => setIsResetConfirmOpen(false)}
+                onConfirm={confirmReset}
+                title="설정을 기본값으로 되돌릴까요?"
+                description="지금까지 수정한 예외 케이스 문구가 모두 사라져요. 이 작업은 되돌릴 수 없어요."
+                confirmLabel="초기화"
+            />
         </div>
     );
 }
