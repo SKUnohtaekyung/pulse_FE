@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Icosahedron, Float } from '@react-three/drei';
+import { Icosahedron, Float, Environment } from '@react-three/drei';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
 
 function GeometricHeart() {
@@ -55,6 +55,8 @@ const ThreeBackground = ({ position = [0, 0, 0], scale = 1 }) => {
                     <group position={position} scale={scale}>
                         <GeometricHeart />
                     </group>
+
+                    <Environment preset="city" />
                 </Canvas>
             </ErrorBoundary>
         </div>

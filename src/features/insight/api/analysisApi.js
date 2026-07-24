@@ -11,14 +11,14 @@ export const MOCK_ANALYSIS_DATA = {
     total_reviews: 128,
     personas: [
         {
-            id: 'mock-office-worker',
+            id: 1,
             nickname: '퇴근길 직장인',
             summary: '저녁 식사와 회식을 함께 고려하는 고객층입니다.',
             tags: ['직장인', '저녁'],
             action_recommendation: '퇴근 시간대 대표 메뉴와 방문 혜택을 알리세요.',
         },
         {
-            id: 'mock-weekend-couple',
+            id: 2,
             nickname: '주말 데이트 고객',
             summary: '사진과 분위기를 함께 살피는 고객층입니다.',
             tags: ['데이트', '주말'],
