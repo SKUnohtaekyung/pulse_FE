@@ -1,0 +1,47 @@
+name: Deploy Exhibition Demo
+
+# 전시용 데모(demo/exhibition 브랜치) 전용 배포.
+# main 의 deploy.yml(main → gh-pages)과 분리되어, 결과물을 gh-pages-expo 브랜치에 올린다.
+# 저장소 Settings → Pages 의 배포 브랜치를 gh-pages-expo 로 지정하면 전시 버전이 서비스된다.
+
+on:
+  push:
+    branches:
+      - demo/exhibition
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-exhibition-demo
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install and Build (demo mode)
+        env:
+          CI: false
+          # 카카오 키는 저장소 Secrets 에 있으면 그 값을 쓰고, 없으면 기존 .env 값을 쓴다.
+          SECRET_KAKAO_MAP_API_KEY: ${{ secrets.VITE_KAKAO_MAP_API_KEY }}
+          SECRET_KAKAO_REST_API_KEY: ${{ secrets.VITE_KAKAO_REST_API_KEY }}
+        run: |
+          npm install
+          if [ -n "$SECRET_KAKAO_MAP_API_KEY" ]; then export VITE_KAKAO_MAP_API_KEY="$SECRET_KAKAO_MAP_API_KEY"; fi
+          if [ -n "$SECRET_KAKAO_REST_API_KEY" ]; then export VITE_KAKAO_REST_API_KEY="$SECRET_KAKAO_REST_API_KEY"; fi
+          npm run build:demo
+          # 깃페이지에서 어느 주소로 새로고침해도 앱이 뜨도록 index.html 을 404.html 로 복사한다.
+          cp dist/index.html dist/404.html
+          # 화면에서 쓰지 않는 30MB 원본 CSV 는 배포 결과물에서만 제외한다 (저장소 파일은 그대로).
+          rm -f dist/data/commercial_area.csv
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: gh-pages-expo
