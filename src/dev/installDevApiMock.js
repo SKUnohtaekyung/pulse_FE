@@ -326,9 +326,32 @@ function isBackendUrl(url) {
   return [SPRING_API_BASE_URL, FASTAPI_BASE_URL].some((base) => base && String(url).startsWith(base));
 }
 
+// 시연 초기화: 주소 끝에 ?demo-reset 을 붙여 열면 로그인·제안·대시보드 상태를 처음으로 되돌린다.
+// (상권 분석 저장본 pulseDemoMarketSnapshot 은 카카오 장애 대비용이므로 남긴다.)
+const DEMO_KEEP_KEYS = ['pulseDemoMarketSnapshot'];
+
+function resetDemoIfRequested() {
+  try {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has('demo-reset')) return;
+    const keep = Object.fromEntries(DEMO_KEEP_KEYS.map((key) => [key, localStorage.getItem(key)]));
+    localStorage.clear();
+    sessionStorage.clear();
+    Object.entries(keep).forEach(([key, value]) => value !== null && localStorage.setItem(key, value));
+    resetDemoProposals();
+    url.searchParams.delete('demo-reset');
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`);
+    console.info('[demoMock] 시연 상태를 초기화했습니다.');
+  } catch (error) {
+    console.warn('[demoMock] 시연 초기화 실패', error);
+  }
+}
+
 export function installDevApiMock() {
   if (installed || typeof window === 'undefined') return;
   installed = true;
+
+  if (DEMO_MODE) resetDemoIfRequested();
 
   const originalFetch = window.fetch.bind(window);
 

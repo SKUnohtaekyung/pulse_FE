@@ -272,12 +272,16 @@ const saveDemoMarketReport = (radiusM, report) => {
     }
 };
 
+// 저장본이 손상됐거나 형식이 다르면 쓰지 않는다 (빈 리포트로 화면이 깨지는 것 방지).
+const isUsableReport = (report) =>
+    !!report && typeof report === 'object' && !!report.counts && !!report.competition && !!report.anchors;
+
 const loadDemoMarketFallback = async (radiusM) => {
     const cached = readDemoMarketCache();
-    if (cached[radiusM]) return cached[radiusM];
+    if (isUsableReport(cached[radiusM])) return cached[radiusM];
     try {
         const { MARKET_SNAPSHOT } = await import('../../dev/marketSnapshot.js');
-        return MARKET_SNAPSHOT?.[radiusM] || null;
+        return isUsableReport(MARKET_SNAPSHOT?.[radiusM]) ? MARKET_SNAPSHOT[radiusM] : null;
     } catch {
         return null;
     }

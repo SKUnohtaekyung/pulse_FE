@@ -1,7 +1,8 @@
 import React, { useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Icosahedron, Float, Environment } from '@react-three/drei';
+import { Icosahedron, Float, Environment, Lightformer } from '@react-three/drei';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
+import { DEMO_MODE } from '../../config/env';
 
 function GeometricHeart() {
     const meshRef = useRef();
@@ -56,7 +57,20 @@ const ThreeBackground = ({ position = [0, 0, 0], scale = 1 }) => {
                         <GeometricHeart />
                     </group>
 
-                    <Environment preset="city" />
+                    {DEMO_MODE ? (
+                        // 전시 데모: 외부 HDR 파일(raw.githack) 다운로드 없이 반사광을 장면 안에서 만든다.
+                        // 전시장 네트워크가 불안정해도 3D 하트가 사라지지 않는다.
+                        <Environment resolution={256}>
+                            <color attach="background" args={['#1E2F55']} />
+                            <Lightformer form="rect" intensity={2.5} color="#DCE6FF" position={[0, 6, 0]} rotation-x={Math.PI / 2} scale={[20, 20, 1]} />
+                            <Lightformer form="rect" intensity={2} position={[0, 5, -9]} scale={[10, 10, 1]} />
+                            <Lightformer form="rect" intensity={1.5} position={[-5, 1, -1]} rotation-y={Math.PI / 2} scale={[20, 2, 1]} />
+                            <Lightformer form="rect" intensity={1.5} position={[5, 1, -1]} rotation-y={-Math.PI / 2} scale={[20, 2, 1]} />
+                            <Lightformer form="ring" intensity={2} color="#4D85FF" position={[-3, 4, 4]} scale={3} />
+                        </Environment>
+                    ) : (
+                        <Environment preset="city" />
+                    )}
                 </Canvas>
             </ErrorBoundary>
         </div>
