@@ -131,7 +131,9 @@ export const useKakaoMap = (center, radius) => {
         // 커스텀 마커 이미지 (가게)
         const svgContent = `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="24" cy="24" r="20" fill="#FF5A36" stroke="white" stroke-width="4"/>
-        <text x="24" y="30" font-size="20" text-anchor="middle" fill="white">🏪</text>
+        <g transform="translate(13 13) scale(0.9166)" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/>
+        </g>
       </svg>`;
         const imageSrc = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgContent);
         const imageSize = new window.kakao.maps.Size(48, 48);
@@ -217,7 +219,7 @@ export const useKakaoMap = (center, radius) => {
         const content = `
             <div style="padding: 12px 16px; min-width: 200px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
                 <div style="font-size: 15px; font-weight: 600; color: #191F28; margin-bottom: 6px;">${escapeHtml(place?.name)}</div>
-                <div style="font-size: 13px; color: #6B7280; margin-bottom: 4px;">📍 ${escapeHtml(place?.distanceM ?? 0)}m</div>
+                <div style="font-size: 13px; color: #6B7280; margin-bottom: 4px;">내 가게에서 ${escapeHtml(place?.distanceM ?? 0)}m</div>
                 <div style="font-size: 12px; color: #9CA3AF; margin-bottom: 8px;">${escapeHtml(place?.address)}</div>
                 ${safeUrl ? `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 6px 12px; background: #002B7A; color: white; text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: 500;">카카오맵에서 보기</a>` : ''}
             </div>

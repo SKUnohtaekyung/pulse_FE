@@ -22,11 +22,11 @@ const RATING_COLORS = {
 
 // 평가 등급별 라벨
 const RATING_LABELS = {
-    great: '평균 평점 · Great',
-    good: '평균 평점 · Good',
-    soso: '평균 평점 · So-so',
-    bad: '평균 평점 · Bad',
-    worst: '평균 평점 · Worst'
+    great: '매우 좋음',
+    good: '좋음',
+    soso: '보통',
+    bad: '아쉬움',
+    worst: '나쁨'
 };
 
 /**
@@ -153,7 +153,7 @@ export function ReviewSummary({ averageRating, totalReviews, evaluationMetrics }
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200">
             {/* 총 평점 */}
             <div className="text-center mb-8 pb-8 border-b border-gray-200">
-                <div className="text-6xl font-bold mb-3">{rating === null ? '—' : rating.toFixed(2)}</div>
+                <div className="text-6xl font-bold mb-3">{rating === null ? '—' : rating.toFixed(1)}</div>
                 <StarRating rating={rating} />
                 <div className="text-gray-500 mt-3">
                     ({formatNumber(totalReviews, { fallback: '0' })}건의 평가)

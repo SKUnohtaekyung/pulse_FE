@@ -17,6 +17,8 @@
  * ============================================================================
  */
 
+import { dotDate } from './demoDates';
+
 // ── 가게 기본 정체성 (모든 슬라이스의 기준점) ──────────────────────────────
 const STORE = {
   storeId: 'store_001',
@@ -33,7 +35,7 @@ const STORE = {
   lng: 126.9510,
   averageRating: 4.5,
   totalReviews: 128,
-  plan: 'Growth',
+  plan: 'Pro',
 };
 
 // ── 1. 프로필 (localStorage['userProfile'] 시딩 대상) ──────────────────────
@@ -60,6 +62,9 @@ const legacyUser = {
   email: STORE.email,
 };
 
+// 페르소나 아바타 — 외부 이미지 서비스 대신 로컬 SVG(public/dev/personas)를 쓴다 (오프라인 대응)
+const personaAvatar = (name) => `${import.meta.env.BASE_URL}dev/personas/${name}.svg`;
+
 // ── 2. 손님 분석 (/analysis/latest 응답) ───────────────────────────────────
 // UnifiedInsightPage.normalizePersona / MyPage 키워드 / StatusV2Page 페르소나 /
 // influencerMatchingUtils.buildStoreInsightFromAnalysisData 가 소비.
@@ -73,13 +78,13 @@ const analysis = {
     {
       id: 1,
       nickname: '시원한 국물파',
-      summary: '해장이 필요한 직장인, 진한 국물 맛집을 찾아요',
-      img: 'https://api.dicebear.com/7.x/adventurer/svg?seed=hangover',
+      summary: '해장이 필요한 직장인, 뜨끈한 국물 한 그릇을 찾아요',
+      img: personaAvatar('hangover'),
       tags: ['30대', '직장인', '해장'],
       overall_comment:
         '해장 수요가 높은 고객층으로, 국물 퀄리티와 빠른 제공이 핵심입니다. 이 그룹을 잡으면 평일 오전 매출이 올라갑니다.',
       action_recommendation:
-        '"10분 완성 해장국밥" 릴스를 만들어 월요일 아침에 올려보세요. 공유율이 높습니다.',
+        '"주문 5분 만에 나오는 출근길 해장국밥" 릴스를 만들어 월요일 아침에 올려보세요.',
       journey: {
         explore: {
           action: '"범계 해장국밥" 키워드로 네이버 지도 검색',
@@ -92,7 +97,7 @@ const analysis = {
           action: '출근 전 오전 8시 30분 방문',
           thought: '줄이 없네! 바로 앉을 수 있겠다.',
           type: 'good',
-          opportunity: '오전 방문 고객에게 "얼리버드 계란후라이" 서비스로 충성도를 높이세요.',
+          opportunity: '오전 10시 전 해장 손님에게 공깃밥 추가를 무료로 드려 단골로 만드세요.',
         },
         eat: {
           action: '순댓국 + 공깃밥 주문, 빠른 서빙 기대',
@@ -112,7 +117,7 @@ const analysis = {
       id: 2,
       nickname: '가성비 직장인',
       summary: '빠른 점심이 필요한 직장인, 가성비와 속도를 중시해요',
-      img: 'https://api.dicebear.com/7.x/adventurer/svg?seed=worker',
+      img: personaAvatar('worker'),
       tags: ['20-30대', '점심', '가성비'],
       overall_comment:
         '점심 피크 회전율이 핵심입니다. 대기 시간에 민감하지만, 한 번 만족하면 고정 단골이 됩니다.',
@@ -133,10 +138,10 @@ const analysis = {
           opportunity: '"현재 대기 0명" 보드를 설치하면 이탈을 줄일 수 있습니다.',
         },
         eat: {
-          action: '제육국밥 세트 주문, 10분 내 수령',
+          action: '순대국밥 점심 정식 주문, 10분 안에 받음',
           thought: '양 많고 든든하다. 가격 대비 만족!',
           type: 'good',
-          opportunity: '대표 세트를 #가성비점심 태그와 함께 노출하세요.',
+          opportunity: '점심 정식을 #범계점심 #가성비점심 태그와 함께 노출하세요.',
         },
         share: {
           action: '팀 단톡에 "여기 든든해" 공유',
@@ -150,7 +155,7 @@ const analysis = {
       id: 3,
       nickname: '동네 단골 가족',
       summary: '주말에 부모님과 찾는 가족, 편안함과 푸짐함을 중시해요',
-      img: 'https://api.dicebear.com/7.x/adventurer/svg?seed=family',
+      img: personaAvatar('family'),
       tags: ['40-50대', '가족', '주말'],
       overall_comment:
         '주말 가족 단위 방문이 핵심입니다. 편안한 자리와 푸짐한 양이 재방문을 만듭니다.',
@@ -204,21 +209,21 @@ const reviewContext = {
     ],
   },
   reviews: [
-    { id: 'rv_01', source: 'naver', hasPhoto: true, author: '국물러버', date: '2026.06.05', rating: 5,
+    { id: 'rv_01', source: 'naver', hasPhoto: true, author: '국물러버', date: dotDate(-1), rating: 5,
       content: '해장하러 왔는데 국물이 진짜 진하네요. 출근 전에 딱입니다. 자리도 금방 났어요.' },
-    { id: 'rv_02', source: 'naver', hasPhoto: false, author: '범계직장인', date: '2026.06.03', rating: 5,
-      content: '점심에 제육국밥 세트 먹었어요. 양 많고 든든해서 오후까지 버팁니다. 또 올게요.' },
-    { id: 'rv_03', source: 'kakao', hasPhoto: true, author: '주말가족', date: '2026.06.01', rating: 5,
+    { id: 'rv_02', source: 'naver', hasPhoto: false, author: '범계직장인', date: dotDate(-3), rating: 5,
+      content: '점심에 순대국밥 정식 먹었어요. 양 많고 든든해서 오후까지 버팁니다. 또 올게요.' },
+    { id: 'rv_03', source: 'kakao', hasPhoto: true, author: '주말가족', date: dotDate(-5), rating: 5,
       content: '부모님 모시고 방문했는데 자리도 넓고 수육도 깔끔했습니다. 어르신들이 좋아하셨어요.' },
-    { id: 'rv_04', source: 'naver', hasPhoto: false, author: '순댓국매니아', date: '2026.05.30', rating: 4,
+    { id: 'rv_04', source: 'naver', hasPhoto: false, author: '순댓국매니아', date: dotDate(-8), rating: 4,
       content: '순댓국 맛은 훌륭합니다. 다만 깍두기가 조금 더 익었으면 좋겠어요.' },
-    { id: 'rv_05', source: 'kakao', hasPhoto: false, author: '한끼소중', date: '2026.05.28', rating: 4,
+    { id: 'rv_05', source: 'kakao', hasPhoto: false, author: '한끼소중', date: dotDate(-11), rating: 4,
       content: '가성비 좋고 친절합니다. 혼밥하기도 편해요. 국물 리필이 되면 더 좋을 듯.' },
-    { id: 'rv_06', source: 'naver', hasPhoto: true, author: '동네주민A', date: '2026.05.26', rating: 5,
+    { id: 'rv_06', source: 'naver', hasPhoto: true, author: '범계동토박이', date: dotDate(-15), rating: 5,
       content: '집 근처라 자주 가요. 변함없는 맛이 제일 큰 장점입니다.' },
-    { id: 'rv_07', source: 'kakao', hasPhoto: false, author: '점심방랑', date: '2026.05.24', rating: 3,
+    { id: 'rv_07', source: 'kakao', hasPhoto: false, author: '점심방랑', date: dotDate(-20), rating: 3,
       content: '맛은 좋은데 12시엔 줄이 길어요. 조금 일찍 가야 바로 먹을 수 있습니다.' },
-    { id: 'rv_08', source: 'naver', hasPhoto: false, author: '까칠한미식', date: '2026.05.21', rating: 2,
+    { id: 'rv_08', source: 'naver', hasPhoto: false, author: '까칠한미식', date: dotDate(-25), rating: 2,
       content: '이날따라 국물이 평소보다 싱거웠어요. 다음엔 다시 진하게 부탁드립니다.' },
   ],
   settings: {
@@ -281,34 +286,7 @@ const store = {
   },
 };
 
-// ── 6. 사장님이 보낸 제안 (/influencer-proposals/owner 응답) ────────────────
-// OwnerSentProposals: { id, influencerName, status, message, desiredDate, budget }
-const sentProposals = [
-  {
-    id: 'prop_01',
-    influencerName: '안양맛집탐험가',
-    status: 'ACCEPTED',
-    message: '범계 든든국밥 해장 콘텐츠로 직장인 타깃 릴스 1편 제안드립니다.',
-    desiredDate: '2026.06.15 ~ 06.20',
-    budget: 300000,
-  },
-  {
-    id: 'prop_02',
-    influencerName: '국밥부장관',
-    status: 'PENDING',
-    message: '순댓국 비주얼이 좋아 방문 리뷰 + 숏폼 1편 협업 원합니다.',
-    desiredDate: '일정 협의',
-    budget: 200000,
-  },
-  {
-    id: 'prop_03',
-    influencerName: '경기도혼밥러',
-    status: 'REJECTED',
-    message: '혼밥 콘텐츠 협업 제안드렸습니다.',
-    desiredDate: '2026.05.10 ~ 05.15',
-    budget: 100000,
-  },
-];
+// ── 6. 협업 제안은 사장님 ↔ 인플루언서 공유 저장소(demoState.js)에서 관리한다.
 
 // dev 전용 로컬 미디어 (public/dev/*). BASE_URL 접두로 dev('/')·build('/pulse_FE/') 모두 대응.
 // videoUrl 은 반드시 절대경로(origin 포함)여야 한다 — promotionApi.normalizeVideoUrl 이
@@ -327,7 +305,7 @@ const promotionGenerate = {
     videoUrl: `${DEV_ORIGIN}${import.meta.env.BASE_URL}dev/video.mp4`,
     videoTitle: '뜨끈한 든든국밥 한 그릇',
     hashtags: ['#범계국밥', '#든든국밥', '#해장맛집', '#직장인점심', '#범계역맛집'],
-    generationTime: '5.4s',
+    generationTime: '약 5초',
   },
 };
 
@@ -340,11 +318,7 @@ const promotionPrompt = {
   hashtags: ['#범계국밥', '#든든국밥', '#해장맛집'],
 };
 
-// /chat (FastAPI) 응답 — 인라인 챗 / 제안 AI 문구 생성
-const chatReply = {
-  reply:
-    '범계 든든국밥 사장님, 평일 점심 회전율과 해장 수요가 강점이에요. 직장인 타깃으로 "10분 해장국밥" 메시지를 강조하면 반응이 좋을 거예요.',
-};
+// /chat (FastAPI) 응답은 질문 맥락에 따라 demoResponders.buildChatReply 가 만든다.
 
 // ── 통합 SSOT export ───────────────────────────────────────────────────────
 export const MOCK_OWNER = {
@@ -355,11 +329,9 @@ export const MOCK_OWNER = {
   reviewContext,
   searchSignal,
   storeInfo: store,
-  sentProposals,
   promotionSampleImage,
   promotionGenerate,
   promotionPrompt,
-  chatReply,
 };
 
 export default MOCK_OWNER;

@@ -55,7 +55,7 @@ export const useSignupProgress = () => {
 
             setProgress(0);
             setStatus('loading');
-            setMessage('사장님의 가게 정보를 안전하게 암호화하고 있어요... 🔒');
+            setMessage('사장님의 가게 정보를 안전하게 암호화하고 있어요...');
 
             try {
                 let taskId = taskIdRef.current;
@@ -83,7 +83,7 @@ export const useSignupProgress = () => {
                 }
 
                 setProgress(30);
-                setMessage('AI 분석을 시작하고 있어요... 🔍');
+                setMessage('AI 분석을 시작하고 있어요...');
 
                 const startedAt = Date.now();
                 let transientFailures = 0;

@@ -211,7 +211,7 @@ export const buildMarketActions = (rawBody) => {
         {
           title: '점심 피크 회전으로 차별화',
           why: competition
-            ? `반경 안에 음식점이 ${competition}곳이에요. 범계역 직장인 점심 수요를 먼저 잡아야 해요.`
+            ? `반경 안에 음식점이 ${competition}곳${competition === 45 ? ' 이상' : ''}이에요. 범계역 직장인 점심 수요를 먼저 잡아야 해요.`
             : '범계역 직장인 점심 수요를 먼저 잡아야 해요.',
           todo: ['"주문 후 5분" 점심 특선 메뉴 고정하기', '플레이스 대표 사진을 순댓국 클로즈업으로 바꾸기'],
           cta: { label: 'USP 문구 생성하기', action: 'OPEN_COPY_GENERATOR', payload: { type: 'usp' } },

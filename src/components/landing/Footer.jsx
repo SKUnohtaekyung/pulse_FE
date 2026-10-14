@@ -74,9 +74,9 @@ const Footer = () => {
 
                 {/* 하단 legal 바 */}
                 <div className="border-t border-neutral-200 mt-14 pt-6 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <p className="text-caption text-neutral-400">Copyright © 2025 PULSE. All rights reserved.</p>
+                    <p className="text-caption text-neutral-400">Copyright © {new Date().getFullYear()} PULSE. All rights reserved.</p>
                     <p className="text-caption text-neutral-400 leading-relaxed break-keep">
-                        상호 (주)펄스 · 대표 홍길동 · 사업자등록번호 000-00-00000 · 통신판매업신고 0000-서울-0000
+                        PULSE · 팀 F12 · 전시용 데모 버전
                     </p>
                 </div>
 

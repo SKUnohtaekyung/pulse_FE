@@ -9,7 +9,7 @@ import SnapshotCard from './SnapshotCard';
 import CompetitionCard from './CompetitionCard';
 import AnchorCard from './AnchorCard';
 import ActionCard from './ActionCard';
-import { AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Loader2, Lightbulb, Info } from 'lucide-react';
 import { formatDate, toArray } from '../../../utils/safeFormat';
 
 export default function SummaryPanel({ data, onPlaceClick, onRefresh, actionsLoading = false, showHeader = true }) {
@@ -89,7 +89,7 @@ export default function SummaryPanel({ data, onPlaceClick, onRefresh, actionsLoa
                     <>
                         <div className="border-t-2 border-gray-200 pt-5 mt-2">
                             <h3 className="text-[16px] font-bold text-[#191F28] mb-3 flex items-center gap-2">
-                                <span className="text-[#FF5A36]">💡</span>
+                                <Lightbulb size={18} className="shrink-0 text-[#FF5A36]" aria-hidden="true" />
                                 이번 주 실행 액션
                             </h3>
                         </div>
@@ -114,8 +114,9 @@ export default function SummaryPanel({ data, onPlaceClick, onRefresh, actionsLoa
                 {/* 하단 노트 */}
                 {report.note && (
                     <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
-                        <p className="text-[13px] text-gray-600 leading-relaxed">
-                            ℹ️ {report.note}
+                        <p className="flex items-start gap-1.5 text-[13px] text-gray-600 leading-relaxed">
+                            <Info size={14} className="shrink-0 mt-[3px] text-[#002B7A]" aria-hidden="true" />
+                            <span>{report.note}</span>
                         </p>
                     </div>
                 )}

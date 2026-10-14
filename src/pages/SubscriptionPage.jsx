@@ -5,6 +5,9 @@ import PricingCard from '../components/subscription/PricingCard';
 import FaqSection from '../components/subscription/FaqSection';
 import { useToast } from '../components/common/ToastProvider';
 
+// 데모 사장님(범계 든든국밥)의 현재 플랜
+const CURRENT_PLAN_ID = 'pro';
+
 const SubscriptionPage = ({ onNavigate }) => {
     const [isYearly, setIsYearly] = useState(false);
     const toast = useToast();
@@ -60,10 +63,10 @@ const SubscriptionPage = ({ onNavigate }) => {
 
     const handleSelectPlan = (planId) => {
         // 결제 연동은 아직 준비 중이다. 동작하지 않는 것처럼 보이지 않도록 상태를 알린다.
-        if (planId === 'expert') {
-            toast.info('Pro 플랜 결제는 준비 중이에요. 준비되면 가장 먼저 알려드릴게요.');
-        } else {
+        if (planId === CURRENT_PLAN_ID) {
             toast.success('현재 사용 중인 플랜이에요.');
+        } else {
+            toast.info('플랜 변경은 준비 중이에요. 준비되면 가장 먼저 알려드릴게요.');
         }
     };
 
@@ -111,7 +114,7 @@ const SubscriptionPage = ({ onNavigate }) => {
                         <span className={`text-[15px] font-medium transition-colors flex items-center gap-1.5 ${isYearly ? 'text-[#191F28]' : 'text-gray-400'}`}>
                             연간 결제
                             {/* Bouncing Discount Badge */}
-                            <span className="text-[12px] font-bold text-[#FF5A36] bg-[#FF5A361A] px-2 py-0.5 rounded-full animate-bounce">
+                            <span className="text-[12px] font-bold text-[#FF5A36] bg-[#FF5A361A] px-2 py-0.5 rounded-full">
                                 20% OFF
                             </span>
                         </span>
@@ -125,6 +128,7 @@ const SubscriptionPage = ({ onNavigate }) => {
                             key={plan.id}
                             {...plan}
                             isYearly={isYearly}
+                            isCurrent={plan.id === CURRENT_PLAN_ID}
                             onSelect={() => handleSelectPlan(plan.id)}
                         />
                     ))}
@@ -133,7 +137,7 @@ const SubscriptionPage = ({ onNavigate }) => {
                 {/* Social Proof (Trust Text) */}
                 <div className="mt-12 text-center">
                     <p className="text-[14px] text-gray-400">
-                        이미 <span className="text-[#002B7A] font-bold">5,120명의 사장님</span>이 Growth 플랜으로 매출 성장을 경험하고 있습니다.
+                        모든 요금제는 약정 없이 언제든 변경하거나 해지할 수 있어요.
                     </p>
                 </div>
 

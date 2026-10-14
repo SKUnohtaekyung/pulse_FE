@@ -1,6 +1,20 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Search, MapPin, Utensils, Share2, MessageCircle, AlertCircle, Zap, Quote, Sparkles } from 'lucide-react';
+import { Search, MapPin, Utensils, Share2, MessageCircle, AlertCircle, Zap, Quote, Sparkles, Smile, Meh, Frown, Lightbulb } from 'lucide-react';
+
+// 감정 단계별 아이콘·색상 (PULSE 토큰: success / slate / error)
+const EMOTION_ICON = {
+    good: { Icon: Smile, className: 'text-[#059669]' },
+    neutral: { Icon: Meh, className: 'text-slate-500' },
+    pain: { Icon: Frown, className: 'text-[#DC2626]' },
+};
+
+function EmotionIcon({ type, size }) {
+    const entry = EMOTION_ICON[type];
+    if (!entry) return null;
+    const { Icon, className } = entry;
+    return <Icon size={size} className={`shrink-0 ${className}`} aria-hidden="true" />;
+}
 
 export default function JourneyMapSection({ persona }) {
     if (!persona) return null;
@@ -39,11 +53,7 @@ export default function JourneyMapSection({ persona }) {
                     <div className="relative z-10 flex flex-col items-center">
                         <div className={`w-14 h-14 rounded-full border-[4px] border-[#F2F4F6] flex items-center justify-center bg-white shadow-sm transition-transform group-hover:scale-110 ${data.type === 'good' ? 'bg-[#002B7A]/5' : data.type === 'pain' ? 'bg-[#FF5A36]/5' : ''
                             }`}>
-                            <div className="text-[24px]">
-                                {data.type === 'good' && '🤩'}
-                                {data.type === 'pain' && '😥'}
-                                {data.type === 'neutral' && '😐'}
-                            </div>
+                            <EmotionIcon type={data.type} size={26} />
                         </div>
                         <div className="mt-2 px-2 py-1 bg-white border border-[#E5E8EB] rounded-full text-[11px] font-bold text-[#4E5968] shadow-sm flex items-center gap-1.5 whitespace-nowrap">
                             {data.icon}
@@ -109,7 +119,7 @@ export default function JourneyMapSection({ persona }) {
                 <div className="bg-[#F5F7FA] p-6 border-b border-[#E5E8EB] flex justify-between items-start">
                     <div>
                         <h4 className="flex items-center gap-2 text-[18px] font-bold text-[#191F28] mb-2">
-                            <img src="/PULSE_LOGO.png" alt="PULSE" style={{ width: 20, height: 20 }} className="object-contain" />
+                            <img src={`${import.meta.env.BASE_URL}PULSE_LOGO.png`} alt="PULSE" style={{ width: 20, height: 20 }} className="object-contain" />
                             PULSE Insight 요약
                         </h4>
                         <p className="text-[14px] text-[#4E5968] font-medium">
@@ -138,15 +148,15 @@ export default function JourneyMapSection({ persona }) {
                         <span className="text-[12px] font-bold text-[#8B95A1] px-2">감정 기호:</span>
                         <div className="flex gap-4">
                             <div className="flex items-center gap-1.5">
-                                <span className="text-[16px]">🤩</span>
+                                <EmotionIcon type="good" size={16} />
                                 <span className="text-[12px] font-medium text-[#4E5968]">만족</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <span className="text-[16px]">😐</span>
+                                <EmotionIcon type="neutral" size={16} />
                                 <span className="text-[12px] font-medium text-[#4E5968]">보통</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <span className="text-[16px]">😥</span>
+                                <EmotionIcon type="pain" size={16} />
                                 <span className="text-[12px] font-medium text-[#4E5968]">불만(이탈 위험)</span>
                             </div>
                         </div>
@@ -171,11 +181,7 @@ export default function JourneyMapSection({ persona }) {
                                             <span className="text-[10px] font-bold text-[#8B95A1] uppercase tracking-wide">Step 0{i + 1}</span>
                                             <span className="text-[14px] font-bold text-[#191F28]">{d.label}</span>
                                         </div>
-                                        <div className="text-[20px]">
-                                            {d.type === 'good' && '🤩'}
-                                            {d.type === 'pain' && '😥'}
-                                            {d.type === 'neutral' && '😐'}
-                                        </div>
+                                        <EmotionIcon type={d.type} size={20} />
                                     </div>
 
                                     {/* Quote Bubble */}
@@ -197,7 +203,10 @@ export default function JourneyMapSection({ persona }) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Summary */}
                         <div className="bg-blue-50/50 p-5 rounded-xl border border-[#E5E8EB]">
-                            <span className="block text-[12px] font-bold text-[#002B7A] mb-2">💡 분석 총평</span>
+                            <span className="flex items-center gap-1.5 text-[12px] font-bold text-[#002B7A] mb-2">
+                                <Lightbulb size={14} className="shrink-0" aria-hidden="true" />
+                                분석 총평
+                            </span>
                             <p className="text-[14px] font-bold text-[#191F28] leading-relaxed">
                                 {persona.overall_comment || '분석 총평 데이터를 불러오는 중입니다...'}
                             </p>
@@ -206,7 +215,10 @@ export default function JourneyMapSection({ persona }) {
                         {/* Action Item */}
                         <div className="bg-[#002B7A] p-5 rounded-xl text-white shadow-lg flex flex-col justify-between cursor-pointer group hover:bg-[#002568] transition-colors">
                             <div className="flex justify-between items-start mb-2">
-                                <span className="text-[12px] font-bold text-white/80">⚡ 지금 바로 해결하기</span>
+                                <span className="flex items-center gap-1.5 text-[12px] font-bold text-white/80">
+                                    <Zap size={14} className="shrink-0" aria-hidden="true" />
+                                    지금 바로 해결하기
+                                </span>
                                 <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors">
                                     <Zap size={14} className="fill-white" />
                                 </div>

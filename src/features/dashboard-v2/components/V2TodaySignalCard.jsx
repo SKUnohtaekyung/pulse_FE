@@ -1,15 +1,17 @@
 import React from 'react';
+import { Flame, TrendingUp, BarChart2 } from 'lucide-react';
 
 const INTENSITY_CONFIG = {
-    high: { icon: '🔥', color: 'text-orange-600', bg: 'bg-orange-50' },
-    medium: { icon: '📈', color: 'text-blue-600', bg: 'bg-blue-50' },
-    low: { icon: '📊', color: 'text-gray-500', bg: 'bg-gray-50' },
+    high: { icon: Flame, color: 'text-orange-600', bg: 'bg-orange-50' },
+    medium: { icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50' },
+    low: { icon: BarChart2, color: 'text-gray-500', bg: 'bg-gray-50' },
 };
 
 const V2TodaySignalCard = ({ data }) => {
     if (!data) return null;
     const { state = 'default', source, period, keyword, signal, intensity = 'medium' } = data;
     const cfg = INTENSITY_CONFIG[intensity] || INTENSITY_CONFIG.medium;
+    const SignalIcon = cfg.icon;
 
     if (state === 'empty' || state === 'first_time') {
         return (
@@ -44,7 +46,8 @@ const V2TodaySignalCard = ({ data }) => {
                 <span
                     className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[12px] font-bold ${cfg.color} ${cfg.bg}`}
                 >
-                    {cfg.icon} {signal}
+                    <SignalIcon size={14} className="shrink-0" aria-hidden="true" />
+                    {signal}
                 </span>
             </div>
 

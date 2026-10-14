@@ -1,14 +1,16 @@
-const DEFAULT_PERSONA_ICONS = ['🍜', '💼', '💞', '👨‍👩‍👧‍👦', '🎓'];
+import { Soup, Briefcase, Heart, Users, GraduationCap, Flame } from 'lucide-react';
+
+// 페르소나 아이콘은 Lucide 컴포넌트 참조로 보관한다 (렌더링 시 <Icon /> 형태로 사용).
+const DEFAULT_PERSONA_ICONS = [Soup, Briefcase, Heart, Users, GraduationCap];
 
 const PERSONA_ICON_RULES = [
-    { icon: '🍜', keywords: ['중독자', '단골파'] },
-    { icon: '🍙', keywords: ['스팸주먹밥', '주먹밥', '소울푸드'] },
-    { icon: '🌶️', keywords: ['향수', '풍미', '재방문', '일관성', '도전파'] },
-    { icon: '🍜', keywords: ['국물', '해장', '얼큰', '수제비', '칼국수', '뜨끈', '매운'] },
-    { icon: '💼', keywords: ['직장', '점심', '퇴근', '가성비', '빠른', '회사', '오피스'] },
-    { icon: '💞', keywords: ['커플', '데이트', '감성', '분위기', '인스타', '사진'] },
-    { icon: '👨‍👩‍👧‍👦', keywords: ['가족', '아이', '부모', '단체'] },
-    { icon: '🎓', keywords: ['학생', '시험', '학원', '대학', '캠퍼스'] },
+    { icon: Soup, keywords: ['중독자', '단골파'] },
+    { icon: Flame, keywords: ['향수', '풍미', '재방문', '일관성', '도전파'] },
+    { icon: Soup, keywords: ['국물', '해장', '얼큰', '수제비', '칼국수', '뜨끈', '매운'] },
+    { icon: Briefcase, keywords: ['직장', '점심', '퇴근', '가성비', '빠른', '회사', '오피스'] },
+    { icon: Heart, keywords: ['커플', '데이트', '감성', '분위기', '인스타', '사진'] },
+    { icon: Users, keywords: ['가족', '아이', '부모', '단체'] },
+    { icon: GraduationCap, keywords: ['학생', '시험', '학원', '대학', '캠퍼스'] },
 ];
 
 /** tags 가 배열이 아닐 때 문자열이 글자 단위로 펼쳐지는 것을 막는다. */

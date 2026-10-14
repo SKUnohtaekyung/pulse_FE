@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { Drawer } from '../../components/ui/Drawer';
 
 const TONE_OPTIONS = ['친근한', '감성적인', '트렌디한', '고급스러운', '유쾌한', '편안한'];
-const STORE_TYPES = ['이자카야', '한식', '카페', '양식', '중식', '기타'];
+const STORE_TYPES = ['한식', '중식', '일식', '양식', '카페', '이자카야', '기타'];
 
 export function ProfileEditDrawer({ isOpen, onClose, initialData, onSave }) {
     // 초기값을 initialData로 설정 — useState 빈값 vs initialData 비교 타이밍 버그 방지

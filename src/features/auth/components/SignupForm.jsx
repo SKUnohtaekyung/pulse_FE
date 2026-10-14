@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, ChevronDown } from 'lucide-react';
+import { Eye, EyeOff, ChevronDown, Check, Circle } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import SignupLoadingScreen from './SignupLoadingScreen';
 import { useSignupProgress } from '../../../hooks/useSignupProgress';
@@ -587,7 +587,7 @@ const PasswordInput = ({ name, placeholder, value, onChange, validation, autoCom
                         marginBottom: '6px',
                         color: validation.minLength ? '#10b981' : '#6b7280'
                     }}>
-                        <span>{validation.minLength ? '✓' : '○'}</span>
+                        {validation.minLength ? <Check size={12} aria-hidden="true" /> : <Circle size={12} aria-hidden="true" />}
                         <span>8자 이상</span>
                     </div>
                     <div style={{
@@ -597,7 +597,7 @@ const PasswordInput = ({ name, placeholder, value, onChange, validation, autoCom
                         marginBottom: '6px',
                         color: validation.hasSpecialChar ? '#10b981' : '#6b7280'
                     }}>
-                        <span>{validation.hasSpecialChar ? '✓' : '○'}</span>
+                        {validation.hasSpecialChar ? <Check size={12} aria-hidden="true" /> : <Circle size={12} aria-hidden="true" />}
                         <span>특수문자 포함</span>
                     </div>
                     <div style={{
@@ -607,7 +607,7 @@ const PasswordInput = ({ name, placeholder, value, onChange, validation, autoCom
                         marginBottom: '6px',
                         color: validation.hasLowerCase ? '#10b981' : '#6b7280'
                     }}>
-                        <span>{validation.hasLowerCase ? '✓' : '○'}</span>
+                        {validation.hasLowerCase ? <Check size={12} aria-hidden="true" /> : <Circle size={12} aria-hidden="true" />}
                         <span>영어 포함</span>
                     </div>
                     <div style={{
@@ -616,7 +616,7 @@ const PasswordInput = ({ name, placeholder, value, onChange, validation, autoCom
                         gap: '8px',
                         color: validation.hasNumber ? '#10b981' : '#6b7280'
                     }}>
-                        <span>{validation.hasNumber ? '✓' : '○'}</span>
+                        {validation.hasNumber ? <Check size={12} aria-hidden="true" /> : <Circle size={12} aria-hidden="true" />}
                         <span>숫자 포함</span>
                     </div>
                 </div>

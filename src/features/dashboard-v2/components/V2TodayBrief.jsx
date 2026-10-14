@@ -17,7 +17,7 @@ const V2TodayBrief = ({
         return (
             <div className="py-2">
                 <p className="text-[15px] text-gray-400 font-medium">
-                    💡 오늘의 가게 요약 정보를 준비 중이에요.
+                    오늘의 가게 요약 정보를 준비 중이에요.
                 </p>
             </div>
         );
@@ -26,7 +26,7 @@ const V2TodayBrief = ({
     return (
         <div className="py-2">
             <p className="text-[17px] font-medium text-[#191F28] leading-[160%] break-keep">
-                💡{' '}
+                {/* 섹션 헤더(StatusV2Page)에 Lightbulb 아이콘이 있어 본문 앞 장식은 두지 않는다 */}
                 {highlightedSegments.map((segment, index) => (
                     <span
                         key={index}

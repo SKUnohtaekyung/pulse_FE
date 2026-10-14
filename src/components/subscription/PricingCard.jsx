@@ -22,6 +22,7 @@ const PricingCard = ({
     features,
     isPopular,
     isYearly,
+    isCurrent,
     onSelect
 }) => {
     // Current price display based on toggle
@@ -94,7 +95,7 @@ const PricingCard = ({
                 onClick={onSelect}
                 className={`w-full h-[52px] rounded-xl text-[16px] font-bold transition-all duration-200 flex items-center justify-center gap-2 ${buttonStyle}`}
             >
-                {isPopular ? "2주 무료 체험 시작" : (title === 'Pro' ? "전문가 매칭 시작" : "현재 이용 중")}
+                {isCurrent ? "현재 이용 중" : isPopular ? "2주 무료 체험 시작" : (title === 'Basic' ? "무료 플랜으로 변경" : "전문가 매칭 시작")}
 
                 {/* Shine Effect Animation (Micro-interaction) */}
                 {isPopular && (

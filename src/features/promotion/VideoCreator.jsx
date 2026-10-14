@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { Upload, X, Zap, Crown, Coffee, AlertCircle, Clock, Hash, Copy, Download, RefreshCw, Play, Wand2, Trash2, ChevronDown, Info, Plus, Sparkles, Lock } from 'lucide-react';
+import { Upload, X, Zap, Crown, Coffee, AlertCircle, Clock, Hash, Copy, Download, RefreshCw, Play, Wand2, Trash2, ChevronDown, Info, Plus, Sparkles, Lock, Soup, Briefcase, Users, Hourglass, Minus } from 'lucide-react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Sphere, MeshDistortMaterial } from '@react-three/drei';
 import VideoPlayer from '../../components/common/VideoPlayer';
@@ -84,24 +84,24 @@ const VIBES = [
 const PERSONA_PROMPTS = [
     {
         id: 'hangover',
-        label: '시원 국물파',
-        icon: '🍜',
+        label: '시원한 국물파',
+        icon: Soup,
         desc: '해장이 필요한 손님 타겟',
         prompt: '김이 모락모락 나는 얼큰한 국물 요리 클로즈업, 땀을 닦으며 시원해하는 중년 남성, 해장이 되어 개운한 표정, 활기찬 아침 식당 분위기'
     },
     {
         id: 'worker',
         label: '가성비 직장인',
-        icon: '💼',
+        icon: Briefcase,
         desc: '빠른 점심이 필요한 타겟',
         prompt: '푸짐하고 맛있는 점심 한 상 차림, 음식을 급하게 먹지만 만족스러운 표정, 시계를 확인하며 웃는 직장인, 활기찬 점심시간 분위기'
     },
     {
-        id: 'couple',
-        label: '미식가 커플',
-        icon: '💑',
-        desc: '데이트 맛집을 찾는 타겟',
-        prompt: '로맨틱한 조명 아래 예쁘게 플레이팅된 요리, 서로 음식을 먹여주거나 건배하는 다정한 커플, 인스타그램 감성의 세련된 분위기'
+        id: 'family',
+        label: '동네 단골 가족',
+        icon: Users,
+        desc: '주말 가족 외식 타겟',
+        prompt: '넓은 테이블에 국밥과 수육이 푸짐하게 차려진 상, 부모님과 함께 웃으며 식사하는 가족, 따뜻하고 편안한 동네 식당 분위기'
     }
 ];
 
@@ -223,7 +223,7 @@ export default function VideoCreator({ step, resultData, onReset, onRetry, image
             ...persona,
             id: `persona-placeholder-${index + 1}`,
             label: personaLoadFailed ? '불러오기 실패' : '분석 연결 중',
-            icon: personaLoadFailed ? '—' : '⏳',
+            icon: personaLoadFailed ? Minus : Hourglass,
             disabled: true,
         }));
 
@@ -407,7 +407,13 @@ export default function VideoCreator({ step, resultData, onReset, onRetry, image
                                                 : 'border-gray-200 bg-gray-50 hover:bg-blue-50 hover:border-blue-200'
                                                 }`}
                                         >
-                                            <span className="text-xl mb-1 group-hover:scale-110 transition-transform">{persona.icon}</span>
+                                            {persona.icon && (
+                                                <persona.icon
+                                                    size={20}
+                                                    aria-hidden="true"
+                                                    className={`shrink-0 mb-1 group-hover:scale-110 transition-transform ${isSelected ? 'text-[#002B7A]' : 'text-slate-500 group-hover:text-[#002B7A]'}`}
+                                                />
+                                            )}
                                             <span className={`text-[13px] font-bold ${isSelected ? 'text-[#002B7A]' : 'text-gray-700 group-hover:text-[#002B7A]'}`}>
                                                 {persona.label}
                                             </span>

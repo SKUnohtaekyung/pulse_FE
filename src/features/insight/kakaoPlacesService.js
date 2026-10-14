@@ -1,4 +1,6 @@
 import { fetchAiMarketingActions, fetchMarketInsightReport } from './api/mapInsightApi.js';
+import { searchPlacesByCategory } from './api/kakaoLocal.js';
+import { DEMO_MODE } from '../../config/env.js';
 /**
  * kakaoPlacesService.js
  * 카카오 지도 Places API를 이용한 상권 데이터 실시간 조회
@@ -106,19 +108,39 @@ function validateRadius(radiusM) {
 /** 카카오 콜백이 오지 않으면 Promise 가 영원히 pending 되어 로딩이 끝나지 않는다. */
 const CATEGORY_SEARCH_TIMEOUT_MS = 12000;
 
+/** JS SDK 는 목록·totalCount 를 45 까지만 준다. 이 한도에 걸린 업종만 REST 로 실제 전체 개수를 확인한다. */
+const KAKAO_LIST_LIMIT = 45;
+
+async function withTrueTotals(results, center, radiusM) {
+    return Promise.all(results.map(async (result) => {
+        if (result.status !== 'OK' || result.places.length < KAKAO_LIST_LIMIT) return result;
+        try {
+            const response = await searchPlacesByCategory(center.lat, center.lng, radiusM, result.code);
+            const trueTotal = Number(response?.meta?.total_count);
+            return Number.isFinite(trueTotal) && trueTotal > result.totalCount
+                ? { ...result, totalCount: trueTotal }
+                : result;
+        } catch {
+            return result; // 보정 실패 시 45 로 유지
+        }
+    }));
+}
+
 function searchCategoryAll(ps, category, center, radiusM) {
     return new Promise((resolve) => {
         const { code, label } = category;
         const allPlaces = [];
         let currentPage = 1;
         let pageCount = 0;
+        // 목록은 최대 45개(15개 × 3페이지)까지만 받는다. 실제 전체 개수는 아래 withTrueTotals 가 보정한다.
+        let totalCount = 0;
         let settled = false;
 
         const settle = (result) => {
             if (settled) return;
             settled = true;
             clearTimeout(timer);
-            resolve(result);
+            resolve({ ...result, totalCount: Math.max(totalCount, result.places.length) });
         };
 
         // 콜백 미호출·SDK 이상으로 응답이 끊겨도 부분 결과로 마무리한다.
@@ -177,6 +199,7 @@ function searchCategoryAll(ps, category, center, radiusM) {
 
                     pageCount++;
                     allPlaces.push(...(Array.isArray(data) ? data : []));
+                    if (Number.isFinite(pagination?.totalCount)) totalCount = pagination.totalCount;
 
                     // 다음 페이지가 있고 최대 3페이지까지만 (과도한 요청 방지)
                     // pagination 이 없을 수 있으므로 옵셔널 체이닝으로 접근한다.
@@ -228,7 +251,55 @@ function searchCategoryAll(ps, category, center, radiusM) {
  * @param {string} primaryCategory - 내 가게 업종 코드 (기본: 'FD6')
  * @returns {Promise<object>} marketData (SummaryPanel에서 소비하는 구조)
  */
+// ── 전시 데모: 카카오 사용량 한도·네트워크 불안정 대비 ─────────────────────────
+// 실시간 조회가 성공하면 반경별 결과를 저장해 두고, 실패하면 마지막 성공 결과를 보여준다.
+// (저장본도 없으면 번들된 범계 상권 스냅샷을 쓴다.)
+const DEMO_MARKET_CACHE_KEY = 'pulseDemoMarketSnapshot';
+
+const readDemoMarketCache = () => {
+    try {
+        return JSON.parse(localStorage.getItem(DEMO_MARKET_CACHE_KEY) || '{}') || {};
+    } catch {
+        return {};
+    }
+};
+
+const saveDemoMarketReport = (radiusM, report) => {
+    try {
+        localStorage.setItem(DEMO_MARKET_CACHE_KEY, JSON.stringify({ ...readDemoMarketCache(), [radiusM]: report }));
+    } catch {
+        // 저장 실패는 무시 — 다음 조회에서 다시 시도한다.
+    }
+};
+
+const loadDemoMarketFallback = async (radiusM) => {
+    const cached = readDemoMarketCache();
+    if (cached[radiusM]) return cached[radiusM];
+    try {
+        const { MARKET_SNAPSHOT } = await import('../../dev/marketSnapshot.js');
+        return MARKET_SNAPSHOT?.[radiusM] || null;
+    } catch {
+        return null;
+    }
+};
+
 export async function fetchRealMarketData(center, radiusM, primaryCategory = 'FD6') {
+    if (!DEMO_MODE) return fetchLiveMarketData(center, radiusM, primaryCategory);
+
+    try {
+        const report = await fetchLiveMarketData(center, radiusM, primaryCategory);
+        // 일부 업종이 실패한 결과는 저장하지 않는다 (온전한 결과만 대체본으로 쓴다).
+        if (report?.reportState !== REPORT_STATE.EMPTY && !report?.warnings?.length) saveDemoMarketReport(radiusM, report);
+        return report;
+    } catch (liveError) {
+        const fallback = await loadDemoMarketFallback(radiusM);
+        if (!fallback) throw liveError;
+        logMarket('warn', '[CommercialAnalysis] demo: live lookup failed, using saved snapshot', { radius: radiusM }, false);
+        return fallback;
+    }
+}
+
+async function fetchLiveMarketData(center, radiusM, primaryCategory = 'FD6') {
     const validCenter = validateCenter(center);
     const validRadius = validateRadius(radiusM);
 
@@ -279,8 +350,12 @@ export async function fetchRealMarketData(center, radiusM, primaryCategory = 'FD
     }, true);
 
     // 모든 카테고리 병렬 조회
-    const results = await Promise.all(
-        CATEGORY_CONFIGS.map((category) => searchCategoryAll(ps, category, validCenter, validRadius))
+    const results = await withTrueTotals(
+        await Promise.all(
+            CATEGORY_CONFIGS.map((category) => searchCategoryAll(ps, category, validCenter, validRadius))
+        ),
+        validCenter,
+        validRadius,
     );
 
     const failedResults = results.filter(({ status }) => status === 'ERROR' || status === 'PARTIAL_ERROR');
@@ -348,10 +423,13 @@ export async function fetchRealMarketData(center, radiusM, primaryCategory = 'FD
     const categoryPlaces = {};
     const counts = {};
 
-    results.forEach(({ code, label, places, status, rawStatus }) => {
+    results.forEach(({ code, label, places, status, rawStatus, totalCount }) => {
+        const total = Math.max(totalCount || 0, places.length);
         counts[code] = {
             label,
-            total: places.length,
+            total,
+            // 목록 한도(45)에 걸렸고 실제 개수 보정도 못 한 경우 → 화면에 "45+" 로 표시
+            capped: places.length >= KAKAO_LIST_LIMIT && total <= KAKAO_LIST_LIMIT,
             status,
             unavailable: status === 'ERROR' || status === 'PARTIAL_ERROR',
         };
@@ -475,6 +553,7 @@ export async function fetchRealMarketData(center, radiusM, primaryCategory = 'FD
             categoryGroupCode: primaryCategory,
             label: `내 업종(${counts[primaryCategory]?.label || '음식점'})`,
             total: counts[primaryCategory]?.total || 0,
+            capped: !!counts[primaryCategory]?.capped,
             densityPerKm2,
             nearest: sortedCompetitors,
         },

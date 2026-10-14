@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, X, Instagram, Youtube, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { Camera, X, Instagram, Youtube, Sparkles, Eye, EyeOff, Check, Circle } from 'lucide-react';
 import { signupInfluencer } from '../api/authApi';
 import { FormError, InlineError, LoadingSpinner } from '../../../components/common/StateViews';
 import { getErrorMessage } from '../../../utils/apiError';
@@ -255,7 +255,7 @@ export default function InfluencerSignupForm({ onSwitch }) {
                                             marginBottom: i < 3 ? '6px' : '0',
                                             color: pwValidation[key] ? '#10b981' : '#6b7280'
                                         }}>
-                                            <span>{pwValidation[key] ? '✓' : '○'}</span>
+                                            {pwValidation[key] ? <Check size={12} aria-hidden="true" /> : <Circle size={12} aria-hidden="true" />}
                                             <span>{label}</span>
                                         </div>
                                     ))}

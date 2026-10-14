@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Users, Sparkles, AlertCircle, ChevronRight, Trophy, Clock, TrendingUp, Film, Loader2 } from 'lucide-react';
+import { MapPin, Users, Sparkles, AlertCircle, ChevronRight, Trophy, Clock, TrendingUp, Film, Loader2, Star, MessageSquare } from 'lucide-react';
 import JourneyMapSection from './JourneyMapSection';
 import { fetchLatestAnalysisData } from './api/analysisApi';
 import { getErrorMessage, isCanceledError } from '../../utils/apiError';
@@ -9,6 +9,10 @@ import { USE_MOCK_ANALYSIS } from '../../config/env';
 
 // ─── 목업 데이터 (API 연결 실패 시 fallback) ────────────────────────────────
 // API 응답 구조와 동일하게 유지해야 합니다.
+
+// 페르소나 기본 아바타 — 외부 이미지 서비스 대신 로컬 SVG(public/dev/personas)를 순서대로 쓴다.
+const PERSONA_AVATARS = ['hangover', 'worker', 'family'];
+const localPersonaAvatar = (index) => `${import.meta.env.BASE_URL}dev/personas/${PERSONA_AVATARS[index % PERSONA_AVATARS.length]}.svg`;
 const MOCK_ANALYSIS_DATA = {
     store_name: '범계 든든국밥',
     store_summary: '범계역 직장인 상권의 든든한 국밥집. 평일 점심과 해장 수요가 높으며 재방문율이 높은 가게입니다.',
@@ -19,7 +23,7 @@ const MOCK_ANALYSIS_DATA = {
             id: 1,
             nickname: '시원한 국물파',
             summary: '해장이 필요한 직장인, 시원한 국물 맛집을 찾아요',
-            img: 'https://api.dicebear.com/7.x/adventurer/svg?seed=hangover',
+            img: localPersonaAvatar(0),
             tags: ['30대', '직장인', '해장'],
             overall_comment: '해장 수요가 높은 고객층으로 국물 메뉴 퀄리티와 속도가 핵심입니다. 이 그룹을 잡으면 평일 오전 매출이 올라갑니다.',
             action_recommendation: '"10분 완성 해장국" 릴스를 제작해 월요일 아침에 업로드하세요. 공유율이 높아집니다.',
@@ -55,7 +59,7 @@ const MOCK_ANALYSIS_DATA = {
             id: 2,
             nickname: '가성비 직장인',
             summary: '빠른 점심이 필요한 직장인, 가성비와 속도를 중시해요',
-            img: 'https://api.dicebear.com/7.x/adventurer/svg?seed=worker',
+            img: localPersonaAvatar(1),
             tags: ['20-30대', '점심', '가성비'],
             overall_comment: '점심 피크타임 회전율이 핵심입니다. 이 그룹은 대기 시간에 매우 민감하며, 한 번 만족하면 고정 단골이 됩니다.',
             action_recommendation: '"5분 안에 나오는 점심" 특선을 만들고, 테이블 QR 주문을 도입해보세요.',
@@ -91,7 +95,7 @@ const MOCK_ANALYSIS_DATA = {
             id: 3,
             nickname: '미식가 커플',
             summary: '데이트 맛집을 찾는 커플, 분위기와 플레이팅을 중시해요',
-            img: 'https://api.dicebear.com/7.x/adventurer/svg?seed=couple',
+            img: localPersonaAvatar(2),
             tags: ['20-30대', '커플', '데이트'],
             overall_comment: '인스타그램 노출이 핵심입니다. 이 그룹이 올리는 사진 1장이 신규 고객 10명 이상을 데려올 수 있습니다.',
             action_recommendation: '포토존 하나만 만들어도 인스타 바이럴이 폭발합니다. 대표 메뉴 플레이팅을 개선하세요.',
@@ -179,7 +183,7 @@ const normalizePersona = (persona, index) => {
         id: persona?.id ?? index + 1,
         nickname: persona?.nickname || `대표 고객 ${index + 1}`,
         summary: persona?.summary || '리뷰 기반 대표 고객 그룹입니다.',
-        img: persona?.img || `https://api.dicebear.com/7.x/adventurer/svg?seed=persona-${index + 1}`,
+        img: persona?.img || localPersonaAvatar(index),
         tags: Array.isArray(persona?.tags) && persona.tags.length ? persona.tags : ['고객분석'],
         overall_comment: persona?.overall_comment || '리뷰 기반 분석 총평을 준비 중입니다.',
         action_recommendation: persona?.action_recommendation || '대표 메뉴와 방문 이유를 더 명확히 노출해보세요.',
@@ -313,7 +317,7 @@ export default function UnifiedInsightPage({ onNavigate }) {
                         <div className="bg-white rounded-[24px] p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] border border-[#E5E8EB] shrink-0">
                             <div className="flex items-center gap-2 mb-3">
                                 <Trophy size={18} className="text-[#FFB300]" />
-                                <span className="text-[#8B95A1] font-bold text-xs uppercase tracking-wider">AI Insight</span>
+                                <span className="text-[#8B95A1] font-bold text-xs tracking-wider">AI 인사이트</span>
                             </div>
                             <h2 className="text-[22px] font-bold leading-[1.3] text-[#191F28] mb-1">
                                 <span className="bg-gradient-to-r from-[#002B7A] to-blue-500 bg-clip-text text-transparent">{analysisData?.store_name || '가게'}</span>의<br />
@@ -324,17 +328,19 @@ export default function UnifiedInsightPage({ onNavigate }) {
                                     {analysisData.store_summary}
                                 </p>
                             )}
-                            {/* 값이 없으면 "⭐ 평균 점" 같은 빈 배지가 되므로, 있을 때만 표시한다 */}
+                            {/* 값이 없으면 "평균 점" 같은 빈 배지가 되므로, 있을 때만 표시한다 */}
                             {analysisData && (ratingLabel || reviewCountLabel) && (
                                 <div className="flex gap-3 mt-3 flex-wrap">
                                     {ratingLabel && (
-                                        <span className="px-2.5 py-1 bg-blue-50 text-[#002B7A] text-[11px] font-bold rounded-full border border-blue-100">
-                                            ⭐ 평균 {ratingLabel}점
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-[#002B7A] text-[11px] font-bold rounded-full border border-blue-100">
+                                            <Star size={12} className="shrink-0 fill-[#D97706] text-[#D97706]" aria-hidden="true" />
+                                            평균 {ratingLabel}점
                                         </span>
                                     )}
                                     {reviewCountLabel && (
-                                        <span className="px-2.5 py-1 bg-blue-50 text-[#002B7A] text-[11px] font-bold rounded-full border border-blue-100">
-                                            📝 리뷰 {reviewCountLabel}개 분석
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-[#002B7A] text-[11px] font-bold rounded-full border border-blue-100">
+                                            <MessageSquare size={12} className="shrink-0" aria-hidden="true" />
+                                            리뷰 {reviewCountLabel}개 분석
                                         </span>
                                     )}
                                 </div>

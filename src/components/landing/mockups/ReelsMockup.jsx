@@ -68,7 +68,7 @@ const ReelsMockup = () => {
                 <span className="text-[11px] text-neutral-500 font-medium">타겟</span>
                 <div className="flex items-center gap-1 bg-primary-tint px-2.5 py-1 rounded-full border border-primary-border">
                     <CheckCircle size={10} className="text-primary" />
-                    <span className="text-[11px] font-bold text-primary">30대 직장인</span>
+                    <span className="text-[11px] font-bold text-primary">시원한 국물파</span>
                 </div>
             </div>
 
@@ -81,7 +81,7 @@ const ReelsMockup = () => {
             >
                 <div className="flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-primary">AI가 영상을 만들고 있어요</span>
-                    <Badge variant="point" size="sm">생성 완료</Badge>
+                    <Badge variant="point" size="sm">생성 중</Badge>
                 </div>
                 {/* scaleX 진행 바 — transform 사용 ✓ */}
                 <div className="bg-neutral-100 rounded-full h-2 overflow-hidden">
@@ -93,7 +93,7 @@ const ReelsMockup = () => {
                     />
                 </div>
                 <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-neutral-400">예상 완료까지 약 18초</span>
+                    <span className="text-[10px] text-neutral-400">예상 완료까지 약 5초</span>
                     <span className="text-[10px] font-bold text-primary">82%</span>
                 </div>
             </motion.div>
@@ -113,7 +113,7 @@ const ReelsMockup = () => {
                 </div>
                 <div>
                     <p className="text-[11px] font-bold text-text-main">숏폼 영상 완성</p>
-                    <p className="text-[10px] text-neutral-400">9:16 · 30초 · 에너지 바이브</p>
+                    <p className="text-[10px] text-neutral-400">9:16 · 8초 · 에너지 바이브</p>
                 </div>
             </motion.div>
         </div>

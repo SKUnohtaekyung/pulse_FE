@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { RefreshCw, AlertTriangle } from 'lucide-react';
+import { RefreshCw, AlertTriangle, Lightbulb, Zap } from 'lucide-react';
 import {
     fetchDashboardData,
     getLocalDismissedIds,
@@ -65,14 +65,11 @@ const formatBaseTime = (isoString) => {
 };
 
 const LOADING_TIPS = [
-    '요즘 뜨는 주변 상권 해시태그를 분석하고 있어요 🔍',
-    '오늘의 날씨와 유동인구 데이터를 확인 중이에요 ☀️',
-    '우리 가게 방문 손님 데이터를 가져오는 중이에요 🏃‍♂️',
-    '가장 효율적인 마케팅 액션을 고민 중이에요 🤔',
+    '요즘 뜨는 주변 상권 해시태그를 분석하고 있어요',
+    '오늘의 날씨와 유동인구 데이터를 확인 중이에요',
+    '우리 가게 방문 손님 데이터를 가져오는 중이에요',
+    '가장 효율적인 마케팅 액션을 고민 중이에요',
 ];
-
-// 손님분석 페르소나 표시용 이모지 팔레트 (콘텐츠 장식용, 순환 배정)
-const PERSONA_EMOJIS = ['🙋', '🍽️', '☕', '✨', '💬', '🛍️'];
 
 const StatusV2Page = ({ onNavigate }) => {
     const shouldReduceMotion = useReducedMotion();
@@ -128,8 +125,8 @@ const StatusV2Page = ({ onNavigate }) => {
             if (signal.aborted) return;
 
             if (analysis?.personas?.length && response.data.insights) {
-                response.data.insights.personas = analysis.personas.slice(0, 3).map((persona, index) => ({
-                    emoji: PERSONA_EMOJIS[index % PERSONA_EMOJIS.length],
+                // 아이콘은 V2PersonaSummary 가 순서대로 Lucide 아이콘을 배정한다.
+                response.data.insights.personas = analysis.personas.slice(0, 3).map((persona) => ({
                     label: persona.nickname || persona.tags?.[0] || '단골 손님',
                     detail: persona.summary || toArray(persona.tags).join(', '),
                 }));
@@ -412,8 +409,8 @@ const StatusV2Page = ({ onNavigate }) => {
                             {/* Today Brief */}
                             <div className="mb-4 shrink-0">
                                 <h2 className="text-[14px] font-bold text-gray-400 tracking-wide flex items-center gap-2 mb-2">
-                                    <span className="w-2 h-2 rounded-full bg-blue-500" />
-                                    오늘의 우리 가게 요약 💡
+                                    <Lightbulb size={14} className="shrink-0 text-blue-500" aria-hidden="true" />
+                                    오늘의 우리 가게 요약
                                 </h2>
                                 <V2TodayBrief
                                     highlightedSegments={data.todayBrief}
@@ -425,8 +422,8 @@ const StatusV2Page = ({ onNavigate }) => {
                             {/* Actions */}
                             <div className="flex flex-col gap-4 flex-1 min-h-0">
                                 <h2 className="text-[14px] font-bold text-gray-400 tracking-wide flex items-center gap-2 shrink-0">
-                                    <span className="w-2 h-2 rounded-full bg-[#FF5A36]" />
-                                    지금 당장 해볼까요? ⚡
+                                    <Zap size={14} className="shrink-0 text-[#FF5A36]" aria-hidden="true" />
+                                    지금 당장 해볼까요?
                                 </h2>
 
                                 {/* AI 제안 — 1개, dismiss 가능 */}

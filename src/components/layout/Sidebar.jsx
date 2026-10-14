@@ -18,7 +18,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 const OWNER_FALLBACK = '\uC0AC\uC7A5\uB2D8';
-const GROWTH_PLAN_LABEL = 'Growth \uD50C\uB79C';
+// \uB85C\uADF8\uC778 \uD504\uB85C\uD544\uC758 \uD50C\uB79C(plan)\uC744 \uB530\uB974\uACE0, \uC5C6\uC73C\uBA74 Pro \uB85C \uD45C\uC2DC\uD55C\uB2E4.
+const planLabel = (plan) => `${plan || 'Pro'} \uD50C\uB79C`;
 
 const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded, profile }) => {
     const navigate = useNavigate();
@@ -108,7 +109,7 @@ const Sidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpanded, profile
                             >
                                 <p className="text-white text-[15px] font-bold leading-tight mb-0.5">{ownerName}</p>
                                 <div className="flex items-center gap-1">
-                                    <p className="text-blue-200 text-[11px] font-medium leading-tight">{GROWTH_PLAN_LABEL}</p>
+                                    <p className="text-blue-200 text-[11px] font-medium leading-tight">{planLabel(profile?.plan)}</p>
                                     <ChevronUp size={12} className="text-blue-200" />
                                 </div>
                             </div>

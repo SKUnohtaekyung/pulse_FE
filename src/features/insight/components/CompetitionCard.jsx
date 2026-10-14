@@ -24,11 +24,11 @@ export default function CompetitionCard({ competition, onPlaceClick }) {
             <div className="mb-4 pb-4 border-b border-gray-100">
                 <p className="text-[14px] text-gray-600 mb-1">{formatText(data.label, '같은 업종')}</p>
                 <div className="flex items-baseline gap-2">
-                    <p className="text-[32px] font-bold text-[#FF5A36] leading-none">{formatNumber(data.total)}</p>
-                    <span className="text-[14px] text-gray-600">개</span>
+                    <p className="text-[32px] font-bold text-[#FF5A36] leading-none">{formatNumber(data.total)}{data.capped ? '+' : ''}</p>
+                    <span className="text-[14px] text-gray-600">{data.capped ? '개 이상' : '개'}</span>
                 </div>
                 <p className="text-[13px] text-gray-500 mt-1">
-                    1km²당 {formatNumber(data.densityPerKm2, { digits: 1, suffix: '개' })}
+                    1km²당 {formatNumber(data.densityPerKm2, { digits: 1, suffix: '개' })}{data.capped ? ' 이상' : ''}
                 </p>
             </div>
 

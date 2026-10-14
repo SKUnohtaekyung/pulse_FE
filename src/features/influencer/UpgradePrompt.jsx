@@ -1,5 +1,5 @@
 import React from 'react';
-import { Crown, ArrowRight } from 'lucide-react';
+import { Crown, ArrowRight, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 /**
@@ -34,19 +34,19 @@ export default function UpgradePrompt() {
                     <h3 className="font-semibold text-gray-900 mb-3">Pro 플랜 혜택</h3>
                     <ul className="space-y-2 text-sm text-gray-700">
                         <li className="flex items-start gap-2">
-                            <span className="text-green-500 mt-0.5">✓</span>
+                            <Check size={16} className="text-[#059669] mt-0.5 shrink-0" aria-hidden="true" />
                             <span>인플루언서 매칭 (수수료 0%)</span>
                         </li>
                         <li className="flex items-start gap-2">
-                            <span className="text-green-500 mt-0.5">✓</span>
+                            <Check size={16} className="text-[#059669] mt-0.5 shrink-0" aria-hidden="true" />
                             <span>홍보 영상 무제한 제작 (4K 화질)</span>
                         </li>
                         <li className="flex items-start gap-2">
-                            <span className="text-green-500 mt-0.5">✓</span>
+                            <Check size={16} className="text-[#059669] mt-0.5 shrink-0" aria-hidden="true" />
                             <span>경쟁사 분석 리포트</span>
                         </li>
                         <li className="flex items-start gap-2">
-                            <span className="text-green-500 mt-0.5">✓</span>
+                            <Check size={16} className="text-[#059669] mt-0.5 shrink-0" aria-hidden="true" />
                             <span>다점포 통합 관리</span>
                         </li>
                     </ul>

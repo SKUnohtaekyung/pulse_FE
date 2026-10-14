@@ -20,14 +20,18 @@ export default function ProposalAcceptPage() {
     useEffect(() => {
         // Mock Fetching
         setTimeout(() => {
+            // 방문 희망일: 오늘로부터 열흘 뒤 (전시 데모에서 항상 미래 날짜로 보이도록)
+            const visit = new Date();
+            visit.setDate(visit.getDate() + 10);
+            const pad = (n) => String(n).padStart(2, '0');
             setProposal({
-                influencerName: '김푸디',
-                storeName: '루프탑 다이닝 펄스레스토랑',
-                type: '방문 리뷰',
-                budget: 100000,
+                influencerName: '안양맛집탐험가',
+                storeName: '범계 든든국밥',
+                type: '방문 리뷰 + 릴스',
+                budget: 300000,
                 provideFood: true,
-                date: '2024-05-20',
-                message: '저희 매장의 모던한 분위기와 김푸디님의 스타일이 잘 맞아 연락드렸습니다. 꼭 오셔서 맛있는 식사 하시고 멋진 리뷰 부탁드립니다!'
+                date: `${visit.getFullYear()}-${pad(visit.getMonth() + 1)}-${pad(visit.getDate())}`,
+                message: '출근길 해장 손님이 많은 범계역 국밥집입니다. 진한 순댓국 한 그릇을 안양맛집탐험가님의 릴스로 담아주시면 좋겠습니다.'
             });
         }, 800);
     }, [token]);
@@ -83,7 +87,7 @@ export default function ProposalAcceptPage() {
             {/* Left: Brand Canvas */}
             <div className="hidden lg:flex w-1/2 bg-[#002B7A] p-12 flex-col justify-between relative overflow-hidden">
                 <div className="relative z-10">
-                    <img src="/PULSE_LOGO.png" alt="PULSE" className="w-8/12 filter brightness-0 invert mb-6" />
+                    <img src={`${import.meta.env.BASE_URL}PULSE_LOGO.png`} alt="PULSE" className="w-8/12 filter brightness-0 invert mb-6" />
                     <h1 className="text-white text-[48px] font-extrabold leading-[1.2] tracking-tight text-white/95">
                         <span className="text-[#FF5A36]">가장 완벽한</span><br/>
                         협업의 시작을<br/>
@@ -96,7 +100,7 @@ export default function ProposalAcceptPage() {
                 <div className="absolute -bottom-20 -left-20 w-[400px] h-[400px] bg-[#FF5A36]/20 rounded-full blur-3xl mix-blend-overlay"></div>
                 
                 <div className="relative z-10 text-white/70 font-medium text-[15px]">
-                    Powered by PULSE Marketing Automation
+                    PULSE 사장님 마케팅 비서
                 </div>
             </div>
 

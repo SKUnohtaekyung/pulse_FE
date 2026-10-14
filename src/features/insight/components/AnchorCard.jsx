@@ -7,6 +7,8 @@ import React from 'react';
 import { Anchor, Award } from 'lucide-react';
 import { formatNumber, formatText, toArray, toFiniteNumber } from '../../../utils/safeFormat';
 
+const ANCHOR_STACK_LIMIT = 3;
+
 export default function AnchorCard({ anchors }) {
     // 응답 필드가 비어도 카드가 터지거나 NaN 이 노출되지 않도록 방어한다.
     const data = anchors && typeof anchors === 'object' ? anchors : {};
@@ -63,13 +65,17 @@ export default function AnchorCard({ anchors }) {
                     breakdown.map((item, i) => {
                         const count = toFiniteNumber(item?.count);
                         const weight = toFiniteNumber(item?.weight);
-                        const subtotal = count === null || weight === null ? null : count * weight;
+                        // 점수는 항목당 최대 3개까지만 반영된다 (kakaoPlacesService 앵커 점수 계산과 동일).
+                        const countedCount = count === null ? null : Math.min(count, ANCHOR_STACK_LIMIT);
+                        const subtotal = countedCount === null || weight === null ? null : countedCount * weight;
                         return (
                             <div key={i} className="flex justify-between items-center p-2.5 bg-[#F5F7FA] rounded-lg gap-2">
                                 <span className="text-[14px] font-medium text-[#191F28] truncate">{formatText(item?.label, '항목')}</span>
                                 <div className="flex items-center gap-2 shrink-0">
                                     <span className="text-[13px] text-gray-600">
-                                        {formatNumber(count, { suffix: '개' })} × {formatNumber(weight)}
+                                        {count !== null && count > ANCHOR_STACK_LIMIT
+                                            ? `${formatNumber(count, { suffix: '개' })} 중 ${ANCHOR_STACK_LIMIT}개 × ${formatNumber(weight)}`
+                                            : `${formatNumber(count, { suffix: '개' })} × ${formatNumber(weight)}`}
                                     </span>
                                     <span className="text-[15px] font-bold text-[#002B7A] min-w-[24px] text-right">
                                         {formatNumber(subtotal)}

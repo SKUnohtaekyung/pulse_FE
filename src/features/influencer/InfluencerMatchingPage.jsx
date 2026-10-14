@@ -149,7 +149,7 @@ export default function InfluencerMatchingPage() {
 
                     <div className="flex flex-col gap-3 px-1">
                         <div className="flex items-center gap-2 mb-1 text-[#191F28] font-bold text-[18px]">
-                            <img src="/PULSE_LOGO.png" alt="PULSE" className="w-[20px] h-[20px] object-contain" />
+                            <img src={`${import.meta.env.BASE_URL}PULSE_LOGO.png`} alt="PULSE" className="w-[20px] h-[20px] object-contain" />
                             현재 기준
                         </div>
                         <ul className="flex flex-col gap-3">

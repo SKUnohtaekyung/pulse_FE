@@ -13,26 +13,10 @@
 
 import { INFLUENCER_DATA } from '../data/mockInfluencers';
 
-// ── 날짜 유틸 (오늘 기준 상대 날짜) ─────────────────────────────────────────
+export { isoDate, dotDate, dateRange } from './demoDates';
+import { isoDate } from './demoDates';
+
 const pad = (n) => String(n).padStart(2, '0');
-const shiftDays = (days) => {
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-  return date;
-};
-/** 2026-10-14 형식 (API createdAt 용) */
-export const isoDate = (days = 0) => {
-  const d = shiftDays(days);
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-};
-/** 2026.10.14 형식 (화면 표기용) */
-export const dotDate = (days = 0) => isoDate(days).replace(/-/g, '.');
-/** 10.20 ~ 10.31 형식 기간 */
-export const dateRange = (fromDays, toDays) => {
-  const from = shiftDays(fromDays);
-  const to = shiftDays(toDays);
-  return `${from.getFullYear()}.${pad(from.getMonth() + 1)}.${pad(from.getDate())} ~ ${pad(to.getMonth() + 1)}.${pad(to.getDate())}`;
-};
 
 // ── 이니셜 아바타 (PULSE primary 계열) ──────────────────────────────────────
 const AVATAR_COLORS = ['#002B7A', '#123F8F', '#21539C', '#3466A9', '#4577B5'];

@@ -20,6 +20,8 @@ export default function SnapshotCard({ counts, radius }) {
 
     // 전체 업소 수
     const totalPlaces = entries.reduce((sum, [, cat]) => sum + (toFiniteNumber(cat.total) ?? 0), 0);
+    // 카카오 목록 한도(45)에 걸린 업종이 있으면 "이상"으로 표시해 실제보다 적게 읽히지 않게 한다.
+    const anyCapped = entries.some(([, cat]) => cat?.capped);
 
     return (
         <div className="bg-white rounded-xl p-5 border border-[#E5E8EB] shadow-sm">
@@ -35,8 +37,8 @@ export default function SnapshotCard({ counts, radius }) {
             {/* 전체 업소 수 */}
             <div className="mb-4 pb-4 border-b border-gray-100">
                 <p className="text-[14px] text-gray-600 mb-1">주변 가게 수</p>
-                <p className="text-[32px] font-bold text-[#002B7A] leading-none">{formatNumber(totalPlaces, { fallback: '0' })}</p>
-                <p className="text-[13px] text-gray-500 mt-1">개</p>
+                <p className="text-[32px] font-bold text-[#002B7A] leading-none">{formatNumber(totalPlaces, { fallback: '0' })}{anyCapped ? '+' : ''}</p>
+                <p className="text-[13px] text-gray-500 mt-1">{anyCapped ? '개 이상' : '개'}</p>
             </div>
 
             {/* Top 3 카테고리 */}
@@ -59,7 +61,7 @@ export default function SnapshotCard({ counts, radius }) {
                             </span>
                             <span className="text-[15px] font-medium text-[#191F28]">{formatText(data.label, code)}</span>
                         </div>
-                        <span className="text-[17px] font-bold text-[#002B7A]">{formatNumber(data.total, { fallback: '0' })}</span>
+                        <span className="text-[17px] font-bold text-[#002B7A]">{formatNumber(data.total, { fallback: '0' })}{data.capped ? '+' : ''}</span>
                     </div>
                 ))}
             </div>

@@ -1,14 +1,14 @@
 import React, { useRef, useEffect } from 'react';
 import { motion, useReducedMotion, useInView, useMotionValue, useTransform, animate } from 'framer-motion';
-import { Sparkles, Briefcase, Users, Coffee, BarChart2 } from 'lucide-react';
+import { Sparkles, Briefcase, Users, Soup, BarChart2 } from 'lucide-react';
 
 const PERSONAS = [
-    { Icon: Briefcase, label: '30대 직장인', detail: '퇴근 후 가벼운 음식과 한잔' },
-    { Icon: Users,     label: '주말 가족',   detail: '여럿이 즐기는 푸짐한 식사' },
-    { Icon: Coffee,    label: '아침 직장인', detail: '빠른 아침과 테이크아웃' },
+    { Icon: Soup,      label: '시원한 국물파', detail: '출근길 해장 한 그릇' },
+    { Icon: Briefcase, label: '가성비 직장인', detail: '빠르고 든든한 점심' },
+    { Icon: Users,     label: '동네 단골 가족', detail: '주말 부모님과 푸짐한 식사' },
 ];
 
-const STEPS = ['탐색', '방문', '식사', '기타'];
+const STEPS = ['탐색', '방문', '식사', '공유'];
 
 function ScoreCount({ target }) {
     const shouldAnimate = !useReducedMotion();

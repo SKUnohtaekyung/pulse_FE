@@ -4,22 +4,22 @@ import { Zap, MapPin, ChevronDown, Users, Play } from 'lucide-react';
 
 const INFLUENCERS = [
     {
-        initials: 'JH',
-        name: '맛집탐험가',
+        initials: '안',
+        name: '안양맛집탐험가',
         matchScore: 87,
         platform: '인스타그램',
-        followers: '12.4만',
-        area: '강남',
-        keywords: ['#맛집', '#카페', '#서울'],
+        followers: '3.2만',
+        area: '안양',
+        keywords: ['#국밥', '#해장', '#범계역'],
     },
     {
-        initials: 'YJ',
-        name: '일상vlog',
+        initials: '경',
+        name: '경기남부해장러',
         matchScore: 72,
         platform: '유튜브',
-        followers: '8.2만',
-        area: '홍대',
-        keywords: ['#일상', '#음식', '#리뷰'],
+        followers: '4.1만',
+        area: '군포',
+        keywords: ['#해장', '#노포', '#아침식사'],
     },
 ];
 

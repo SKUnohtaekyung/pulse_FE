@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Store, MapPin, Calendar, CheckCircle2, XCircle, ChevronDown, X, AlertCircle, ArrowUpDown } from 'lucide-react';
+import { Store, MapPin, Calendar, CheckCircle2, XCircle, ChevronDown, X, AlertCircle, ArrowUpDown, Wallet, UtensilsCrossed, Check } from 'lucide-react';
 import { acceptInfluencerProposal, fetchInfluencerInbox, rejectInfluencerProposal } from './influencerApi';
 import ConfirmModal from '../../components/common/ConfirmModal';
 import { CardSkeleton, SectionError } from '../../components/common/StateViews';
@@ -72,6 +72,16 @@ const SORT_OPTIONS = [
     { value: 'deadline', label: '마감 임박순' },
 ];
 
+// 답변 마감일: 별도 마감일이 없으면 제안일로부터 7일 (createdAt 을 마감일로 쓰던 버그 수정)
+const RESPONSE_WINDOW_DAYS = 7;
+const toResponseDeadline = (createdAt) => {
+    const created = createdAt ? new Date(`${String(createdAt).slice(0, 10)}T00:00:00`) : null;
+    if (!created || Number.isNaN(created.getTime())) return '협의';
+    created.setDate(created.getDate() + RESPONSE_WINDOW_DAYS);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${created.getFullYear()}-${pad(created.getMonth() + 1)}-${pad(created.getDate())}`;
+};
+
 // ── 상세 모달 (Phase 1: G1) ──────────────────────────────
 const mapApiProposal = (proposal) => ({
     id: proposal.id,
@@ -83,7 +93,7 @@ const mapApiProposal = (proposal) => ({
     offerPrice: proposal.budget || 0,
     freeMeal: proposal.provideFood ? '방문 시 식사 제공' : '식사 제공 없음',
     date: proposal.desiredDate || '협의',
-    deadline: proposal.createdAt ? proposal.createdAt.slice(0, 10) : '협의',
+    deadline: proposal.deadline ? String(proposal.deadline).slice(0, 10) : toResponseDeadline(proposal.createdAt),
     instagram: proposal.contact || '',
     status: (proposal.status || 'PENDING').toLowerCase(),
 });
@@ -119,12 +129,14 @@ function ProposalDetailModal({ proposal, onClose, onAccept, onReject }) {
                     {/* Highlights */}
                     <div className="flex flex-wrap gap-2">
                         {proposal.offerPrice > 0 && (
-                            <span className="text-[14px] text-[#002B7A] font-bold bg-[#E8F3FF] px-3 py-2 rounded-lg border border-[#CFE5FF]">
-                                💰 원고료 {proposal.offerPrice.toLocaleString()}원
+                            <span className="inline-flex items-center gap-1.5 text-[14px] text-[#002B7A] font-bold bg-[#E8F3FF] px-3 py-2 rounded-lg border border-[#CFE5FF]">
+                                <Wallet size={15} className="shrink-0" aria-hidden="true" />
+                                원고료 {proposal.offerPrice.toLocaleString()}원
                             </span>
                         )}
-                        <span className="text-[14px] text-[#FF5A36] font-bold bg-[#FFF0ED] px-3 py-2 rounded-lg border border-[#FFE5DF]">
-                            🍽️ {proposal.freeMeal}
+                        <span className="inline-flex items-center gap-1.5 text-[14px] text-[#FF5A36] font-bold bg-[#FFF0ED] px-3 py-2 rounded-lg border border-[#FFE5DF]">
+                            <UtensilsCrossed size={15} className="shrink-0" aria-hidden="true" />
+                            {proposal.freeMeal}
                         </span>
                     </div>
 
@@ -168,9 +180,10 @@ function ProposalDetailModal({ proposal, onClose, onAccept, onReject }) {
                         </button>
                         <button
                             onClick={() => { onAccept(proposal.id); onClose(); }}
-                            className="flex-[2] h-[52px] bg-[#002B7A] text-white font-bold text-[16px] rounded-[14px] hover:bg-[#001F5C] shadow-md hover:-translate-y-0.5 transition-all"
+                            className="flex-[2] h-[52px] inline-flex items-center justify-center gap-1.5 bg-[#002B7A] text-white font-bold text-[16px] rounded-[14px] hover:bg-[#001F5C] shadow-md hover:-translate-y-0.5 transition-all"
                         >
-                            수락하기 ✓
+                            수락하기
+                            <Check size={18} className="shrink-0" aria-hidden="true" />
                         </button>
                     </div>
                 )}

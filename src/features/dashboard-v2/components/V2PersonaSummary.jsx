@@ -1,4 +1,8 @@
 import React from 'react';
+import { Soup, Briefcase, Users } from 'lucide-react';
+
+// 페르소나 아이콘은 순서대로 순환 배정한다 (이모지 대신 Lucide 아이콘 사용).
+const PERSONA_ICONS = [Soup, Briefcase, Users];
 
 const V2PersonaSummary = ({ personas = [] }) => {
     if (!personas || personas.length === 0) return null;
@@ -10,24 +14,27 @@ const V2PersonaSummary = ({ personas = [] }) => {
             </h3>
 
             <div className="flex flex-col gap-1">
-                {personas.map((persona, index) => (
-                    <div
-                        key={index}
-                        className="flex items-center gap-2.5 py-2 px-3 bg-blue-50/50 hover:bg-blue-50 border border-blue-100/50 rounded-xl group cursor-pointer transition-colors"
-                    >
-                        <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm border border-blue-100/30 text-sm group-hover:scale-110 transition-transform">
-                            {persona.emoji}
+                {personas.map((persona, index) => {
+                    const PersonaIcon = PERSONA_ICONS[index % PERSONA_ICONS.length];
+                    return (
+                        <div
+                            key={index}
+                            className="flex items-center gap-2.5 py-2 px-3 bg-blue-50/50 hover:bg-blue-50 border border-blue-100/50 rounded-xl group cursor-pointer transition-colors"
+                        >
+                            <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm border border-blue-100/30 text-[#002B7A] group-hover:scale-110 transition-transform">
+                                <PersonaIcon size={14} className="shrink-0" aria-hidden="true" />
+                            </div>
+                            <div className="flex flex-col justify-center min-w-0 flex-1">
+                                <h4 className="text-[13px] font-bold text-[#002B7A] leading-tight">
+                                    {persona.label}
+                                </h4>
+                                <p className="text-[11px] text-[#002B7A]/65 truncate font-medium leading-tight">
+                                    {persona.detail}
+                                </p>
+                            </div>
                         </div>
-                        <div className="flex flex-col justify-center min-w-0 flex-1">
-                            <h4 className="text-[13px] font-bold text-[#002B7A] leading-tight">
-                                {persona.label}
-                            </h4>
-                            <p className="text-[11px] text-[#002B7A]/65 truncate font-medium leading-tight">
-                                {persona.detail}
-                            </p>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );

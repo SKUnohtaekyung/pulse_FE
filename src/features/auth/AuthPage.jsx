@@ -44,7 +44,7 @@ const AuthPage = () => {
                 </div>
 
                 <div className="auth-footer">
-                    <p>© 2025 PULSE. All rights reserved.</p>
+                    <p>© {new Date().getFullYear()} PULSE. All rights reserved.</p>
                 </div>
             </div>
 

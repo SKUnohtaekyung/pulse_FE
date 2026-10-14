@@ -23,8 +23,16 @@ import { KakaoLinkDrawer } from './KakaoLinkDrawer';
 import { LogoutModal } from './LogoutModal';
 import { WithdrawModal } from './WithdrawModal';
 import { Toast } from '../../components/ui/Toast';
+import { DEMO_MODE } from '../../config/env';
 
 // ─── Static config ────────────────────────────────────────────
+
+// 다음 결제일: 다음 달 1일 (예: 2026. 11. 01)
+const NEXT_BILLING_DATE = (() => {
+    const now = new Date();
+    const next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return `${next.getFullYear()}. ${String(next.getMonth() + 1).padStart(2, '0')}. 01`;
+})();
 
 const PLATFORM_ICONS = { instagram: Instagram, naver: MapPin, kakao: MessageSquare };
 
@@ -114,7 +122,7 @@ const MyPage = ({ onNavigate, profile }) => {
 
     // platform state
     const [platforms, setPlatforms] = useState([
-        { id: 'instagram', name: 'Instagram', handle: '@dondon_gukbap', status: 'connected' },
+        { id: 'instagram', name: 'Instagram', handle: '@pulse_beomgye_gukbap', status: 'connected' },
         { id: 'naver',     name: 'Naver Place', handle: '범계 든든국밥', status: 'collecting' },
         { id: 'kakao',     name: '카카오 채널', handle: null, status: 'unlinked' },
     ]);
@@ -132,6 +140,8 @@ const MyPage = ({ onNavigate, profile }) => {
 
     // 주력 메뉴 키워드 — 손님분석(DeepSeek) 결과의 페르소나 태그에서 추출 (best-effort)
     useEffect(() => {
+        // 전시 데모: 메뉴 키워드 자리에 손님 태그(#30대 등)가 덮어써지지 않도록 기본 메뉴 키워드를 유지한다.
+        if (DEMO_MODE) return undefined;
         let ignore = false;
         fetchLatestAnalysisData()
             .then((analysis) => {
@@ -184,7 +194,7 @@ const MyPage = ({ onNavigate, profile }) => {
     const handleKakaoSuccess = () => {
         setPlatforms((prev) =>
             prev.map((p) =>
-                p.id === 'kakao' ? { ...p, handle: '@kakaochannel', status: 'collecting' } : p
+                p.id === 'kakao' ? { ...p, handle: profileData.storeName, status: 'collecting' } : p
             )
         );
     };
@@ -342,12 +352,12 @@ const MyPage = ({ onNavigate, profile }) => {
                                 <div className="flex gap-6">
                                     <div>
                                         <p className="text-caption text-text-main/40 mb-0.5">다음 결제일</p>
-                                        <p className="text-body-6 text-text-main">2025. 12. 01</p>
+                                        <p className="text-body-6 text-text-main">{NEXT_BILLING_DATE}</p>
                                     </div>
                                     <div className="w-px bg-gray-100 self-stretch" aria-hidden="true" />
                                     <div>
                                         <p className="text-caption text-text-main/40 mb-0.5">결제 수단</p>
-                                        <p className="text-body-6 text-text-main">현대카드 ···· 1234</p>
+                                        <p className="text-body-6 text-text-main">신한카드 ···· 4821</p>
                                     </div>
                                 </div>
                             </div>

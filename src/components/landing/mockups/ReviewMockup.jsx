@@ -3,23 +3,30 @@ import { motion, useReducedMotion, useInView } from 'framer-motion';
 import { Star, Camera, FileText, Sparkles } from 'lucide-react';
 import Badge from '../../ui/Badge';
 
+// 리뷰 날짜는 오늘 기준 최근 날짜로 표시한다.
+const recentDate = (daysAgo) => {
+    const date = new Date();
+    date.setDate(date.getDate() - daysAgo);
+    return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+};
+
 const REVIEWS = [
     {
-        name: '박민수',
+        name: '국물러버',
         rating: 5,
         hasPhoto: true,
-        text: '치킨이 진짜 바삭하고 양도 많아요! 또 올게요.',
-        keywords: ['#바삭함', '#양많음', '#재방문'],
+        text: '해장하러 왔는데 국물이 진짜 진하네요. 출근 전에 딱입니다!',
+        keywords: ['#진한국물', '#해장', '#재방문'],
         sentiment: 'success',
         sentimentLabel: '긍정',
-        reply: '소중한 리뷰 감사합니다! 다음에도 바삭한 치킨으로 모시겠습니다 :)',
+        reply: '소중한 리뷰 감사해요! 해장 한 그릇으로 속 편하게 출근하셨다니 뿌듯해요. 다음에도 든든하게 모실게요.',
     },
     {
-        name: '김지영',
+        name: '점심방랑',
         rating: 3,
         hasPhoto: false,
-        text: '배달이 좀 늦었어요. 음식은 맛있었는데...',
-        keywords: ['#배달지연'],
+        text: '맛은 좋은데 12시엔 줄이 길어요. 조금 일찍 가야 해요.',
+        keywords: ['#점심대기'],
         sentiment: 'warning',
         sentimentLabel: '개선 필요',
         reply: null,
@@ -62,11 +69,11 @@ const ReviewMockup = () => {
                             <span className="text-[13px] font-semibold text-text-main">{REVIEWS[0].name}</span>
                             <Stars count={REVIEWS[0].rating} />
                         </div>
-                        <p className="text-[10px] text-neutral-400">2024.03.15</p>
+                        <p className="text-[10px] text-neutral-400">{recentDate(1)}</p>
                     </div>
                     <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary-tint text-primary rounded-lg text-[10px] font-medium">
                         <Camera size={10} />
-                        Photo review
+                        사진 리뷰
                     </span>
                 </div>
 
@@ -116,11 +123,11 @@ const ReviewMockup = () => {
                             <span className="text-[13px] font-semibold text-text-main">{REVIEWS[1].name}</span>
                             <Stars count={REVIEWS[1].rating} />
                         </div>
-                        <p className="text-[10px] text-neutral-400">2024.03.14</p>
+                        <p className="text-[10px] text-neutral-400">{recentDate(3)}</p>
                     </div>
                     <span className="inline-flex items-center gap-1 px-2 py-1 bg-neutral-100 text-neutral-600 rounded-lg text-[10px] font-medium">
                         <FileText size={10} />
-                        Text review
+                        글 리뷰
                     </span>
                 </div>
                 <p className="text-[12px] text-neutral-700 leading-relaxed mb-2 break-keep">

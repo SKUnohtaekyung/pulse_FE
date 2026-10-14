@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { User, Instagram, Youtube, Hash, Edit3, CheckCircle2, Camera } from 'lucide-react';
 import { fetchCurrentProfile } from '../auth/api/authApi';
+import { fetchInfluencerInbox } from './influencerApi';
+import { toArray } from '../../utils/safeFormat';
 
 const EMPTY_PROFILE = {
     name: '',
@@ -73,10 +75,35 @@ export default function InfluencerProfile() {
         fetchCurrentProfile()
             .then((profile) => {
                 if (!ignore && profile?.role === 'INFLUENCER') {
-                    setData(mapProfile(profile));
+                    // 통계는 받은 제안함에서 따로 채우므로 덮어쓰지 않는다.
+                    setData((prev) => ({ ...mapProfile(profile), stats: prev.stats }));
                 }
             })
             .catch((error) => console.warn('Influencer profile load failed:', error));
+        return () => {
+            ignore = true;
+        };
+    }, []);
+
+    // 활동 통계는 받은 제안함 기준으로 계산한다 (수락 건수·대기 건수·수락한 원고료 합계).
+    useEffect(() => {
+        let ignore = false;
+        fetchInfluencerInbox()
+            .then((proposals) => {
+                if (ignore) return;
+                const list = toArray(proposals);
+                const accepted = list.filter((item) => String(item?.status).toUpperCase() === 'ACCEPTED');
+                setData((prev) => ({
+                    ...prev,
+                    stats: {
+                        ...prev.stats,
+                        accepted: accepted.length,
+                        pending: list.filter((item) => String(item?.status || 'PENDING').toUpperCase() === 'PENDING').length,
+                        totalEarned: accepted.reduce((total, item) => total + Number(item?.budget || 0), 0),
+                    },
+                }));
+            })
+            .catch(() => { /* 통계는 보조 정보 — 실패 시 0 유지 */ });
         return () => {
             ignore = true;
         };

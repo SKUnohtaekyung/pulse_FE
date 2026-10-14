@@ -11,7 +11,7 @@ const InfluencerSidebar = ({ activeMenu, setActiveMenu, isExpanded, setIsExpande
     const influencerName = profile?.ownerName || '인플루언서';
 
     const menus = [
-        { id: 'inbox', icon: <Inbox size={24} />, label: '받은 제안 화면' },
+        { id: 'inbox', icon: <Inbox size={24} />, label: '받은 제안' },
         { id: 'profile', icon: <User size={24} />, label: '마이 프로필' }
     ];
 

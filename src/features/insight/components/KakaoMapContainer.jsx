@@ -6,7 +6,7 @@
 import React, { useEffect } from 'react';
 import { useKakaoMap } from '../hooks/useKakaoMap';
 import CurrentLocationButton from './CurrentLocationButton';
-import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Loader2, AlertCircle, RefreshCw, Store } from 'lucide-react';
 
 export default function KakaoMapContainer({
     center,
@@ -93,8 +93,8 @@ export default function KakaoMapContainer({
                     title="클릭하여 내 가게 위치로 이동"
                 >
                     <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-[#FF5A36] rounded-full flex items-center justify-center text-[12px]">
-                            🏪
+                        <div className="w-6 h-6 bg-[#FF5A36] rounded-full flex items-center justify-center text-white">
+                            <Store size={13} className="shrink-0" aria-hidden="true" />
                         </div>
                         <span className="text-[13px] font-medium text-gray-700">내 가게</span>
                     </div>

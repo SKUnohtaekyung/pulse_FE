@@ -9,8 +9,8 @@ import { apiPost } from '../../utils/httpClient';
 import { getErrorMessage, isCanceledError } from '../../utils/apiError';
 
 const FASTAPI_URL = FASTAPI_BASE_URL;
-const OWNER_GREETING = '안녕하세요, 사장님! 👋\n매장과 손님 분석에 대해 궁금한 점을 언제든 물어보세요.';
-const INFLUENCER_GREETING = '안녕하세요! 👋\n프로필이나 협업 제안에 대해 무엇이든 물어보세요.';
+const OWNER_GREETING = '안녕하세요, 사장님!\n매장과 손님 분석에 대해 궁금한 점을 언제든 물어보세요.';
+const INFLUENCER_GREETING = '안녕하세요!\n프로필이나 협업 제안에 대해 무엇이든 물어보세요.';
 /** LLM 응답은 오래 걸릴 수 있지만, 무한 대기는 막는다. */
 const CHAT_TIMEOUT_MS = 60000;
 const MAX_MESSAGE_LENGTH = 1000;
