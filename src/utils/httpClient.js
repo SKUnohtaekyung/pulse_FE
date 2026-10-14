@@ -13,6 +13,7 @@
 
 import { ERROR_TYPES, normalizeApiError, normalizeHttpError, isOffline } from './apiError';
 import { handleSessionExpired } from './session';
+import { DEMO_MODE } from '../config/env';
 
 export const DEFAULT_TIMEOUT_MS = 15000;
 
@@ -92,7 +93,8 @@ export const apiRequest = async (url, options = {}) => {
         context,
     } = options;
 
-    if (isOffline()) {
+    // 데모 모드는 인터셉터가 응답하므로 전시장 네트워크가 끊겨도 요청을 막지 않는다.
+    if (!DEMO_MODE && isOffline()) {
         throw normalizeApiError(new TypeError('Failed to fetch'), { context: context || url });
     }
 

@@ -1,13 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Store, User } from 'lucide-react';
 import { login } from '../api/authApi';
+import { DEMO_MODE } from '../../../config/env';
 import { FormError, InlineError, LoadingSpinner } from '../../../components/common/StateViews';
 import { getErrorMessage } from '../../../utils/apiError';
 import { consumeSessionExpiredNotice } from '../../../utils/session';
 import '../AuthPage.css';
 
 const DEV_MODE = import.meta.env.DEV;
+
+// 전시 데모 계정 (fetch 인터셉터가 응답한다. 실제 계정·비밀번호가 아님)
+const DEMO_ACCOUNTS = {
+    owner: { email: 'owner@pulse.dev', password: 'pulse-demo' },
+    influencer: { email: 'creator@pulse.dev', password: 'pulse-demo' },
+};
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_EMAIL_LENGTH = 254;
@@ -31,7 +38,7 @@ const validate = ({ email, password }) => {
 const LoginForm = ({ onSwitch }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [formData, setFormData] = useState({ email: '', password: '' });
+    const [formData, setFormData] = useState(() => (DEMO_MODE ? { ...DEMO_ACCOUNTS.owner } : { email: '', password: '' }));
     const [fieldErrors, setFieldErrors] = useState({});
     const [formError, setFormError] = useState(null);
     const [sessionNotice, setSessionNotice] = useState(false);
@@ -74,11 +81,17 @@ const LoginForm = ({ onSwitch }) => {
         }
         setFieldErrors({});
 
+        await submitLogin({ email: formData.email.trim(), password: formData.password });
+    };
+
+    const submitLogin = async (credentials) => {
+        if (submittingRef.current) return;
         submittingRef.current = true;
         setIsSubmitting(true);
+        setFormError(null);
 
         try {
-            const data = await login({ email: formData.email.trim(), password: formData.password });
+            const data = await login(credentials);
             const role = data?.user?.role;
             const redirectTo = location.state?.from;
             if (redirectTo && typeof redirectTo === 'string' && redirectTo.startsWith('/')) {
@@ -99,6 +112,12 @@ const LoginForm = ({ onSwitch }) => {
 
     // 개발자 빠른 진입: mock 유저로 즉시 로그인
     const handleDevBypassLogin = async (role = 'owner') => {
+        // 전시 데모: 실제 로그인 흐름 그대로 데모 계정으로 로그인한다 (인터셉터가 응답).
+        if (DEMO_MODE) {
+            setFormData({ ...DEMO_ACCOUNTS[role] });
+            await submitLogin({ ...DEMO_ACCOUNTS[role] });
+            return;
+        }
         if (role === 'owner') {
             // 통합 가상 사장님(범계 든든국밥/김든든)을 localStorage 에 시딩.
             // 동적 import 로 dev 목 모듈을 프로덕션 번들에서 격리한다.
@@ -126,22 +145,29 @@ const LoginForm = ({ onSwitch }) => {
             </p>
 
             <form onSubmit={handleSubmit} noValidate>
-                {DEV_MODE && (
+                {(DEV_MODE || DEMO_MODE) && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
                         <button
                             type="button"
                             onClick={() => handleDevBypassLogin('owner')}
-                            style={{ padding: '10px', background: '#f97316', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+                            disabled={isSubmitting}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', height: '48px', background: '#002B7A', color: '#FFFFFF', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, fontSize: '15px' }}
                         >
-                            🚀 [DEV] 사장님 자동 로그인
+                            <Store size={18} aria-hidden="true" />
+                            데모 사장님으로 체험하기
                         </button>
                         <button
                             type="button"
                             onClick={() => handleDevBypassLogin('influencer')}
-                            style={{ padding: '10px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+                            disabled={isSubmitting}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', height: '48px', background: '#FFFFFF', color: '#002B7A', border: '1px solid #CBD5E1', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, fontSize: '15px' }}
                         >
-                            ✨ [DEV] 인플루언서 자동 로그인
+                            <User size={18} aria-hidden="true" />
+                            데모 인플루언서로 체험하기
                         </button>
+                        <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#475569', textAlign: 'center' }}>
+                            {DEMO_MODE ? '범계 든든국밥 데모 계정으로 바로 둘러볼 수 있어요.' : '개발용 빠른 로그인'}
+                        </p>
                     </div>
                 )}
 

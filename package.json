@@ -6,7 +6,9 @@
     "homepage": "https://skunohtaekyung.github.io/pulse_FE/",
     "scripts": {
         "dev": "vite",
+        "dev:demo": "vite --mode demo",
         "build": "vite build",
+        "build:demo": "vite build --mode demo",
         "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
         "typecheck": "tsc --noEmit -p tsconfig.json",
         "test": "node --test scripts/test-utils.mjs",

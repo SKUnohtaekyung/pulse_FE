@@ -6,7 +6,24 @@ import SignupLoadingScreen from './SignupLoadingScreen';
 import { useSignupProgress } from '../../../hooks/useSignupProgress';
 import { InlineError } from '../../../components/common/StateViews';
 import { writeJson } from '../../../utils/safeStorage';
+import { DEMO_MODE } from '../../../config/env';
 import '../AuthPage.css';
+
+// 전시 데모: 범계 든든국밥 정보로 미리 채워 "다음"만 눌러도 가입 흐름을 보여줄 수 있게 한다.
+const DEMO_SIGNUP_DEFAULTS = {
+    name: '김든든',
+    phone: '010-1234-5678',
+    email: 'owner@pulse.dev',
+    password: 'Pulse!2026',
+    passwordConfirm: 'Pulse!2026',
+    storeName: '범계 든든국밥',
+    category: '한식',
+    customCategory: '',
+    postcode: '14055',
+    address: '경기 안양시 동안구 범계로 18',
+    detailAddress: '1층',
+    agreed: true,
+};
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_PATTERN = /^01[016-9]-?\d{3,4}-?\d{4}$/;
@@ -31,7 +48,7 @@ const SignupForm = ({ onSwitch }) => {
     const [errors, setErrors] = useState({});
     const submittingRef = useRef(false);
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState(() => (DEMO_MODE ? { ...DEMO_SIGNUP_DEFAULTS } : {
         name: '',
         phone: '',
         email: '',
@@ -44,13 +61,18 @@ const SignupForm = ({ onSwitch }) => {
         address: '',
         detailAddress: '',
         agreed: false
-    });
-    const [passwordValidation, setPasswordValidation] = useState({
+    }));
+    const [passwordValidation, setPasswordValidation] = useState(() => (DEMO_MODE ? {
+        minLength: true,
+        hasSpecialChar: true,
+        hasLowerCase: true,
+        hasNumber: true
+    } : {
         minLength: false,
         hasSpecialChar: false,
         hasLowerCase: false,
         hasNumber: false
-    });
+    }));
 
     // No auto-redirect useEffect - waiting for user action on Success screen
 
@@ -137,6 +159,11 @@ const SignupForm = ({ onSwitch }) => {
     };
 
     const execDaumPostcode = () => {
+        // 우편번호 스크립트를 못 불러온 경우(네트워크 불안정) 화면이 오류로 멈추지 않게 한다.
+        if (!window.daum?.Postcode) {
+            setErrors(prev => ({ ...prev, address: '주소 검색을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.' }));
+            return;
+        }
         new window.daum.Postcode({
             oncomplete: function (data) {
                 let addr = '';

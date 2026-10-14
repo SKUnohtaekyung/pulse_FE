@@ -51,6 +51,7 @@ const extractWords = (text = '') => {
         '직장인', '점심', '회식', '가성비', '재방문', '친절', '매운', '혼밥',
         '한식', '중식', '일식', '양식', '주점', '브런치', '하이볼', '안주',
         '가족', '부모님', '학생', '핫플', '인테리어', '배달',
+        '국밥', '해장', '국물', '순댓국', '수육', '주말', '아침', '출근',
     ];
     return known.filter((word) => source.includes(word));
 };
@@ -100,13 +101,12 @@ export function buildStoreInsightFromAnalysisData(analysisData) {
 
     const localProfile = getLocalStoreProfile();
     const personas = asArray(analysisData.personas);
+    // 페르소나 요약 "문장"을 통째로 키워드로 넣으면 매칭 사유에 문장이 그대로 노출된다.
+    // 태그·키워드와 요약에서 뽑은 단어만 쓴다.
     const personaKeywords = personas.flatMap((persona) => [
-        persona.name,
-        persona.title,
-        persona.type,
-        persona.summary,
         ...asArray(persona.keywords),
-        ...extractWords(`${persona.name || ''} ${persona.title || ''} ${persona.summary || ''}`),
+        ...asArray(persona.tags),
+        ...extractWords(`${persona.nickname || ''} ${persona.name || ''} ${persona.title || ''} ${persona.summary || ''}`),
     ]);
     const reviewTopics = [
         ...asArray(analysisData.review_topics),
@@ -204,7 +204,7 @@ export function calculateInfluencerMatch(storeInsight, influencer) {
 
     if (scores.category >= 20) reasons.push(`${storeInsight.category} 업종과 콘텐츠 분야가 잘 맞습니다.`);
     if (scores.location >= 20) reasons.push(`${extractDistrict(storeInsight.location)} 활동권 인플루언서입니다.`);
-    if (keyword.matched.length > 0) reasons.push(`손님분석 키워드 ${keyword.matched.slice(0, 3).join(', ')}와 겹칩니다.`);
+    if (keyword.matched.length > 0) reasons.push(`손님분석 키워드가 겹칩니다: ${keyword.matched.slice(0, 3).join(' · ')}`);
     if (scores.performance >= 10) reasons.push(`평균 조회수와 참여율이 협업 검증 기준을 넘습니다.`);
     if (scores.budget >= 10) reasons.push(`예상 단가가 현재 제안 예산 안에 들어옵니다.`);
 

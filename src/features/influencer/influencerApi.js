@@ -65,6 +65,11 @@ const mapInfluencer = (item) => {
         engagementRate: profile.engagementRate || 0,
         minBudget: profile.minBudget || 0,
         bio: profile.bio || '',
+        // 응답에 있으면 카드·상세에 그대로 쓰는 선택 필드
+        instagramUrl: profile.instagramUrl || '',
+        youtubeUrl: profile.youtubeUrl || '',
+        tags: toArray(profile.tags),
+        rating: profile.rating,
         matchScore: item.score,
         matchBreakdown: item.breakdown,
         matchReasons: toArray(item.matchReasons),

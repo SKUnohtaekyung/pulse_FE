@@ -38,18 +38,29 @@ export const KAKAO_MAP_API_KEY = readEnv('VITE_KAKAO_MAP_API_KEY');
 export const KAKAO_REST_API_KEY = readEnv('VITE_KAKAO_REST_API_KEY');
 export const BYPASS_AUTH = readEnv('VITE_BYPASS_AUTH') === 'true';
 
+/**
+ * 전시 데모 모드 (`vite --mode demo` → .env.demo).
+ * 백엔드 없이 모든 요청을 src/dev 의 fetch 인터셉터가 "범계 든든국밥" 데이터로 응답한다.
+ * 기능 코드의 실제 API 경로를 그대로 타게 하려고 기능별 mock 분기(USE_MOCK_*)는 끈다.
+ */
+export const DEMO_MODE = readEnv('VITE_DEMO_MODE') === 'true';
+
 // The local UI workflow is mock-first. Live API integration must be explicitly
 // enabled so stale development environment files cannot trigger failing calls.
 const useLiveApiInDev = readEnv('VITE_USE_LIVE_API') === 'true';
-export const USE_MOCK_API = import.meta.env.DEV
-    ? !useLiveApiInDev
-    : readEnv('VITE_USE_MOCK_API') === 'true';
+export const USE_MOCK_API = DEMO_MODE
+    ? false
+    : import.meta.env.DEV
+        ? !useLiveApiInDev
+        : readEnv('VITE_USE_MOCK_API') === 'true';
 
 // Production can independently opt into mock analysis when required.
 const mockAnalysisSetting = readEnv('VITE_USE_MOCK_ANALYSIS');
-export const USE_MOCK_ANALYSIS = import.meta.env.DEV
-    ? USE_MOCK_API
-    : mockAnalysisSetting === 'true';
+export const USE_MOCK_ANALYSIS = DEMO_MODE
+    ? false
+    : import.meta.env.DEV
+        ? USE_MOCK_API
+        : mockAnalysisSetting === 'true';
 
 /** 기능별 필수 환경변수 — 없으면 해당 기능만 우아하게 실패시킨다. */
 export const FEATURE_REQUIREMENTS = {

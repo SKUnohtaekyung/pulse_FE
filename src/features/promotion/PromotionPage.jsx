@@ -17,6 +17,7 @@ import ConfirmModal from '../../components/common/ConfirmModal';
 import { useToast } from '../../components/common/ToastProvider';
 import { getErrorMessage, isCanceledError } from '../../utils/apiError';
 import { releasePreviews } from '../../utils/imageUpload';
+import { DEMO_MODE } from '../../config/env';
 
 const DEFAULT_TARGET = '우리 가게 손님';
 const DEFAULT_CONCEPT = '맛있고 매력적인 우리 가게 대표 메뉴를 소개하는 홍보 영상';
@@ -89,11 +90,13 @@ export default function PromotionPage({ initialParams, onNavigate }) {
         setIsAutoPrompt(!initialParams.prompt);
     }, [initialParams]);
 
-    // dev 전용: 사장님 자동 로그인 시 입력 사진을 샘플(public/dev/pizza.png)로
+    // dev 사장님 자동 로그인 / 전시 데모 모드: 입력 사진을 샘플(public/dev/bab.png)로
     // 자동 세팅해, 업로드 없이도 "영상 생성하기"가 바로 활성화되게 한다.
     useEffect(() => {
-        if (!import.meta.env.DEV) return undefined;
-        if (localStorage.getItem('accessToken') !== 'dev-bypass-token') return undefined;
+        if (!DEMO_MODE) {
+            if (!import.meta.env.DEV) return undefined;
+            if (localStorage.getItem('accessToken') !== 'dev-bypass-token') return undefined;
+        }
         let cancelled = false;
         import('../../dev/mockOwner').then(({ MOCK_OWNER }) => {
             if (cancelled) return;
